@@ -3,18 +3,24 @@ os: linux
 files:
   - source: /
     destination: /home/ubuntu/app
-file_exists_behavior: OVERWRITE
-
 hooks:
-  ApplicationStop:
-    - location: scripts/stop.sh
+  BeforeInstall:
+    - location: scripts/before_install.sh
       timeout: 300
       runas: ubuntu
   AfterInstall:
-    - location: scripts/before_install.sh
+    - location: scripts/install.sh
       timeout: 300
       runas: ubuntu
   ApplicationStart:
     - location: scripts/start.sh
+      timeout: 300
+      runas: ubuntu
+  ApplicationStop:
+    - location: scripts/stop.sh
+      timeout: 300
+      runas: ubuntu
+  BeforeAllowTraffic:
+    - location: scripts/migrate.sh
       timeout: 300
       runas: ubuntu
