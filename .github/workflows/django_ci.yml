@@ -1,4 +1,4 @@
-name: Django CI
+name: Django CI/CD with CodeDeploy
 
 on:
   push:
@@ -7,6 +7,11 @@ on:
   pull_request:
     branches:
       - main
+env:
+  AWS_REGION: "us-east-1"  # Reemplázalo con tu región de AWS
+  S3_BUCKET: "semillero-deployments"  # Nombre de tu bucket S3
+  CODEDEPLOY_APP: "semillero-rest-api"  # Nombre de la aplicación en CodeDeploy
+  DEPLOYMENT_GROUP: "semillero-rest-api-group"  # Grupo de despliegue en CodeDeploy
 
 jobs:
   test:
@@ -36,10 +41,10 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v3
       with:
         python-version: '3.9'
 
@@ -56,3 +61,55 @@ jobs:
       run: |
         pytest register/tests/
         pytest authentication/tests/
+
+  deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"  # Ajusta la versión de Python según tu proyecto
+
+      - name: Install dependencies
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Create static files directory
+        run: mkdir -p staticfiles
+        
+      - name: Collect static files
+        run: |
+          source venv/bin/activate
+          python manage.py collectstatic --noinput
+
+      - name: Package application
+        run: |
+          mkdir deploy
+          cp -r $(ls -A | grep -v deploy) deploy/
+          zip -r deploy.zip deploy
+
+      - name: Set AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Upload to S3
+        run: |
+          aws s3 cp deploy.zip s3://${{ env.S3_BUCKET }}/deploy.zip
+
+      - name: Deploy with AWS CodeDeploy
+        run: |
+          aws deploy create-deployment --application-name ${{ env.CODEDEPLOY_APP }} \
+          --deployment-group-name ${{ env.DEPLOYMENT_GROUP }} \
+          --s3-location bucket=${{ env.S3_BUCKET }},bundleType=zip,key=deploy.zip \
+          --region ${{ env.AWS_REGION }}
