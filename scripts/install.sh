@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e  # Detiene el script si hay un error
 
 echo "📦 Creando entorno virtual..."
 cd app/
