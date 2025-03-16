@@ -3,6 +3,9 @@ set -e  # Detiene el script si hay un error
 
 echo "🔥 Limpiando archivos de implementaciones anteriores..."
 
+# Crear la carpeta app si no existe
+sudo mkdir -p /home/ubuntu/app
+
 # Eliminar versiones anteriores de la aplicación
 sudo rm -rf /home/ubuntu/app/*
 sudo rm -rf /home/ubuntu/app/venv
