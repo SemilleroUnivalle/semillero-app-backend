@@ -92,6 +92,7 @@ jobs:
 
       - name: Package application
         run: |
+          rm -rf deploy deploy.zip
           mkdir deploy
           cp -r $(ls -A | grep -v deploy) deploy/
           zip -r deploy.zip deploy
