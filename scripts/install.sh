@@ -1,21 +1,14 @@
 #!/bin/bash
-set -e  # Detener el script si hay un error
+set -e  # Detiene el script si hay un error
 
-# Definir ruta del entorno virtual
-VENV_PATH="/home/ubuntu/app/venv"
+echo "📦 Creando entorno virtual..."
+cd app/
+python3 -m venv venv
 
-# Crear el entorno virtual si no existe
-if [ ! -d "$VENV_PATH" ]; then
-    python3 -m venv "$VENV_PATH"
-fi
+echo "📦 Activando entorno virtual..."
+source venv/bin/activate
 
-# Activar el entorno virtual
-source "$VENV_PATH/bin/activate"
+echo "📦 Instalando dependencias..."
+pip install -r requirements.txt
 
-# Actualizar pip dentro del entorno virtual
-pip install --upgrade pip
-
-# Instalar dependencias desde requirements.txt
-pip install -r /home/ubuntu/app/requirements.txt
-
-echo "Instalación completada exitosamente."
+echo "✅ Instalación completada."
