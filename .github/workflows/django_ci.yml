@@ -11,7 +11,7 @@ env:
   AWS_REGION: "us-east-1"  # Reemplázalo con tu región de AWS
   S3_BUCKET: "semillero-deployments"  # Nombre de tu bucket S3
   CODEDEPLOY_APP: "semillero-rest-api"  # Nombre de la aplicación en CodeDeploy
-  DEPLOYMENT_GROUP: "semillero-rest-api-group"  # Grupo de despliegue en CodeDeploy
+  DEPLOYMENT_GROUP: "semillero-rest-api-2"  # Grupo de despliegue en CodeDeploy
 
 jobs:
   test:
