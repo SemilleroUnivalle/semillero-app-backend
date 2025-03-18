@@ -16,7 +16,8 @@ def test_registro_inicial_e_inicio_sesion():
     data_registro = {
         'Nombre': 'Juan',
         'Apellidos': 'Pérez',
-        'NumeroIdentificacion': '1234567890'
+        'NumeroIdentificacion': '1234567890',
+        'CorreoElectronico': 'JuanPerez@gmail.com'
     }
     response = client.post(url_registro, data_registro, format='json')
     assert response.status_code == status.HTTP_201_CREATED
@@ -43,7 +44,8 @@ def test_actualizacion_progresiva():
     estudiante_data = {
         'Nombre': 'Juan',
         'Apellidos': 'Pérez',
-        'NumeroIdentificacion': '1234567890'
+        'NumeroIdentificacion': '1234567890',
+        'CorreoElectronico': 'JuanPerez@gmail.com'
     }
     response = client.post(url_registro, estudiante_data, format='json')
     assert response.status_code == status.HTTP_201_CREATED
@@ -72,11 +74,11 @@ def test_actualizacion_progresiva():
     url_actualizacion = reverse('progressive-update', kwargs={'pk': estudiante_instance.pk})
 
     data_actualizacion = {
-        'CorreoElectronico': 'nuevo.correo@example.com',
+        'ConfirmacionCorreo': 'nuevo.correo@example.com',
         'CiudadNacimiento': 'Ciudad Nueva'
     }
     response = client.patch(url_actualizacion, data_actualizacion, format='json')
     assert response.status_code == status.HTTP_200_OK
     estudiante_instance.refresh_from_db()
-    assert estudiante_instance.CorreoElectronico == 'nuevo.correo@example.com'
+    assert estudiante_instance.ConfirmacionCorreo == 'nuevo.correo@example.com'
     assert estudiante_instance.CiudadNacimiento == 'Ciudad Nueva'

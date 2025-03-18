@@ -9,6 +9,6 @@ source /home/ubuntu/app/venv/bin/activate
 cd /home/ubuntu/app
 
 # Iniciar Gunicorn con logs
-nohup gunicorn --workers 3 --bind 0.0.0.0:8000 project_semillero.wsgi:application > /home/ubuntu/app/gunicorn.log 2>&1 &
+gunicorn --bind 0.0.0.0:8000 project_semillero.wsgi:application
 
 echo "✅ Gunicorn iniciado correctamente."
