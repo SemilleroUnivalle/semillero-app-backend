@@ -34,7 +34,7 @@ class Estudiante(models.Model):
     TipoIdentificacion = models.CharField(max_length=2, choices=TipoIdentificacionOpciones, null=True, blank=True)
     NumeroIdentificacion = models.CharField(max_length=20, unique=True)
     CiudadNacimiento = models.CharField(max_length=100, null=True, blank=True)
-    CorreoElectronico = models.EmailField(null=True, blank=True)
+    CorreoElectronico = models.EmailField(default='default@default.com')
     ConfirmacionCorreo = models.EmailField(null=True, blank=True)
     NumeroCelular = models.CharField(max_length=15, null=True, blank=True)
     NumeroTelefonoAlternativo = models.CharField(max_length=15, null=True, blank=True)

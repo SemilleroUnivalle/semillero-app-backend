@@ -10,10 +10,11 @@ from curse.models import Modulo
 class InitialRegistrationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Estudiante
-        fields = ['Nombre', 'Apellidos', 'NumeroIdentificacion']
+        fields = ['Nombre', 'Apellidos', 'NumeroIdentificacion', 'CorreoElectronico']
     
     def create(self, validated_data):
         numero_identificacion = validated_data['NumeroIdentificacion']
+        correo_electronico = validated_data['CorreoElectronico']
         
         # Verificar si ya existe un usuario con el mismo document_number
         if User.objects.filter(document_number=numero_identificacion).exists():
@@ -21,7 +22,7 @@ class InitialRegistrationSerializer(serializers.ModelSerializer):
         
         user = User.objects.create_user(
             document_number=numero_identificacion,
-            email="-",
+            email=correo_electronico,
             password=numero_identificacion
         )
         # Crear el grupo de estudiantes si no existe
@@ -36,7 +37,8 @@ class InitialRegistrationSerializer(serializers.ModelSerializer):
             user=user,
             Nombre=validated_data['Nombre'],
             Apellidos=validated_data['Apellidos'],
-            NumeroIdentificacion=numero_identificacion
+            NumeroIdentificacion=numero_identificacion,
+            CorreoElectronico=correo_electronico
         )
         return estudiante
 
@@ -44,7 +46,7 @@ class ProgressiveUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Estudiante
         fields = [
-            'Foto', 'CiudadNacimiento', 'CorreoElectronico', 'ConfirmacionCorreo', 'NumeroCelular',
+            'Foto', 'CiudadNacimiento', 'ConfirmacionCorreo', 'NumeroCelular',
             'Genero', 'FechaNacimiento', 'DepartamentoResidencia', 'CiudadResidencia', 'DireccionResidencia',
             'EntidadSalud', 'NombreColegio', 'EstamentoColegio', 'GradoEscolaridad', 'ModuloMatricular',
             'NombreAcudiente', 'NumeroCelularAcudiente', 'TieneDiscapacidad', 'TipoDiscapacidad',
