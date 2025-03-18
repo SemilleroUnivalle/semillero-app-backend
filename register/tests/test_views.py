@@ -14,7 +14,8 @@ def test_vista_registro_inicial():
     data = {
         'Nombre': 'Juan',
         'Apellidos': 'Pérez',
-        'NumeroIdentificacion': '1234567890'
+        'NumeroIdentificacion': '1234567890',
+        'CorreoElectronico':'JuanPrez@gmail.com'
     }
     response = client.post(url, data, format='json')
     assert response.status_code == status.HTTP_201_CREATED
