@@ -3,10 +3,10 @@ from django.db import models
 
 class StudentManager(BaseUserManager):
     """Manager para manejar la creación de estudiantes"""
-
+    print("Creando un nuevo manager para estudiantes")
     def create_user(self, nombre, apellido, numero_identificacion, email, password=None):
         """Crea y retorna un estudiante con el número de identificación como contraseña"""
-
+        print(f"Datos recibidos: nombre={nombre}, apellido={apellido}, numero_identificacion={numero_identificacion}, email={email}")
         email = self.normalize_email(email)
 
         student = self.model(
@@ -18,10 +18,6 @@ class StudentManager(BaseUserManager):
 
         # Se usa el número de identificación como contraseña
         student.set_password(numero_identificacion)
-
-        # Imprimir los datos del estudiante antes de guardarlos
-        print(f"Datos del estudiante antes de guardar: {student.__dict__}")
-
         student.save(using=self._db)
         return student
 
