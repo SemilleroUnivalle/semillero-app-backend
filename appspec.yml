@@ -2,24 +2,26 @@ version: 0.0
 os: linux
 files:
   - source: /
-    destination: /home/ubuntu/api
-    file_exists_behavior: OVERWRITE  # Sobrescribe archivos existentes
-
+    destination: /home/ubuntu/app
+    overwrite: yes
 hooks:
-  ApplicationStop:
-    - location: scripts/stop.sh
-      timeout: 300
-      runas: ubuntu
-      ignoreFailure: true
   BeforeInstall:
-    - location: scripts/install.sh
+    - location: scripts/before_install.sh
       timeout: 300
       runas: ubuntu
   AfterInstall:
-    - location: scripts/permissions.sh
+    - location: scripts/install.sh
       timeout: 300
       runas: ubuntu
   ApplicationStart:
     - location: scripts/start.sh
+      timeout: 300
+      runas: ubuntu
+  ApplicationStop:
+    - location: scripts/stop.sh
+      timeout: 300
+      runas: ubuntu
+  BeforeAllowTraffic:
+    - location: scripts/migrate.sh
       timeout: 300
       runas: ubuntu
