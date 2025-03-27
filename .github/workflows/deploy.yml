@@ -1,0 +1,87 @@
+name: Build & Deploy to EC2 with CodeDeploy
+
+on:
+  push:
+    branches:
+      - main
+
+# Variables de entorno globales
+env:
+  BUCKET_NAME: "bucket-api-semillero"
+  AWS_REGION: "us-east-1"  
+  ARTIFACT_NAME: "api.zip"
+  APPLICATION_NAME: "aplication-api-semillero"
+  DEPLOYMENT_GROUP_NAME: "group-aplication-api-semillero"
+
+jobs:
+  build:
+    name: Build and Package
+    runs-on: ubuntu-latest
+    
+    # Para asumir roles con OIDC necesitas id-token: write
+    permissions:
+      contents: read
+      id-token: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configurar credenciales de AWS
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ secrets.IAMROLE_GITHUB }}
+          role-session-name: "Github-Actions-Role"
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Instalar dependencias
+        run: |
+          pip install -r requirements.txt
+          python manage.py migrate
+          # python manage.py collectstatic --noinput
+
+      - name: Hacer ejecutables los scripts
+        run: chmod +x scripts/*.sh
+
+      #- name: Ejecutar tests (opcional)
+        #run: |
+          #pytest
+
+      - name: Crear artefacto (zip)
+        run: |
+          zip -r $ARTIFACT_NAME .
+
+      - name: Subir artefacto a S3
+        run: |
+          aws s3 cp $ARTIFACT_NAME s3://$BUCKET_NAME/$ARTIFACT_NAME
+
+  deploy:
+    name: Deploy to EC2 via CodeDeploy
+    runs-on: ubuntu-latest
+    needs: build
+    
+    # Para asumir rol en el job de deploy, también necesitas id-token: write
+    permissions:
+      id-token: write
+    
+    steps:
+      - name: Configurar credenciales de AWS
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ secrets.IAMROLE_GITHUB }}
+          role-session-name: "Github-Actions-Role"
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Echo "Deploy branch"
+        shell: bash
+        run: |
+          BRANCH_NAME=$(echo "${{ github.ref }}" | sed 's/refs\/heads\///')
+          echo "Deploy branch: $BRANCH_NAME"
+  
+      - name: Create CodeDeploy Deployment
+        run: |
+          aws deploy create-deployment \
+            --application-name aplication-api-semillero \
+            --deployment-group-name group-aplication-api-semillero \
+            --s3-location bucket=bucket-api-semillero,key=${{ env.ARTIFACT_NAME }},bundleType=zip \
+            --region "us-east-1"

@@ -101,7 +101,17 @@ DATABASES = {
         'PORT': '5432',
     }
 }
-
+"""
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        # ...
+        "OPTIONS": {
+            "init_command": "PRAGMA synchronous=3; PRAGMA cache_size=2000;",
+        },
+    }
+}
+"""
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
