@@ -8,9 +8,9 @@ files:
 hooks:
   ApplicationStop:
     - location: scripts/stop.sh
-      pattern: "**"
       timeout: 300
       runas: ubuntu
+      ignoreFailure: true
   BeforeInstall:
     - location: scripts/install.sh
       timeout: 300
