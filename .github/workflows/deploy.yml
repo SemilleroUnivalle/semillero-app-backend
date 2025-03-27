@@ -30,9 +30,9 @@ jobs:
       - name: Configurar credenciales de AWS
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          role-to-assume: ${{ secrets.IAMROLE_GITHUB }}
+          role-to-assume: "arn:aws:iam::897722690560:oidc-provider/token.actions.githubusercontent.com"
           role-session-name: "Github-Actions-Role"
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: "us-east-1"
 
       - name: Instalar dependencias
         run: |
