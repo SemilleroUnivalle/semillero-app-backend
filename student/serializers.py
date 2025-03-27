@@ -2,13 +2,21 @@ from rest_framework import serializers
 from .models import Student
 from django.contrib.auth.hashers import check_password
 from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.validators import UniqueValidator
 
 class StudentSerializer(serializers.ModelSerializer):
     """Serializer para el modelo Student"""
-
+    numero_identificacion = serializers.CharField(
+        validators=[UniqueValidator(queryset=Student.objects.all())]
+    )
+    
     class Meta:
         model = Student
         fields = ['id', 'nombre', 'apellido', 'numero_identificacion', 'email']
+        
+    def create(self, validated_data):
+        # Usamos el manager personalizado
+        return Student.objects.create_user(**validated_data)
 
 class StudentLoginSerializer(serializers.Serializer):
     numero_identificacion = serializers.CharField()
