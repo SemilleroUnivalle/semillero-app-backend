@@ -1,8 +1,13 @@
 #!/bin/bash
-echo "Stopping old process (if running)..."
 
-# Mata el proceso solo si existe
-pkill -f gunicorn || echo "No process found"
+echo "🛑 Deteniendo Gunicorn..."
 
-echo "Process stopped successfully!"
-exit 0  # Asegura que CodeDeploy no falle
+# Buscar si Gunicorn está corriendo
+if pgrep -f gunicorn > /dev/null
+then
+    pkill -f gunicorn
+    echo "✅ Gunicorn detenido exitosamente."
+else
+    echo "⚠️ No se encontró ningún proceso de Gunicorn en ejecución."
+fi
+
