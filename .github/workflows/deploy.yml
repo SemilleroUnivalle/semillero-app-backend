@@ -31,7 +31,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v1
         with:
           role-to-assume: "arn:aws:iam::897722690560:role/GitHubActionsRole"
-          role-session-name: "Github-Actions-Role"
+          role-session-name: "GitHubActionsRole"
           aws-region: "us-east-1"
 
       - name: Instalar dependencias
@@ -69,7 +69,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v1
         with:
           role-to-assume: "arn:aws:iam::897722690560:role/GitHubActionsRole"
-          role-session-name: "Github-Actions-Role"
+          role-session-name: "GitHubActionsRole"
           aws-region: "us-east-1"
 
       - name: Echo "Deploy branch"
