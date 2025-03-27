@@ -1,5 +1,5 @@
 #!/bin/bash
-cd /home/ec2-user/api
+cd api/
 source venv/bin/activate
 # Cambia esto si usás Django, Flask, etc.
 # Ejemplo Django:
