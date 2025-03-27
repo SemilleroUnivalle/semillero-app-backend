@@ -1,5 +1,5 @@
 #!/bin/bash
-cd api/
+cd /home/ubuntu/api/
 source venv/bin/activate
 # Cambia esto si usás Django, Flask, etc.
 # Ejemplo Django:
