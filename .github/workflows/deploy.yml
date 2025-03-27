@@ -40,9 +40,6 @@ jobs:
           python manage.py migrate
           # python manage.py collectstatic --noinput
 
-      - name: Hacer ejecutables los scripts
-        run: chmod +x scripts/*.sh
-
       #- name: Ejecutar tests (opcional)
         #run: |
           #pytest
