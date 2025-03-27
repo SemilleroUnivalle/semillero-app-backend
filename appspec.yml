@@ -9,14 +9,14 @@ hooks:
   BeforeInstall:
     - location: scripts/stop.sh
       timeout: 60
-      runas: ec2-user
+      runas: ubuntu
 
   AfterInstall:
     - location: scripts/install.sh
       timeout: 120
-      runas: ec2-user
+      runas: ubuntu
 
   ApplicationStart:
     - location: scripts/start.sh
       timeout: 60
-      runas: ec2-user
+      runas: ubuntu
