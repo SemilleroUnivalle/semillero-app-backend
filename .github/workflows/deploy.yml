@@ -74,9 +74,7 @@ jobs:
 
       - name: Echo "Deploy branch"
         shell: bash
-        run: |
-          BRANCH_NAME=$(echo "${{ github.ref }}" | sed 's/refs\/heads\///')
-          echo "Deploy branch: $BRANCH_NAME"
+        run: echo "BRANCH=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
   
       - name: Create CodeDeploy Deployment
         run: |
