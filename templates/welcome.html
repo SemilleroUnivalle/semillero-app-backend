@@ -1,0 +1,30 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Semillero API - Bienvenido</title>
+    <link rel="stylesheet" href="{% static 'css/welcome.css' %}">
+</head>
+<body>
+    <div class="container">
+        {% if logo_path %}
+        <img src="{% static logo_path %}" alt="Logo Semillero" class="logo">
+        {% endif %}
+        
+        <h1>Bienvenido a la API de Semillero</h1>
+        <p>Esta es la API REST que proporciona servicios para la aplicación Semillero.</p>
+        
+        <div class="endpoints">
+            <h2>Endpoints Principales</h2>
+            
+            
+        <a href="/swagger/" class="docs-link">Documentación de la API</a>
+        
+        <div class="footer">
+            <p>Semillero Backend &copy; {% now "Y" %}</p>
+        </div>
+    </div>
+</body>
+</html>
