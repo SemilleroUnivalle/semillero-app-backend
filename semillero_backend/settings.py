@@ -26,8 +26,12 @@ SECRET_KEY = 'django-insecure-3-!4cm82i1-s5hbg4*m_4x!=wg=lj1$0(-3hb&awt2^0nzpp@o
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost']
-
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    '0.0.0.0',
+    # otros hosts permitidos...
+]
 
 # Application definition
 
@@ -91,25 +95,16 @@ WSGI_APPLICATION = 'semillero_backend.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-"""
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'Semillero',
+        'NAME': 'semillero_database',
         'USER': 'postgres',
-        'PASSWORD': 'admin',
+        'PASSWORD': 'admin',  # Usualmente vacío para autenticación del sistema
         'HOST': 'localhost',
         'PORT': '5432',
     }
 }
-"""
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / "db.sqlite3",
-    }
-}
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators

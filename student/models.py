@@ -4,6 +4,7 @@ from django.db import models
 class StudentManager(BaseUserManager):
     """Manager para manejar la creación de estudiantes"""
     def create_user(self, nombre, apellido, numero_identificacion, email, password=None):
+        print("Método create_user ejecutado")
         """Crea y retorna un estudiante con el número de identificación como contraseña"""
         print(f"Datos recibidos: nombre={nombre}, apellido={apellido}, numero_identificacion={numero_identificacion}, email={email}")
         email = self.normalize_email(email)

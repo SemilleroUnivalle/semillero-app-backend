@@ -36,12 +36,15 @@ class StudentViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         """
-        Utiliza el método create_user del modelo Student para crear el estudiante
-        en lugar del método save() predeterminado del serializer.
+        Crea un estudiante utilizando el método create_user del manager.
         """
-        validated_data = serializer.validated_data
-        # Crear el usuario con el método personalizado
-        Student.create_user(**validated_data)
+        data = serializer.validated_data
+        Student.objects.create_user(
+            nombre=data['nombre'],
+            apellido=data['apellido'],
+            numero_identificacion=data['numero_identificacion'],
+            email=data['email']
+        )
 
     @swagger_auto_schema(
         operation_summary="Obtener un estudiante específico",
