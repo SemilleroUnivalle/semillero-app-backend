@@ -13,11 +13,30 @@ class StudentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Student
         fields = ['id', 'nombre', 'apellido', 'numero_identificacion', 'email']
-        
-    def create(self, validated_data):
-        # Usamos el manager personalizado
-        return Student.objects.create_user(**validated_data)
 
+class StudentRegistrationPhase2Serializer(serializers.ModelSerializer):
+    """Serializer para la segunda fase de registro (información complementaria)"""
+    class Meta:
+        model = Student
+        fields = [
+            'genero', 'fecha_nacimiento', 'telefono', 'celular',
+            'departamento_residencia', 'comuna', 'direccion',
+            'estamento', 'discapacidad', 'tipo_discapacidad',
+            'descripcion_discapacidad'
+        ]
+        
+    def update(self, instance, validated_data):
+        instance = super().update(instance, validated_data)
+        instance.registration_phase = 2  # Actualizar a fase completa
+        instance.save()
+        return instance
+
+class StudentPhase2FilesSerializer(serializers.ModelSerializer):
+    """Serializer para la carga de archivos en la fase 2"""
+    class Meta:
+        model = Student
+        fields = ['Foto', 'documento_identidad', 'constancia_estudios', 'comprobante_pago']
+        
 class StudentLoginSerializer(serializers.Serializer):
     numero_identificacion = serializers.CharField()
     password = serializers.CharField(write_only=True)
