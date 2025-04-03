@@ -30,6 +30,7 @@ ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
     '0.0.0.0',
+    #ip publica servidor aws
     # otros hosts permitidos...
 ]
 
@@ -100,10 +101,23 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'semillero_database',
         'USER': 'postgres',
-        'PASSWORD': 'admin',  # Usualmente vacío para autenticación del sistema
+        'PASSWORD': 'admin',  
         'HOST': 'localhost',
         'PORT': '5432',
+    },
+    'secondary': {
+        'ENGINE': 'django.db.backends.postgresql', # Motor de la base de datos
+        'NAME': 'database-semillero', #name rds
+        'USER': 'postgres', #user rds
+        'PASSWORD': 'admin',  #password rds
+        'HOST': 'database-semillero.cktk40yw6g7t.us-east-1.rds.amazonaws.com', #endpoint rds
+        'PORT': '5432',
+    },
+    'third': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',  # La base de datos se almacenará en el directorio base del proyecto
     }
+    
 }
 
 # Password validation
