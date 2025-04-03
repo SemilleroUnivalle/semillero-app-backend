@@ -78,6 +78,7 @@ class StudentRegisterPhase2View(APIView):
     )
     def put(self, request, student_id):  # Añadir el parámetro student_id aquí
         try:
+            
             # Buscar el estudiante por su ID
             student = Student.objects.get(id=student_id)
             
