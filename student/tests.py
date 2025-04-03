@@ -85,11 +85,9 @@ class StudentViewTest(TestCase):
         # Verificar respuesta HTTP exitosa
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         
-        # Obtener ID del estudiante creado
-        student_id = response.data['id']
+        # Obtener el estudiante creado filtrándolo por email
+        created_student = Student.objects.get(email=new_student_data["email"])
         
-        # Verificar que el estudiante fue creado con los datos correctos
-        created_student = Student.objects.get(id=student_id)
         self.assertEqual(created_student.nombre, "Juan")
         self.assertEqual(created_student.apellido, "Pérez")
         self.assertEqual(created_student.email, "juan.perez@example.com")
@@ -106,8 +104,8 @@ class StudentViewTest(TestCase):
             "email": "sebastian.tombe@example.com"
         }
         
-        # Enviar petición PUT para actualizar
-        response = self.client.put(
+        # Enviar petición PATCH para actualización parcial
+        response = self.client.patch(
             f'/student/student/{self.student1.id}/',
             update_data,
             format='json'
@@ -132,6 +130,35 @@ class StudentViewTest(TestCase):
         
         # Verificar que ya no existe en la base de datos
         self.assertFalse(Student.objects.filter(id=student_id).exists())
+
+    def test_create_student_invalid(self):
+        """
+        Prueba que al intentar registrar un estudiante con datos inválidos se retornen
+        los mensajes de error configurados en el serializer.
+        """
+        # Por ejemplo, faltan nombre y numero_identificacion o el email no tiene formato válido
+        invalid_student_data = {
+            "nombre": "",  # vacío: campo requerido
+            "apellido": "García",
+            "numero_identificacion": "",  # vacío: campo requerido
+            "email": "email-no-valido"  # formato no válido
+        }
+        
+        response = self.client.post(
+            '/student/student/',
+            invalid_student_data,
+            format='json'
+        )
+        
+        # Se espera un error HTTP 400 (Bad Request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        
+        # Verificar que se incluyan mensajes de error para los campos faltantes o con formato incorrecto.
+        self.assertIn("nombre", response.data, "Debe informarse error en el campo 'nombre'")
+        self.assertIn("numero_identificacion", response.data, "Debe informarse error en el campo 'numero_identificacion'")
+        self.assertIn("email", response.data, "Debe informarse error en el campo 'email'")
+        
+        print("Errores al registrar estudiante inválido:", response.data)
 
 class StudentLoginSerializerTest(TestCase):
     def setUp(self):
