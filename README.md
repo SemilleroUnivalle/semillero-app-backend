@@ -20,8 +20,8 @@ Sigue estos pasos para configurar y ejecutar el proyecto localmente:
 1. **Clona el repositorio desde GitHub:**
 
    ```bash
-   git clone https://github.com/tuusuario/tu-repositorio.git
-   cd tu-repositorio
+   git clone https://github.com/SemilleroUnivalle/semillero-app-backend.git
+   cd semillero-app-backend
    ```
 
 2. **Crea y activa un entorno virtual:**
@@ -29,7 +29,7 @@ Sigue estos pasos para configurar y ejecutar el proyecto localmente:
    Con `virtualenv`:
 
    ```bash
-   virtualenv venv
+   virtualenv ven
    source venv/bin/activate  # En Windows usa `venv\Scripts\activate`
    ```
 
