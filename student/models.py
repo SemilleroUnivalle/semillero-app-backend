@@ -33,6 +33,7 @@ class Student(AbstractBaseUser):
     registration_phase = models.PositiveSmallIntegerField(default=1)  # 1 = Fase inicial, 2 = Fase completada
 
     # Campos opcionales para la segunda fase del registro
+    tipo_identificacion = models.CharField(max_length=50, blank=True, null=True)
     genero = models.CharField(max_length=10, blank=True, null=True)
     fecha_nacimiento = models.DateField(blank=True, null=True)
     telefono = models.CharField(max_length=20, blank=True, null=True)
@@ -59,5 +60,26 @@ class Student(AbstractBaseUser):
     REQUIRED_FIELDS = ['nombre', 'apellido', 'email']
 
     def __str__(self):
-        return f"{self.nombre} {self.apellido} - {self.numero_identificacion}"
+        basic_info = f"{self.nombre} {self.apellido} ({self.numero_identificacion})"
+        
+        additional_info = []
+        if self.email:
+            additional_info.append(f"Email: {self.email}")
+        if self.telefono:
+            additional_info.append(f"Tel: {self.telefono}")
+        if self.celular:
+            additional_info.append(f"Cel: {self.celular}")
+        if self.genero:
+            additional_info.append(f"Género: {self.genero}")
+        if self.estamento:
+            additional_info.append(f"Estamento: {self.estamento}")
+        
+        # Información sobre la fase de registro
+        registration_status = f"Fase de registro: {self.registration_phase}"
+        
+        # Combinar toda la información
+        if additional_info:
+            return f"{basic_info} - {', '.join(additional_info)} - {registration_status}"
+        else:
+            return f"{basic_info} - {registration_status}"
 
