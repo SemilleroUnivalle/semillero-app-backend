@@ -98,38 +98,28 @@ WSGI_APPLICATION = 'semillero_backend.wsgi.application'
 
 # Base de datos
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-"""
-DATABASES = {
 
+DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'semillero_database',
+        'NAME': 'database_semillero',
         'USER': 'postgres',
-        'PASSWORD': 'admin',  
+        'PASSWORD': 'admin',
         'HOST': 'localhost',
         'PORT': '5432',
     },
-    'secondary': {
-        'ENGINE': 'django.db.backends.postgresql', # Motor de la base de datos
-        'NAME': 'database-semillero', #name rds
-        'USER': 'postgres', #user rds
-        'PASSWORD': 'admin',  #password rds
-        'HOST': 'database-semillero.cktk40yw6g7t.us-east-1.rds.amazonaws.com', #endpoint rds
+    'aws': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'semillero-database',
+        'USER': 'semillero',
+        'PASSWORD': 'adminsemillero',
+        'HOST': 'database-semillero.cktk40yw6g7t.us-east-1.rds.amazonaws.com',
         'PORT': '5432',
-    },'
-
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',  # La base de datos se almacenará en el directorio base del proyecto
-    }
-    
-}
-"""
-DATABASES = {
-    'default': {
+    },
+    'sqlite': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    },
 }
 
 # Validación de contraseñas
