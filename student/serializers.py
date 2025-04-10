@@ -58,11 +58,8 @@ class StudentLoginSerializer(serializers.Serializer):
             print(f"Contraseña ingresada: {password}, Contraseña almacenada: {student.password}")
             raise AuthenticationFailed('Número de identificación o contraseña incorrectos.')
 
-        return {
-            'id': student.id,
-            'nombre': student.nombre,
-            'apellido': student.apellido,
-            'numero_identificacion': student.numero_identificacion,
-            'email': student.email,
-        }
+        # Guarda el estudiante para que esté disponible en la vista
+        data['student'] = student
+        
+        return data
 

@@ -2,11 +2,16 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework_simplejwt.tokens import RefreshToken, TokenError
+#Documentacion
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+#Modelo
 from .models import Student
+#Serializadores
 from .serializers import StudentSerializer, StudentLoginSerializer, StudentRegistrationPhase2Serializer, StudentPhase2FilesSerializer
-
+#Autenticacion
+from rest_framework.permissions import IsAuthenticated
 class StudentViewSet(viewsets.ModelViewSet):
     """
     API endpoint para gestionar estudiantes.
@@ -74,7 +79,7 @@ class StudentRegisterPhase2View(APIView):
     @swagger_auto_schema(
         operation_summary="Registrar estudiante - Fase 2",
         operation_description="Completa el registro de un estudiante con información adicional",
-        # ... resto de la configuración de swagger ...
+        
     )
     def put(self, request, student_id):  # Añadir el parámetro student_id aquí
         try:
@@ -220,9 +225,57 @@ class StudentRegistrationStatusView(APIView):
             return Response({'error': 'Estudiante no encontrado'}, status=status.HTTP_404_NOT_FOUND)
 
 class StudentLoginView(APIView):
+    @swagger_auto_schema(
+        operation_summary="Login de estudiante",
+        operation_description="Autentica a un estudiante y devuelve tokens JWT"
+    )
     def post(self, request):
         serializer = StudentLoginSerializer(data=request.data)
         if serializer.is_valid():
-            return Response(serializer.validated_data, status=status.HTTP_200_OK)
+            # Obtener el estudiante del serializer
+            student = serializer.validated_data['student']
+            
+            # Generar tokens JWT
+            refresh = RefreshToken.for_user(student)
+            
+            return Response({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+                'id': student.id,
+                'nombre': student.nombre,
+                'apellido': student.apellido,
+                'numero_identificacion': student.numero_identificacion,
+                'email': student.email,
+                'registration_phase': student.registration_phase
+            }, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        try:
+            # Si el cliente manda el refresh token, podemos intentar invalidarlo
+            refresh_token = request.data.get('refresh')
+            if refresh_token:
+                # Intentamos invalidar el token
+                try:
+                    token = RefreshToken(refresh_token)
+                    # Ajustar la fecha de expiración para invalidarlo inmediatamente
+                    token.set_exp(lifetime=0)
+                except TokenError:
+                    pass  # Ignoramos errores con tokens inválidos
+                
+            # Independiente de si recibimos o no el token de refresco,
+            # indicamos al cliente que debe eliminar sus tokens almacenados
+            return Response({
+                "detail": "Sesión cerrada correctamente. Por favor elimina los tokens almacenados.",
+                "success": True
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                "error": str(e),
+                "success": False
+            }, status=status.HTTP_400_BAD_REQUEST)
 
