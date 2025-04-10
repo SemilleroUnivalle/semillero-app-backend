@@ -238,15 +238,44 @@ class StudentLoginView(APIView):
             # Generar tokens JWT
             refresh = RefreshToken.for_user(student)
             
+            # Preparar los campos de archivos
+            foto_url = student.Foto.url if student.Foto else None
+            documento_identidad_url = student.documento_identidad.url if student.documento_identidad else None
+            constancia_estudios_url = student.constancia_estudios.url if student.constancia_estudios else None
+            comprobante_pago_url = student.comprobante_pago.url if student.comprobante_pago else None
+            
             return Response({
+                # Tokens JWT
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
+                
+                # Información básica
                 'id': student.id,
                 'nombre': student.nombre,
                 'apellido': student.apellido,
                 'numero_identificacion': student.numero_identificacion,
                 'email': student.email,
-                'registration_phase': student.registration_phase
+                'registration_phase': student.registration_phase,
+                
+                # Información adicional
+                'tipo_identificacion': student.tipo_identificacion,
+                'genero': student.genero,
+                'fecha_nacimiento': student.fecha_nacimiento,
+                'telefono': student.telefono,
+                'celular': student.celular,
+                'departamento_residencia': student.departamento_residencia,
+                'comuna': student.comuna,
+                'direccion': student.direccion,
+                'estamento': student.estamento,
+                'discapacidad': student.discapacidad,
+                'tipo_discapacidad': student.tipo_discapacidad,
+                'descripcion_discapacidad': student.descripcion_discapacidad,
+                
+                # URLs de archivos
+                'foto_url': foto_url,
+                'documento_identidad_url': documento_identidad_url,
+                'constancia_estudios_url': constancia_estudios_url,
+                'comprobante_pago_url': comprobante_pago_url
             }, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

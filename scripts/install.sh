@@ -1,5 +1,6 @@
 #!/bin/bash
 cd /home/ubuntu/app
-python3 -m venv venv
+sudo python3 -m venv venv
 source venv/bin/activate
+sudo chown -R ubuntu:ubuntu venv/
 pip install -r requirements.txt
