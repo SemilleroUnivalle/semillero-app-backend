@@ -114,22 +114,6 @@ WSGI_APPLICATION = 'semillero_backend.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'database_semillero',
-        'USER': 'postgres',
-        'PASSWORD': 'admin',
-        'HOST': 'localhost',
-        'PORT': '5432',
-    },
-    'aws': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'semillero-database',
-        'USER': 'semillero',
-        'PASSWORD': 'adminsemillero',
-        'HOST': 'database-semillero.cktk40yw6g7t.us-east-1.rds.amazonaws.com',
-        'PORT': '5432',
-    },
-    'sqlite': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     },
