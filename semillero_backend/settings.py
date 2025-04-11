@@ -27,6 +27,8 @@ SECRET_KEY = 'django-insecure-3-!4cm82i1-s5hbg4*m_4x!=wg=lj1$0(-3hb&awt2^0nzpp@o
 DEBUG = True
 
 ALLOWED_HOSTS = [
+    'ec2-54-234-86-157.compute-1.amazonaws.com',
+    '54.234.86.157',
     'localhost',
     '127.0.0.1',
     '0.0.0.0',
@@ -48,8 +50,21 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'drf_yasg',
     'psycopg2',
-    'todo',
-    'student',
+    'estudiante',
+    'acudiente',
+    'area',
+    'asistencia',
+    'discapacidad',
+    'evaluacion_programa',
+    'grado_escolar',
+    'grupo',
+    'historial_cambios',
+    'inscripcion',
+    'modulo',
+    'oferta_modulo',
+    'pago',
+    'periodo_academico',
+    'seguimiento_academico'
 ]
 
 REST_FRAMEWORK = {
@@ -121,7 +136,14 @@ DATABASES = {
         'HOST': 'localhost',
         'PORT': '5432',
     },
-    'aws': {
+    'sqlite': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    },
+}
+"""
+DATABASES = {
+    'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'semillero-database',
         'USER': 'semillero',
@@ -129,12 +151,8 @@ DATABASES = {
         'HOST': 'database-semillero.cktk40yw6g7t.us-east-1.rds.amazonaws.com',
         'PORT': '5432',
     },
-    'sqlite': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    },
 }
-
+"""
 # Validación de contraseñas
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
@@ -181,8 +199,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Configuración de CORS
 # Define la lista de orígenes permitidos para solicitudes de origen cruzado
 CORS_ALLOWED_ORIGINS = [
-    "https://example.com",  # Dominio de ejemplo
-    "https://sub.example.com",  # Subdominio de ejemplo
+    "http://191.104.218.125" #PC Alejandro
+    "http://181.78.17.229" #PC Sebastian
     "http://localhost:8080",  # Servidor de desarrollo local
     "http://127.0.0.1:8000",  # Localhost con el puerto predeterminado de Django
     "http://127.0.0.1:3000",

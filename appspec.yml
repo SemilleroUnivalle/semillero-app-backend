@@ -13,14 +13,6 @@ hooks:
     - location: scripts/install.sh
       timeout: 300
       runas: ubuntu
-  ApplicationStart:
-    - location: scripts/start.sh
-      timeout: 300
-      runas: ubuntu
-  ApplicationStop:
-    - location: scripts/stop.sh
-      timeout: 300
-      runas: ubuntu
       ignoreFailure: true
   BeforeAllowTraffic:
     - location: scripts/migrate.sh
