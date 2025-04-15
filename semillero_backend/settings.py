@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'area',
     'asistencia',
     'discapacidad',
+    'eps',
     'evaluacion_programa',
     'grado_escolar',
     'grupo',
@@ -199,8 +200,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Configuración de CORS
 # Define la lista de orígenes permitidos para solicitudes de origen cruzado
 CORS_ALLOWED_ORIGINS = [
-    "http://191.104.218.125" #PC Alejandro
-    "http://181.78.17.229" #PC Sebastian
+    "http://191.104.218.125", #PC Alejandro
+    "http://181.78.17.229", #PC Sebastian
     "http://localhost:8080",  # Servidor de desarrollo local
     "http://127.0.0.1:8000",  # Localhost con el puerto predeterminado de Django
     "http://127.0.0.1:3000",
