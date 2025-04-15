@@ -7,6 +7,7 @@ class Estudiante(models.Model):
     id_estudiante = models.AutoField(primary_key=True)
     nombre = models.CharField(max_length=50)
     apellido = models.CharField(max_length=50)
+    contrasena = models.CharField(max_length=128,blank=True, null=True)  
     numero_documento = models.CharField(max_length=20, unique=True)
     email = models.EmailField(unique=True)
     is_active = models.BooleanField(default=True)
