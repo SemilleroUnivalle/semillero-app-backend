@@ -4,8 +4,8 @@ from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from django.shortcuts import render
-
-
+from login.views import LoginView
+from logout.views import LogoutView
 schema_view = get_schema_view(
    openapi.Info(
       title="Semillero API",
@@ -43,6 +43,8 @@ urlpatterns = [
     path('pago/', include('pago.urls')),
     path('periodo_academico/', include('periodo_academico.urls')),
     path('seguimiento_academico/', include('seguimiento_academico.urls')),
+    path('login/', LoginView.as_view(), name='login'),
+    path('logout/', LogoutView.as_view(), name='logout'),
     #path('swagger<format>/', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     #path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),

@@ -7,6 +7,7 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 #Modelo
 from .models import Estudiante
+from cuenta.models import CustomUser
 #Serializadores
 from .serializers import EstudianteSerializer
 #Autenticacion
@@ -39,25 +40,31 @@ class EstudianteViewSet(viewsets.ModelViewSet):
     )
     def create(self, request, *args, **kwargs):
         data = request.data
-        print(f"Creando estudiante con datos: {data}")
 
-        # Usar identificación como contrasena si no se proporciona uno
-        if 'contrasena' not in data or not data['contrasena']:
-            data['contrasena'] = data.get('identificacion', '')
-            print(f"Usando identificación como contrasena: {data['contrasena']}")
+        # Si no se proporciona contraseña, usa el número de documento
+        if not data.get('contrasena'):
+            data['contrasena'] = data.get('numero_documento', '')
         
-        # Hashear la contraseña antes de guardarla
-        data['contrasena'] = make_password(data['contrasena'])
+        # Hashear la contraseña
+        hashed_password = make_password(data['contrasena'])
+        
+        # Crear el usuario
+        user = CustomUser.objects.create(
+            username=data.get('numero_documento'),
+            password=hashed_password,
+            user_type='estudiante',
+            # Puedes asignar otros campos (email, first_name, last_name, etc.) si los tienes
+        )
+        
+        # Crear el perfil de estudiante
+        estudiante = Estudiante.objects.create(
+            user=user,
+            numero_documento=data.get('numero_documento'),
+            # ... asignar demás campos ...
+        )
 
-        #Crear el objeto usando el serializador
-        serializer = self.get_serializer(data=data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-
-        print("Estudiante creado exitosamente")
-
-        #Responder con los datos del nuevo estudiante
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        # Puedes retornar la información deseada
+        return Response({'detail': 'Estudiante creado exitosamente'}, status=status.HTTP_201_CREATED)
 
     @swagger_auto_schema(
         operation_summary="Obtener un estudiante específico",

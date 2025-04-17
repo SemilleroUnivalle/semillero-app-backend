@@ -1,10 +1,12 @@
 from django.db import models
 from acudiente.models import Acudiente
+from django.conf import settings
 
 class Estudiante(models.Model):
     """Modelo de usuario para estudiantes"""
     #Campos obligatorios
     id_estudiante = models.AutoField(primary_key=True)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, blank=True, null=True)
     nombre = models.CharField(max_length=50)
     apellido = models.CharField(max_length=50)
     contrasena = models.CharField(max_length=128,blank=True, null=True)  

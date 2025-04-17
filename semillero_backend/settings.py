@@ -47,7 +47,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'rest_framework',
-    'rest_framework_simplejwt',
+    'rest_framework.authtoken',
     'drf_yasg',
     'psycopg2',
     'estudiante',
@@ -65,13 +65,16 @@ INSTALLED_APPS = [
     'oferta_modulo',
     'pago',
     'periodo_academico',
-    'seguimiento_academico'
+    'seguimiento_academico',
+    'login',
+    'cuenta'
 ]
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
+         'rest_framework.authentication.TokenAuthentication',
+         # ... otros backends si los tienes ...
+    )
 }
 
 SIMPLE_JWT = {
@@ -232,3 +235,5 @@ CORS_ALLOW_HEADERS = [
 
 # Permitir todos los orígenes para solicitudes de origen cruzado (anula CORS_ALLOWED_ORIGINS)
 CORS_ALLOW_ALL_ORIGINS = True
+
+AUTH_USER_MODEL = 'cuenta.CustomUser'
