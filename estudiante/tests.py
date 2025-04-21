@@ -1,210 +1,137 @@
-from django.test import TestCase
-from django.urls import reverse
+import pytest
 from rest_framework.test import APIClient
+from django.urls import reverse
 from rest_framework import status
-from rest_framework.exceptions import AuthenticationFailed
-from .serializers import StudentSerializer, StudentLoginSerializer
-from .models import Student
+from .models import Estudiante
+from cuenta.models import CustomUser
 
-class StudentSerializerTest(TestCase):
-    def test_student_serializer(self):
-        data = {"nombre": "Sebas","apellido":"Tombe", "numero_identificacion": "12345678", "email": "sebas.tombe@example.com"}
-        serializer = StudentSerializer(data=data)
-        assert serializer.is_valid(), serializer.errors
-        # Verificar que los campos esperados existen en validated_data
-        assert "nombre" in serializer.validated_data
-        assert "apellido" in serializer.validated_data
-        assert "email" in serializer.validated_data
-        # Verificar que numero_identificacion NO está en validated_data (porque es read_only)
-        assert "numero_identificacion" in serializer.validated_data
+# Language: python
 
-class StudentModelTest(TestCase):
-    def test_student_model(self):
-        # Usar create_user en lugar de create
-        student = Student.objects.create_user(
-            nombre="Sebas", 
-            apellido="Tombe", 
-            numero_identificacion="12345678", 
-            email="sebas.tombe@example.com"
-        )
-        assert str(student) == "Sebas Tombe - 12345678"
-        # Verificar que la contraseña está encriptada
-        assert student.check_password("12345678")  # Usar check_password para verificar contraseñas
+from .views import EstudianteViewSet  # relative import of the view to test
 
-class StudentViewTest(TestCase):
-    def setUp(self):
-        # Crear cliente de API para hacer peticiones
-        self.client = APIClient()
-        
-        # Crear algunos estudiantes de prueba
-        self.student1 = Student.objects.create(
-            nombre="Sebas", 
-            apellido="Tombe", 
-            numero_identificacion="12345678", 
-            email="sebas.tombe@example.com"
-        )
-        
-        self.student2 = Student.objects.create(
-            nombre="María", 
-            apellido="López", 
-            numero_identificacion="87654321", 
-            email="maria.lopez@example.com"
-        )
+# Fixtures for users and estudiante profile
+@pytest.fixture
+def admin_user(db):
+    user = CustomUser.objects.create(username='admin', password='pass', user_type='administrador')
+    return user
 
-    def test_get_all_students(self):
-        # Obtener todos los estudiantes
-        response = self.client.get('/student/student/')
-        
-        # Verificar respuesta
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
+@pytest.fixture
+def profesor_user(db):
+    user = CustomUser.objects.create(username='profesor', password='pass', user_type='profesor')
+    return user
+
+@pytest.fixture
+def estudiante_user(db):
+    user = CustomUser.objects.create(username='estudiante', password='pass', user_type='estudiante')
+    return user
+
+@pytest.fixture
+def estudiante_profile(db, estudiante_user):
+    estudiante = Estudiante.objects.create(user=estudiante_user, numero_documento='12345')
+    return estudiante
+
+# Helper to build URL endpoints
+def list_url():
+    # Assuming router is configured with basename "estudiante"
+    try:
+        return reverse('estudiante-list')
+    except:
+        return '/estudiantes/'
+
+def detail_url(pk):
+    try:
+        return reverse('estudiante-detail', args=[pk])
+    except:
+        return f'/estudiantes/{pk}/'
+
+# Test: List estudiantes
+@pytest.mark.django_db
+def test_list_students(admin_user, profesor_user, estudiante_user):
+    client = APIClient()
+
+    # Admin user must be allowed
+    client.force_authenticate(user=admin_user)
+    response = client.get(list_url())
+    assert response.status_code == status.HTTP_200_OK
+
+    # Profesor user must be allowed
+    client.force_authenticate(user=profesor_user)
+    response = client.get(list_url())
+    assert response.status_code == status.HTTP_200_OK
+
+    # Estudiante user should not be allowed (for list action)
+    client.force_authenticate(user=estudiante_user)
+    response = client.get(list_url())
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+# Test: Create estudiante
+@pytest.mark.django_db
+def test_create_student(admin_user, profesor_user):
+    client = APIClient()
+    data = {
+        "numero_documento": "98765",
+        "contrasena": "securepass"
+    }
+    # As admin user: should succeed
+    client.force_authenticate(user=admin_user)
+    response = client.post(list_url(), data, format='json')
+    assert response.status_code == status.HTTP_201_CREATED
+
+    # As profesor: should be forbidden
+    client.force_authenticate(user=profesor_user)
+    response = client.post(list_url(), data, format='json')
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+# Test: Retrieve estudiante
+@pytest.mark.django_db
+def test_retrieve_student(estudiante_profile, estudiante_user, admin_user):
+    client = APIClient()
+    url = detail_url(estudiante_profile.id_estudiante)
     
-    def test_get_single_student(self):
-        # Obtener un estudiante específico por su ID
-        response = self.client.get(f'/student/student/{self.student1.id}/')
-        
-        # Verificar respuesta
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['nombre'], 'Sebas')
-        self.assertEqual(response.data['apellido'], 'Tombe')
+    # As same estudiante; permission should allow retrieval.
+    client.force_authenticate(user=estudiante_user)
+    response = client.get(url)
+    # Note: Due to duplicate retrieve methods, actual permission might vary.
+    # Here expecting 200 if allowed.
+    assert response.status_code == status.HTTP_200_OK
+
+    # As admin: allowed
+    client.force_authenticate(user=admin_user)
+    response = client.get(url)
+    assert response.status_code == status.HTTP_200_OK
+
+# Test: Update estudiante
+@pytest.mark.django_db
+def test_update_student(estudiante_profile, estudiante_user, admin_user):
+    client = APIClient()
+    url = detail_url(estudiante_profile.id_estudiante)
+    updated_data = {
+        "numero_documento": "12345",  # keeping same
+    }
+    # As the owning estudiante
+    client.force_authenticate(user=estudiante_user)
+    response = client.put(url, updated_data, format='json')
+    # Expect 200 as permission [IsEstudiante | IsAdministrador] permits update
+    assert response.status_code == status.HTTP_200_OK
+
+    # As admin, update with partial data
+    client.force_authenticate(user=admin_user)
+    response = client.patch(url, {"numero_documento": "54321"}, format='json')
+    assert response.status_code == status.HTTP_200_OK
+
+# Test: Delete estudiante
+@pytest.mark.django_db
+def test_destroy_student(estudiante_profile, admin_user, profesor_user):
+    client = APIClient()
+    url = detail_url(estudiante_profile.id_estudiante)
     
-    def test_create_student(self):
-        new_student_data = {
-            "nombre": "Juan",
-            "apellido": "Pérez",
-            "numero_identificacion": "11223344",
-            "email": "juan.perez@example.com"
-        }
-        
-        response = self.client.post(
-            '/student/student/',
-            new_student_data,
-            format='json'
-        )
-        
-        # Verificar respuesta HTTP exitosa
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        
-        # Obtener el estudiante creado filtrándolo por email
-        created_student = Student.objects.get(email=new_student_data["email"])
-        
-        self.assertEqual(created_student.nombre, "Juan")
-        self.assertEqual(created_student.apellido, "Pérez")
-        self.assertEqual(created_student.email, "juan.perez@example.com")
-        self.assertEqual(created_student.numero_identificacion, "11223344")
-        
-        # Agregar este print para diagnóstico
-        print(f"Estudiante creado: {created_student.nombre} - ID: {created_student.id}, Num. Ident: {created_student.numero_identificacion}")
-    
-    def test_update_student(self):
-        # Datos para actualizar estudiante
-        update_data = {
-            "nombre": "Sebastián",
-            "apellido": "Tombe",
-            "email": "sebastian.tombe@example.com"
-        }
-        
-        # Enviar petición PATCH para actualización parcial
-        response = self.client.patch(
-            f'/student/student/{self.student1.id}/',
-            update_data,
-            format='json'
-        )
-        
-        # Verificar actualización exitosa
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['nombre'], 'Sebastián')
-        
-        # Verificar que numero_identificacion no cambió (es read_only)
-        self.assertEqual(response.data['numero_identificacion'], '12345678')
-    
-    def test_delete_student(self):
-        # Guardar ID para verificación posterior
-        student_id = self.student2.id
-        
-        # Enviar petición DELETE
-        response = self.client.delete(f'/student/student/{student_id}/')
-        
-        # Verificar eliminación exitosa
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        
-        # Verificar que ya no existe en la base de datos
-        self.assertFalse(Student.objects.filter(id=student_id).exists())
+    # As profesor, deletion should be forbidden.
+    client.force_authenticate(user=profesor_user)
+    response = client.delete(url)
+    assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    def test_create_student_invalid(self):
-        """
-        Prueba que al intentar registrar un estudiante con datos inválidos se retornen
-        los mensajes de error configurados en el serializer.
-        """
-        # Por ejemplo, faltan nombre y numero_identificacion o el email no tiene formato válido
-        invalid_student_data = {
-            "nombre": "",  # vacío: campo requerido
-            "apellido": "García",
-            "numero_identificacion": "",  # vacío: campo requerido
-            "email": "email-no-valido"  # formato no válido
-        }
-        
-        response = self.client.post(
-            '/student/student/',
-            invalid_student_data,
-            format='json'
-        )
-        
-        # Se espera un error HTTP 400 (Bad Request)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        
-        # Verificar que se incluyan mensajes de error para los campos faltantes o con formato incorrecto.
-        self.assertIn("nombre", response.data, "Debe informarse error en el campo 'nombre'")
-        self.assertIn("numero_identificacion", response.data, "Debe informarse error en el campo 'numero_identificacion'")
-        self.assertIn("email", response.data, "Debe informarse error en el campo 'email'")
-        
-        print("Errores al registrar estudiante inválido:", response.data)
-
-class StudentLoginSerializerTest(TestCase):
-    def setUp(self):
-        # Crear un estudiante de prueba usando create_user
-        self.student = Student.objects.create_user(
-            nombre="Sebas",
-            apellido="Tombe",
-            numero_identificacion="12345678",
-            email="sebas.tombe@example.com",
-            #password="12345678"
-        )
-
-    def test_valid_login(self):
-        # Datos de inicio de sesión válidos
-        data = {
-            "numero_identificacion": "12345678",
-            "password": "12345678"
-        }
-        serializer = StudentLoginSerializer(data=data)
-        self.assertTrue(serializer.is_valid())
-        validated_data = serializer.validated_data
-
-        # Verificar que los datos validados sean correctos
-        self.assertEqual(validated_data['id'], self.student.id)
-        self.assertEqual(validated_data['nombre'], self.student.nombre)
-        self.assertEqual(validated_data['apellido'], self.student.apellido)
-        self.assertEqual(validated_data['numero_identificacion'], self.student.numero_identificacion)
-        self.assertEqual(validated_data['email'], self.student.email)
-
-    def test_invalid_login_wrong_password(self):
-        # Datos de inicio de sesión con contraseña incorrecta
-        data = {
-            "numero_identificacion": "12345678",
-            "password": "wrongpassword"
-        }
-        serializer = StudentLoginSerializer(data=data)
-        with self.assertRaises(AuthenticationFailed):
-            serializer.is_valid(raise_exception=True)
-
-    def test_invalid_login_nonexistent_user(self):
-        # Datos de inicio de sesión con un número de identificación inexistente
-        data = {
-            "numero_identificacion": "99999999",
-            "password": "12345678"
-        }
-        serializer = StudentLoginSerializer(data=data)
-        with self.assertRaises(AuthenticationFailed):
-            serializer.is_valid(raise_exception=True)
+    # As admin, deletion should succeed: 204 No Content
+    client.force_authenticate(user=admin_user)
+    response = client.delete(url)
+    assert response.status_code == status.HTTP_204_NO_CONTENT
 
