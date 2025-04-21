@@ -10,6 +10,9 @@ from .models import Inscripcion
 from .serializers import InscripcionSerializer
 #Autenticacion
 from rest_framework.permissions import IsAuthenticated
+#Permisos
+from cuenta.permissions import IsEstudiante, IsProfesor, IsAdministrador, IsProfesorOrAdministrador
+
 
 class InscripcionViewSet(viewsets.ModelViewSet):
     """
@@ -19,6 +22,16 @@ class InscripcionViewSet(viewsets.ModelViewSet):
     """
     queryset = Inscripcion.objects.all()
     serializer_class = InscripcionSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        """
+        Define permisos para todas las acciones:
+        - Solo los administradores pueden realizar cualquier operación
+        - Estudiantes y profesores no tienen acceso
+        """
+        permission_classes = [IsAuthenticated, IsAdministrador]
+        return [permission() for permission in permission_classes]
     
     @swagger_auto_schema(
         operation_summary="Listar todos los Inscripciones",

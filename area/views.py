@@ -8,6 +8,10 @@ from drf_yasg import openapi
 from .models import Area
 #Serializador
 from .serializers import AreaSerializer
+#Autenticacion
+from rest_framework.permissions import IsAuthenticated
+#Permisos
+from cuenta.permissions import IsEstudiante, IsProfesor, IsAdministrador, IsProfesorOrAdministrador
 
 class AreaViewSet(viewsets.ModelViewSet):
     """
@@ -17,6 +21,16 @@ class AreaViewSet(viewsets.ModelViewSet):
     """
     queryset = Area.objects.all()
     serializer_class = AreaSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        """
+        Define permisos para todas las acciones:
+        - Solo los administradores pueden realizar cualquier operación
+        - Estudiantes y profesores no tienen acceso
+        """
+        permission_classes = [IsAuthenticated, IsAdministrador]
+        return [permission() for permission in permission_classes]
     
     @swagger_auto_schema(
         operation_summary="Listar todas las áreas",

@@ -8,16 +8,38 @@ from drf_yasg import openapi
 from .models import Acudiente
 #Serializadores
 from .serializers import AcudienteSerializer
+#Autenticacion
+from rest_framework.permissions import IsAuthenticated
+#Permisos
+from cuenta.permissions import IsEstudiante, IsProfesor, IsAdministrador, IsProfesorOrAdministrador
 
 class AcudienteViewSet(viewsets.ModelViewSet):
     """
     API endpoint para gestionar acudientes.
     
     Permite listar, crear, actualizar y eliminar acudientes.
+    - Estudiantes: solo pueden crear acudientes
+    - Profesores: no tienen acceso
+    - Administradores: acceso completo
     """
     queryset = Acudiente.objects.all()
     serializer_class = AcudienteSerializer
+    permission_classes = [IsAuthenticated]
     
+    def get_permissions(self):
+        """
+        Define permisos según la acción solicitada:
+        - create: Estudiantes y administradores pueden crear
+        - list, retrieve, update, partial_update, destroy: Solo administradores
+        """
+        if self.action == 'create':
+            # Estudiantes y administradores pueden crear acudientes
+            permission_classes = [IsEstudiante | IsAdministrador]
+        else:
+            # Solo administradores pueden listar, ver detalles, actualizar y eliminar
+            permission_classes = [IsAdministrador]
+        return [permission() for permission in permission_classes]
+
     @swagger_auto_schema(
         operation_summary="Listar todos los acudientes",
         operation_description="Retorna una lista de todos los acudientes registrados"

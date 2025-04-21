@@ -12,6 +12,9 @@ from cuenta.models import CustomUser
 from .serializers import EstudianteSerializer
 #Autenticacion
 from rest_framework.permissions import IsAuthenticated
+#Permisos
+from cuenta.permissions import IsEstudiante, IsProfesor, IsAdministrador, IsProfesorOrAdministrador
+
 
 class EstudianteViewSet(viewsets.ModelViewSet):
     """
@@ -21,6 +24,44 @@ class EstudianteViewSet(viewsets.ModelViewSet):
     """
     queryset = Estudiante.objects.all()
     serializer_class = EstudianteSerializer
+    permission_classes = [IsAuthenticated]  
+    
+    def get_permissions(self):
+        """
+        Define permisos según la acción solicitada:
+        - list: Profesores y administradores pueden ver todos los estudiantes
+        - retrieve, update, partial_update: Estudiantes pueden ver/actualizar sus propios datos, administradores pueden todos
+        - create, destroy: Solo administradores
+        """
+        if self.action == 'list':
+            # Profesores y administradores pueden listar
+            permission_classes = [IsProfesorOrAdministrador]
+        elif self.action in ['retrieve', 'update', 'partial_update']:
+            # Estudiantes pueden ver/editar su perfil, administradores pueden todos
+            # La restricción de que el estudiante solo vea su perfil se controla en retrieve
+            permission_classes = [IsEstudiante | IsAdministrador]
+        elif self.action in ['create', 'destroy']:
+            # Solo administradores pueden crear/eliminar
+            permission_classes = [IsAdministrador]
+        else:
+            # Para cualquier otra acción, usuario autenticado
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
+    
+    # Modificar retrieve para que estudiante solo vea su propio perfil
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        # Si es estudiante, solo puede ver su propio perfil
+        if request.user.user_type == 'estudiante' and (
+            not hasattr(request.user, 'estudiante') or 
+            request.user.estudiante.id_estudiante != instance.id_estudiante
+        ):
+            return Response(
+                {"detail": "No tienes permiso para ver este perfil"}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
     
     @swagger_auto_schema(
         operation_summary="Listar todos los estudiantes",

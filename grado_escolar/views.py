@@ -10,6 +10,9 @@ from .models import GradoEscolar
 from .serializers import GradoEscolarSerializer
 #Autenticacion
 from rest_framework.permissions import IsAuthenticated
+#Permisos
+from cuenta.permissions import IsEstudiante, IsProfesor, IsAdministrador, IsProfesorOrAdministrador
+
 
 class GradoEscolarViewSet(viewsets.ModelViewSet):
     """
@@ -19,6 +22,21 @@ class GradoEscolarViewSet(viewsets.ModelViewSet):
     """
     queryset = GradoEscolar.objects.all()
     serializer_class = GradoEscolarSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        """
+        Define permisos según la acción solicitada:
+        - create: Estudiantes y administradores pueden crear
+        - list, retrieve, update, partial_update, destroy: Solo administradores
+        """
+        if self.action == 'create':
+            # Estudiantes y administradores pueden crear acudientes
+            permission_classes = [IsEstudiante | IsAdministrador]
+        else:
+            # Solo administradores pueden listar, ver detalles, actualizar y eliminar
+            permission_classes = [IsAdministrador]
+        return [permission() for permission in permission_classes]
     
     @swagger_auto_schema(
         operation_summary="Listar todos los grados escolares",
