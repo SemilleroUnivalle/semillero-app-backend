@@ -67,14 +67,20 @@ INSTALLED_APPS = [
     'periodo_academico',
     'seguimiento_academico',
     'login',
-    'cuenta'
+    'logout',
+    'cuenta',
+    'administrador',
+    'profesor',
+    'oferta_academica',
+    'categoria',
+    'oferta_categoria',
 ]
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
          'rest_framework.authentication.TokenAuthentication',
-         # ... otros backends si los tienes ...
-    )
+    ),
+    'EXCEPTION_HANDLER': 'cuenta.utils.custom_exception_handler',
 }
 
 SIMPLE_JWT = {

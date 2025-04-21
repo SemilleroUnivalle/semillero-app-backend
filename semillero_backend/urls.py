@@ -6,6 +6,7 @@ from drf_yasg import openapi
 from django.shortcuts import render
 from login.views import LoginView
 from logout.views import LogoutView
+
 schema_view = get_schema_view(
    openapi.Info(
       title="Semillero API",
@@ -43,6 +44,9 @@ urlpatterns = [
     path('pago/', include('pago.urls')),
     path('periodo_academico/', include('periodo_academico.urls')),
     path('seguimiento_academico/', include('seguimiento_academico.urls')),
+    path('oferta_academica/', include('oferta_academica.urls')),
+    path('administrador/', include('administrador.urls')),
+    path('profesor/', include('profesor.urls')),
     path('login/', LoginView.as_view(), name='login'),
     path('logout/', LogoutView.as_view(), name='logout'),
     #path('swagger<format>/', schema_view.without_ui(cache_timeout=0), name='schema-json'),
