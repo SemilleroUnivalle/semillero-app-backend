@@ -43,6 +43,8 @@ urlpatterns = [
     path('oferta_modulo/', include('oferta_modulo.urls')),
     path('pago/', include('pago.urls')),
     path('periodo_academico/', include('periodo_academico.urls')),
+    path('oferta_categoria/', include('oferta_categoria.urls')),
+    path('categoria/', include('categoria.urls')),
     path('seguimiento_academico/', include('seguimiento_academico.urls')),
     path('oferta_academica/', include('oferta_academica.urls')),
     path('administrador/', include('administrador.urls')),
