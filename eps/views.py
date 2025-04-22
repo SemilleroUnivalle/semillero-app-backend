@@ -47,6 +47,7 @@ class EPSViewSet(viewsets.ModelViewSet):
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+    
     @swagger_auto_schema(
         operation_summary="Crear una nueva EPS",
         operation_description="Crea una nueva EPS con los datos proporcionados",

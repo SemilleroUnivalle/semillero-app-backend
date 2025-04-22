@@ -48,7 +48,7 @@ class DiscapacidadViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
     @swagger_auto_schema(
-        operation_summary="Create a disability",
+        operation_summary="Crear una nueva discapacidad",
         request_body=DiscapacidadSerializer,
         responses={201: DiscapacidadSerializer},
     )
