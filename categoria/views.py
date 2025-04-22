@@ -21,7 +21,7 @@ class CategoriaViewSet(viewsets.ModelViewSet):
     Permite listar, crear, actualizar y eliminar el Categoria.
     """
     queryset = Categoria.objects.all()
-    serializer_class = Categoria
+    serializer_class = CategoriaSerializer
     permission_classes = [IsAuthenticated]
 
     def get_permissions(self):

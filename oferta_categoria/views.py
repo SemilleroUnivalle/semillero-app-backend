@@ -21,7 +21,7 @@ class OfertaCategoriaViewSet(viewsets.ModelViewSet):
     Permite listar, crear, actualizar y eliminar el Oferta categoria.
     """
     queryset = OfertaCategoria.objects.all()
-    serializer_class = OfertaCategoria
+    serializer_class = OfertaCategoriaSerializer
     permission_classes = [IsAuthenticated]
 
     def get_permissions(self):
