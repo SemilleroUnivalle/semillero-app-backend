@@ -139,19 +139,7 @@ WSGI_APPLICATION = 'semillero_backend.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'database_semillero',
-        'USER': 'postgres',
-        'PASSWORD': 'admin',
-        'HOST': 'localhost',
-        'PORT': '5432',
-    },
-    'sqlite': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    },
-}
-"""
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -161,8 +149,7 @@ DATABASES = {
         'HOST': 'database-semillero.cktk40yw6g7t.us-east-1.rds.amazonaws.com',
         'PORT': '5432',
     },
-}
-"""
+
 # Validación de contraseñas
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
@@ -243,3 +230,4 @@ CORS_ALLOW_HEADERS = [
 CORS_ALLOW_ALL_ORIGINS = True
 
 AUTH_USER_MODEL = 'cuenta.CustomUser'
+
