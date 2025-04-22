@@ -14,7 +14,7 @@ from rest_framework.permissions import IsAuthenticated
 from cuenta.permissions import IsEstudiante, IsProfesor, IsAdministrador, IsProfesorOrAdministrador
 
 
-class OfertaAcademicaViewSet(viewsets.ModelViewSet):
+class CategoriaViewSet(viewsets.ModelViewSet):
     """
     API endpoint para gestionar los Categoria.
     
