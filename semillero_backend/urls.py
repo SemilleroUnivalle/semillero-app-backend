@@ -4,8 +4,9 @@ from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from django.shortcuts import render
-from django.views.generic import TemplateView
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from login.views import LoginView
+from logout.views import LogoutView
+
 schema_view = get_schema_view(
    openapi.Info(
       title="Semillero API",
@@ -27,13 +28,31 @@ def welcome_view(request):
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    #path('api/', include('todo.urls')),
-    path('student/', include('student.urls')),
+    path('estudiante/', include('estudiante.urls')),
+    path('acudiente/', include('acudiente.urls')),
+    path('area/', include('area.urls')),
+    path('asistencia/', include('asistencia.urls')),
+    path('discapacidad/', include('discapacidad.urls')),
+    path('eps/', include('eps.urls')),
+    path('evaluacion_programa/', include('evaluacion_programa.urls')),
+    path('grado_escolar/', include('grado_escolar.urls')),
+    path('grupo/', include('grupo.urls')),
+    path('historial_cambios/', include('historial_cambios.urls')),
+    path('inscripcion/', include('inscripcion.urls')),
+    path('modulo/', include('modulo.urls')),
+    path('oferta_modulo/', include('oferta_modulo.urls')),
+    path('pago/', include('pago.urls')),
+    path('periodo_academico/', include('periodo_academico.urls')),
+    path('oferta_categoria/', include('oferta_categoria.urls')),
+    path('categoria/', include('categoria.urls')),
+    path('seguimiento_academico/', include('seguimiento_academico.urls')),
+    path('oferta_academica/', include('oferta_academica.urls')),
+    path('administrador/', include('administrador.urls')),
+    path('profesor/', include('profesor.urls')),
+    path('login/', LoginView.as_view(), name='login'),
+    path('logout/', LogoutView.as_view(), name='logout'),
     #path('swagger<format>/', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     #path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
     path('', welcome_view, name='welcome'),
-
-    path('semillero/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('semillero/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
