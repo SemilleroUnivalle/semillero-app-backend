@@ -52,7 +52,7 @@ class CategoriaViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         data = request.data
         print(f"Creando un Categoria, con datos: {data}")
-
+    
         #Crear el objeto usando el serializador
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)

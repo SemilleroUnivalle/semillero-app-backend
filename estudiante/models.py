@@ -11,7 +11,7 @@ class Estudiante(models.Model):
     apellido = models.CharField(max_length=50)
     contrasena = models.CharField(max_length=128,blank=True, null=True)  
     numero_documento = models.CharField(max_length=20, unique=True)
-    email = models.EmailField(unique=True)
+    email = models.EmailField(max_length=100)
     is_active = models.BooleanField(default=True)
 
     #Relacion uno a uno acudiente

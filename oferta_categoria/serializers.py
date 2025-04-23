@@ -1,8 +1,16 @@
 from rest_framework import serializers
 from .models import OfertaCategoria
 
-class OfertaCategoriaSerializer(serializers.ModelSerializer):
+# Serializador para lecturas (GET) - con depth=1 para mostrar relaciones anidadas
+class OfertaCategoriaReadSerializer(serializers.ModelSerializer):
     class Meta:
         model = OfertaCategoria
         fields = '__all__'
-        read_only_fields = ('id_oferta_categoria',)
+        depth = 1  # Mantiene la profundidad para mostrar datos relacionados
+
+# Serializador para escrituras (POST/PUT/PATCH) - sin depth
+class OfertaCategoriaWriteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OfertaCategoria
+        fields = '__all__'
+        # No usamos depth aquí
