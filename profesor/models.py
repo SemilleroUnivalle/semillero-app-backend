@@ -1,7 +1,9 @@
 from django.db import models
+from django.conf import settings
 
 class Profesor(models.Model):
     id_profesor = models.AutoField(primary_key=True)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, blank=True, null=True)
     nombre = models.CharField(max_length=100)
     apellido = models.CharField(max_length=100)
     correo = models.EmailField(max_length=100, unique=True)
