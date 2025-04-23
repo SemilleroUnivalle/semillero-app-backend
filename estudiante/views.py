@@ -86,7 +86,7 @@ class EstudianteViewSet(viewsets.ModelViewSet):
         # Verificar si el usuario ya existe
         username = data.get('numero_documento', '')
         if CustomUser.objects.filter(username=username).exists():
-            return Response({'detail': 'El usuario ya existe'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': 'El numero de identificacion ya esta registrado'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Si no se proporciona contraseña, usa el número de documento
         if not data.get('contrasena'):
