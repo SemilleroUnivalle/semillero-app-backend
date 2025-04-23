@@ -54,6 +54,11 @@ class ProfesorViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         data = request.data
 
+        # Verificar si el usuario ya existe
+        username = data.get('numero_documento', '')
+        if CustomUser.objects.filter(username=username).exists():
+            return Response({'detail': 'El usuario ya existe'}, status=status.HTTP_400_BAD_REQUEST)
+
         # Si no se proporciona contraseña, usa el número de documento
         if not data.get('contrasena'):
             data['contrasena'] = data.get('numero_documento', '')
@@ -69,13 +74,23 @@ class ProfesorViewSet(viewsets.ModelViewSet):
             first_name=data.get('nombre'),
             last_name=data.get('apellido'),
             email=data.get('correo'),
-            is_active=True
+            is_active=True,
+            is_staff=True,
+            is_superuser=False,
         )
         
         # Crear el perfil de profesor
-        profesor = Profesor.objects.create(
+        Profesor.objects.create(
             user=user,
             numero_documento=data.get('numero_documento'),
+            nombre=data.get('nombre'),
+            apellido=data.get('apellido'),
+            correo=data.get('correo'),
+            telefono=data.get('telefono'),
+            contrasena=hashed_password,
+            fecha_nacimiento=data.get('fecha_nacimiento'),
+            fecha_contratacion=data.get('fecha_contratacion'),
+            salario=data.get('salario'),
             
         )
 

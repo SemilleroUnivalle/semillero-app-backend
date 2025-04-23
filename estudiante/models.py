@@ -20,7 +20,8 @@ class Estudiante(models.Model):
         on_delete=models.CASCADE,
         related_name='estudiante',
         null=True,
-        blank=True
+        blank=True,
+        default=None
     )
     # Nuevos campos
     registro_fase = models.PositiveSmallIntegerField(default=1)  # 1 = Fase inicial, 2 = Fase completada
