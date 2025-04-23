@@ -24,6 +24,7 @@ class EstudianteViewSet(viewsets.ModelViewSet):
     """
     queryset = Estudiante.objects.all()
     serializer_class = EstudianteSerializer
+    
     permission_classes = [IsAuthenticated]  
     
     def get_permissions(self):
@@ -82,6 +83,11 @@ class EstudianteViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         data = request.data
 
+        # Verificar si el usuario ya existe
+        username = data.get('numero_documento', '')
+        if CustomUser.objects.filter(username=username).exists():
+            return Response({'detail': 'El usuario ya existe'}, status=status.HTTP_400_BAD_REQUEST)
+
         # Si no se proporciona contraseña, usa el número de documento
         if not data.get('contrasena'):
             data['contrasena'] = data.get('numero_documento', '')
@@ -94,14 +100,41 @@ class EstudianteViewSet(viewsets.ModelViewSet):
             username=data.get('numero_documento'),
             password=hashed_password,
             user_type='estudiante',
-            # Puedes asignar otros campos (email, first_name, last_name, etc.) si los tienes
+            first_name=data.get('nombre'),
+            last_name=data.get('apellido'),
+            email=data.get('email'),
+            is_superuser=False,
+            is_staff=False,
+            is_active=data.get('is_active', True),
         )
         
         # Crear el perfil de estudiante
-        estudiante = Estudiante.objects.create(
+        Estudiante.objects.create(
             user=user,
             numero_documento=data.get('numero_documento'),
-            # ... asignar demás campos ...
+            contrasena=hashed_password,
+            nombre=data.get('nombre'),
+            apellido=data.get('apellido'),
+            email=data.get('email'),
+            is_active=data.get('is_active'),
+            acudiente=data.get('acudiente'),
+            registro_fase=data.get('registro_fase'),
+            ciudad_residencia=data.get('ciudad_residencia'),
+            ciudad_documento=data.get('ciudad_documento'),
+            id_eps=data.get('id_eps'),
+            id_grado=data.get('id_grado'),
+            tipo_documento=data.get('tipo_documento'),
+            genero=data.get('genero'),
+            fecha_nacimiento=data.get('fecha_nacimiento'),
+            telefono_fijo=data.get('telefono_fijo'),
+            celular=data.get('celular'),
+            departamento_residencia=data.get('departamento_residencia'),
+            comuna_residencia=data.get('comuna_residencia'),
+            direccion_residencia=data.get('direccion_residencia'),
+            estamento=data.get('estamento'),
+            discapacidad=data.get('discapacidad'),
+            tipo_discapacidad=data.get('tipo_discapacidad'),
+            descripcion_discapacidad=data.get('descripcion_discapacidad')
         )
 
         # Puedes retornar la información deseada
