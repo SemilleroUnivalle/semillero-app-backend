@@ -25,17 +25,18 @@ class AdministradorViewSet(viewsets.ModelViewSet):
     """
     queryset = Administrador.objects.all()
     serializer_class = AdministradorSerializer
+    """
     permission_classes = [IsAuthenticated, IsAdministrador]
     
     def get_permissions(self):
-        """
+        
         Define permisos para todas las acciones:
         - Solo los administradores pueden realizar cualquier operación
         - Estudiantes y profesores no tienen acceso
-        """
+        
         permission_classes = [IsAuthenticated, IsAdministrador]
         return [permission() for permission in permission_classes]
-    
+    """
     @swagger_auto_schema(
         operation_summary="Listar todos los administradores",
         operation_description="Retorna una lista de todos los administradores, registrados"
@@ -55,35 +56,44 @@ class AdministradorViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         data = request.data
 
+        # Verificar si el usuario ya existe
+        username = data.get('numero_documento', '')
+        if CustomUser.objects.filter(username=username).exists():
+            return Response({'detail': 'El usuario ya existe'}, status=status.HTTP_400_BAD_REQUEST)
+
         # Si no se proporciona contraseña, usa el número de documento
         if not data.get('contrasena'):
             data['contrasena'] = data.get('numero_documento', '')
-        
+
         # Hashear la contraseña
         hashed_password = make_password(data['contrasena'])
-        
-        # Crear el usuario
+
+        # Crear el usuario sin contraseña y asignarla usando set_password
         user = CustomUser.objects.create(
             username=data.get('numero_documento'),
             password=hashed_password,
-            user_type='administrador',
             first_name=data.get('nombre'),
             last_name=data.get('apellido'),
             email=data.get('correo'),
+            user_type='administrador',
+            is_superuser=True,
             is_active=True,
             is_staff=True,
-            
-            
         )
-        
+    
+
         # Crear el perfil de administrador
-        administrador = Administrador.objects.create(
+        Administrador.objects.create(
             user=user,
             numero_documento=data.get('numero_documento'),
-            
+            nombre=data.get('nombre'),
+            apellido=data.get('apellido'),
+            correo=data.get('correo'),
+            contrasena=hashed_password,
+            fecha_creacion=data.get('fecha_creacion'),
+            fecha_modificacion=data.get('fecha_modificacion'),
         )
 
-        # Puedes retornar la información deseada
         return Response({'detail': 'Administrador creado exitosamente'}, status=status.HTTP_201_CREATED)
 
     @swagger_auto_schema(
