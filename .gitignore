@@ -38,3 +38,8 @@ ENV/
 .vscode/
 *.swp
 *.swo
+
+#SQLite
+*.sqlite3
+*.sqlite
+*.sqlite-journal
