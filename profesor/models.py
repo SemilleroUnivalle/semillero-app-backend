@@ -6,7 +6,7 @@ class Profesor(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, blank=True, null=True)
     nombre = models.CharField(max_length=100)
     apellido = models.CharField(max_length=100)
-    correo = models.EmailField(max_length=100, unique=True)
+    correo = models.EmailField(max_length=100)
     telefono = models.CharField(max_length=15, blank=True, null=True)
     contrasena = models.CharField(max_length=100)
     numero_documento = models.CharField(max_length=20, unique=True)

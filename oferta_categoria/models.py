@@ -13,11 +13,11 @@ class OfertaCategoria(models.Model):
     id_categoria = models.ForeignKey(
         Categoria, 
         on_delete=models.CASCADE,
-        related_name='ofertas',
-        verbose_name='Categoría'
+        related_name='oferta_categoria',
     )
     precio_publico = models.DecimalField(max_digits=10, decimal_places=2)
     precio_privado = models.DecimalField(max_digits=10, decimal_places=2)
+    precio_univalle = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     fecha_finalizacion = models.DateField()
     
     
