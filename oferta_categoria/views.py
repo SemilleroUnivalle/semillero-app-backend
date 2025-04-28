@@ -63,20 +63,19 @@ class OfertaCategoriaViewSet(viewsets.ModelViewSet):
         }
     )
     def create(self, request, *args, **kwargs):
-        data = request.data.copy()  # Hacemos una copia para no modificar el original
-        print(f"Creando un Oferta categoria, con datos: {data}")
-        
-        # Crear el objeto usando el serializador de escritura
+        """
+        Crear una nueva OfertaCategoria.
+        """
+        print("Creando un nuevo Oferta categoria")
+        data = request.data.copy()
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
-        instance = self.perform_create(serializer)
-        
-        print("Oferta categoria creada exitosamente")
-        
-        # Usar el serializador de lectura para devolver la respuesta con depth=1
+        instance = serializer.save()  # Llama al método `create` del serializador
+
+        # Usar el serializador de lectura para la respuesta
         read_serializer = OfertaCategoriaReadSerializer(instance)
         return Response(read_serializer.data, status=status.HTTP_201_CREATED)
-
+    
     def perform_create(self, serializer):
         return serializer.save()
     
@@ -99,21 +98,18 @@ class OfertaCategoriaViewSet(viewsets.ModelViewSet):
         }
     )
     def update(self, request, *args, **kwargs):
-        data = request.data.copy()  # Hacemos una copia para no modificar el original
-        print(f"Actualizando una Oferta categoria, con ID {kwargs['pk']} y datos: {data}")
-        
-        # Actualizar el objeto usando el serializador
+        """
+        Actualizar una OfertaCategoria existente.
+        """
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
-        serializer = self.get_serializer(instance, data=data, partial=partial)
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
-        instance = self.perform_update(serializer)
-        
-        print("Oferta categoria actualizado exitosamente")
-        
-        # Usar el serializador de lectura para devolver la respuesta con depth=1
+        instance = serializer.save()  # Llama al método `update` del serializador
+
+        # Usar el serializador de lectura para la respuesta
         read_serializer = OfertaCategoriaReadSerializer(instance)
-        return Response(read_serializer.data)
+        return Response(read_serializer.data, status=status.HTTP_200_OK)
 
     def perform_update(self, serializer):
         return serializer.save()

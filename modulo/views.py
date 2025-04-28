@@ -1,5 +1,6 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
+from django.core.exceptions import ValidationError
 
 #Documentacion
 from drf_yasg.utils import swagger_auto_schema
@@ -53,15 +54,17 @@ class ModuloViewSet(viewsets.ModelViewSet):
         data = request.data
         print(f"Creando un Modulo, con datos: {data}")
 
-        #Crear el objeto usando el serializador
+        # Crear el objeto usando el serializador
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
 
-        print("Modulo creada exitosamente")
-
-        #Responder con los datos del nuevna Modulo",
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        try:
+            self.perform_create(serializer)
+            print("Modulo creado exitosamente")
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except ValidationError as e:
+            # Capturar la excepción y devolver un error 400 con el mensaje
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(
         operation_summary="Obtener una Modulo específico",
