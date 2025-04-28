@@ -24,3 +24,7 @@ class OfertaCategoria(models.Model):
 
     def __str__(self):
         return self.id_oferta_categoria
+    
+    class Meta:
+        verbose_name = 'Oferta Categoria'
+        verbose_name_plural = 'Ofertas Categoria'
