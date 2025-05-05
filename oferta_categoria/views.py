@@ -16,7 +16,7 @@ from cuenta.permissions import IsEstudiante, IsProfesor, IsAdministrador, IsProf
 
 class OfertaCategoriaViewSet(viewsets.ModelViewSet):
     """
-    API endpoint para gestionar los Oferta categoria.
+    API endpoint para gestionar los oferta categoria.
     
     Permite listar, crear, actualizar y eliminar el Oferta categoria.
     """
@@ -58,7 +58,7 @@ class OfertaCategoriaViewSet(viewsets.ModelViewSet):
         operation_description="Crea un nuevo registro de Oferta categoria",
         request_body=OfertaCategoriaWriteSerializer,
         responses={
-            status.HTTP_201_CREATED: OfertaCategoriaReadSerializer,
+            status.HTTP_201_CREATED: OfertaCategoriaWriteSerializer,
             status.HTTP_400_BAD_REQUEST: "Datos de entrada inválidos"
         }
     )
@@ -66,7 +66,6 @@ class OfertaCategoriaViewSet(viewsets.ModelViewSet):
         """
         Crear una nueva OfertaCategoria.
         """
-        print("Creando un nuevo Oferta categoria")
         data = request.data.copy()
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)

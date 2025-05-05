@@ -8,3 +8,7 @@ class CustomUser(AbstractUser):
         ('administrador', 'Administrador'),
     )
     user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES, default='estudiante')
+    
+    class Meta:
+        verbose_name = 'Usuario'
+        verbose_name_plural = 'Usuarios'

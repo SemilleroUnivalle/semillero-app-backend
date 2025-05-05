@@ -13,4 +13,9 @@ class Administrador(models.Model):
     fecha_modificacion = models.DateTimeField(auto_now=True, blank=True, null=True)
 
     def __str__(self):
-        return f"{self.nombre} {self.apellido}"
+        return f"ID: {self.id_administrador} | Usuario: {self.user} | Nombre: {self.nombre} {self.apellido} | Correo: {self.correo} | Documento: {self.numero_documento} | Creado: {self.fecha_creacion} | Modificado: {self.fecha_modificacion}"
+    
+    class Meta:
+        verbose_name = "Administrador"
+        verbose_name_plural = "Administradores"
+        ordering = ['id_administrador']

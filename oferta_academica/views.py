@@ -1,5 +1,6 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
+from rest_framework.decorators import action
 
 #Documentacion
 from drf_yasg.utils import swagger_auto_schema
@@ -40,6 +41,19 @@ class OfertaAcademicaViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         print("Listando los Oferta academica")
         return super().list(request, *args, **kwargs)
+    
+    @action(detail=False, methods=['get'])
+    @swagger_auto_schema(
+        operation_summary="Listar oferta académica activa",
+        operation_description="Retorna una lista de toda la oferta académica con estado 'activo'"
+    )
+    def activos(self, request):
+        """
+        Endpoint para listar únicamente la oferta académica con estado 'activo'
+        """
+        ofertas_activas = OfertaAcademica.objects.filter(estado='activo')
+        serializer = self.get_serializer(ofertas_activas, many=True)
+        return Response(serializer.data)
     
     @swagger_auto_schema(
         operation_summary="Crear un oferta academica",

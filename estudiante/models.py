@@ -1,49 +1,67 @@
 from django.db import models
 from acudiente.models import Acudiente
+from eps.models import EPS
 from django.conf import settings
 
 class Estudiante(models.Model):
     """Modelo de usuario para estudiantes"""
     #Campos obligatorios
     id_estudiante = models.AutoField(primary_key=True)
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, blank=True, null=True)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     nombre = models.CharField(max_length=50)
     apellido = models.CharField(max_length=50)
-    contrasena = models.CharField(max_length=128,blank=True, null=True)  
+    contrasena = models.CharField(max_length=128,blank=True)  
     numero_documento = models.CharField(max_length=20, unique=True)
     email = models.EmailField(max_length=100)
     is_active = models.BooleanField(default=True)
-
     #Relacion uno a uno acudiente
     acudiente = models.OneToOneField(
         Acudiente,
         on_delete=models.CASCADE,
         related_name='estudiante',
-        null=True,
-        blank=True,
-        default=None
+        null=False,
+        blank=False,
     )
-    # Nuevos campos
-    registro_fase = models.PositiveSmallIntegerField(default=1)  # 1 = Fase inicial, 2 = Fase completada
-
-    # Campos opcionales para la segunda fase del registro
-    ciudad_residencia = models.CharField(max_length=100, blank=True, null=True)
-    ciudad_documento = models.CharField(max_length=100, blank=True, null=True) #La ciudad donde se expidió el documento de identidad
-    id_eps = models.CharField(max_length=20, blank=True, null=True) #Entidad prestadora de salud a la que pertenece el estudiante
-    id_grado = models.CharField(max_length=20, blank=True, null=True) #Grado al que pertenece el estudiante
-    tipo_documento = models.CharField(max_length=20, blank=True, null=True) #Tipo de documento de identidad
-    genero = models.CharField(max_length=10, blank=True, null=True) #Género del estudiante
-    fecha_nacimiento = models.DateField(blank=True, null=True) #Fecha de nacimiento del estudiante
-    telefono_fijo = models.CharField(max_length=15, blank=True, null=True) #Teléfono del estudiante
-    celular = models.CharField(max_length=15, blank=True, null=True) #Celular del estudiante
-    departamento_residencia = models.CharField(max_length=100, blank=True, null=True) #Departamento de residencia del estudiante
-    comuna_residencia = models.CharField(max_length=100, blank=True, null=True) #Comuna de residencia del estudiante
-    direccion_residencia = models.CharField(max_length=255, blank=True, null=True) #Dirección de residencia del estudiante
-    estamento = models.CharField(max_length=50, blank=True, null=True) #Estamento al que pertenece el estudiante
+    ciudad_residencia = models.CharField(max_length=100)
+    ciudad_documento = models.CharField(max_length=100) #La ciudad donde se expidió el documento de identidad
+    id_eps = models.ForeignKey(
+        EPS,
+        on_delete=models.PROTECT,
+        related_name='estudiante',
+        blank=False,
+        null=False,
+    )
+    grado = models.CharField(max_length=20) #Grado al que pertenece el estudiante
+    tipo_documento = models.CharField(max_length=20) #Tipo de documento de identidad
+    genero = models.CharField(max_length=10) #Género del estudiante
+    fecha_nacimiento = models.DateField() #Fecha de nacimiento del estudiante
+    telefono_fijo = models.CharField(max_length=15) #Teléfono del estudiante
+    celular = models.CharField(max_length=15) #Celular del estudiante
+    departamento_residencia = models.CharField(max_length=50) #Departamento de residencia del estudiante
+    comuna_residencia = models.CharField(max_length=10) #Comuna de residencia del estudiante
+    direccion_residencia = models.CharField(max_length=255) #Dirección de residencia del estudiante
+    estamento = models.CharField(max_length=50) #Estamento al que pertenece el estudiante
     discapacidad = models.BooleanField(default=False) #Indica si el estudiante tiene alguna discapacidad
-    tipo_discapacidad = models.CharField(max_length=50, blank=True, null=True) #Tipo de discapacidad del estudiante
-    descripcion_discapacidad = models.TextField(blank=True, null=True) #Descripción de la discapacidad del estudiante
+    tipo_discapacidad = models.CharField(max_length=50, default='Ninguna') #Tipo de discapacidad del estudiante
+    descripcion_discapacidad = models.TextField(max_length=100, default='Ninguna') #Descripción de la discapacidad del estudiante
 
     def __str__(self):
-        return f"{self.nombre} {self.apellido} ({self.numero_documento})"
+        acudiente_info = f"Acudiente: {self.acudiente}" if self.acudiente else "Sin acudiente"
+        return (
+            f"ID: {self.id_estudiante} | Usuario: {self.user} | "
+            f"Nombre: {self.nombre} {self.apellido} | Doc: {self.tipo_documento} {self.numero_documento} | "
+            f"Email: {self.email} | Activo: {self.is_active} |"
+            f"{acudiente_info} | Ciudad res.: {self.ciudad_residencia} | Ciudad doc.: {self.ciudad_documento} | "
+            f"EPS: {self.id_eps} | Grado: {self.grado} | Género: {self.genero} | "
+            f"Fecha nac.: {self.fecha_nacimiento} | Tel. fijo: {self.telefono_fijo} | "
+            f"Celular: {self.celular} | Dpto. res.: {self.departamento_residencia} | "
+            f"Comuna: {self.comuna_residencia} | Dirección: {self.direccion_residencia} | "
+            f"Estamento: {self.estamento} | Discapacidad: {self.discapacidad} | "
+            f"Tipo discapacidad: {self.tipo_discapacidad}"
+        )
+
+    class Meta:
+        verbose_name = "Estudiante"
+        verbose_name_plural = "Estudiantes"
+        ordering = ['id_estudiante']
 

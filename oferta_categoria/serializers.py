@@ -7,6 +7,7 @@ class ModuloSerializer(serializers.ModelSerializer):
     class Meta:
         model = Modulo
         fields = '__all__'
+        ref_name = 'ModuloSerializerEnOfertaCategoria'  # Añadido para evitar conflictos de referencia
 
 # Serializador para lecturas (GET) - con depth=1 para mostrar relaciones anidadas
 class OfertaCategoriaReadSerializer(serializers.ModelSerializer):
@@ -23,7 +24,7 @@ class OfertaCategoriaWriteSerializer(serializers.ModelSerializer):
     # Usamos PrimaryKeyRelatedField para aceptar una lista de IDs de módulos
     modulo = serializers.PrimaryKeyRelatedField(
         many=True,
-        queryset=Modulo.objects.all()  # Correcto: usamos el queryset del modelo Modulo
+        queryset=Modulo.objects.all() 
     )
 
     class Meta:
@@ -32,10 +33,10 @@ class OfertaCategoriaWriteSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         # Extraemos los módulos enviados por el frontend
-        modulos = validated_data.pop('modulo', [])  # Correcto: usamos 'modulo'
+        modulos = validated_data.pop('modulo', []) 
         
         # Extraemos los IDs de los módulos
-        modulos_ids = [mod.id_modulo for mod in modulos]  # Cambiamos aquí para usar 'id_modulo'
+        modulos_ids = [mod.id_modulo for mod in modulos]  
         
         # Verificamos si alguno de los módulos ya está asignado
         modulos_asignados = Modulo.objects.filter(id_oferta_categoria__isnull=False, id_modulo__in=modulos_ids)

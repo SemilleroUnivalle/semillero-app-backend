@@ -38,7 +38,14 @@ class CategoriaViewSet(viewsets.ModelViewSet):
         operation_description="Retorna una lista de todos los Categoria registrados"
     )
     def list(self, request, *args, **kwargs):
-        print("Listando los Categoria")
+        queryset = self.filter_queryset(self.get_queryset())
+        
+        if not queryset.exists():
+            return Response(
+                {"message": "No hay categorías registradas"}, 
+                status=status.HTTP_204_NO_CONTENT
+            )
+        
         return super().list(request, *args, **kwargs)
     
     @swagger_auto_schema(
@@ -51,14 +58,11 @@ class CategoriaViewSet(viewsets.ModelViewSet):
     )
     def create(self, request, *args, **kwargs):
         data = request.data
-        print(f"Creando un Categoria, con datos: {data}")
     
         #Crear el objeto usando el serializador
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
-
-        print("Categoria creada exitosamente")
 
         #Responder con los datos del nuevna Categoria",
         return Response(serializer.data, status=status.HTTP_201_CREATED)
