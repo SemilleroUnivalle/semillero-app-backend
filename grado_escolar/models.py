@@ -7,4 +7,8 @@ class GradoEscolar(models.Model):
     
 
     def __str__(self):
-        return self.nombre_grado
+        return f'ID: {self.id_grado} | Grado: {self.nombre_grado}'
+    class Meta:
+        verbose_name = "Grado Escolar"
+        verbose_name_plural = "Grados Escolares"
+        ordering = ['id_grado']

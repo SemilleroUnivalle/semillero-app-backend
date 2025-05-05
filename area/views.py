@@ -37,7 +37,12 @@ class AreaViewSet(viewsets.ModelViewSet):
         operation_description="Retorna una lista de todas las áreas registradas"
     )
     def list(self, request, *args, **kwargs):
-        print("Listando áreas")
+        queryset = self.filter_queryset(self.get_queryset())
+        if not queryset.exists():
+            return Response(
+                {"message": "No hay áreas registradas"}, 
+                status=status.HTTP_204_NO_CONTENT
+            )
         return super().list(request, *args, **kwargs)
     
     @swagger_auto_schema(

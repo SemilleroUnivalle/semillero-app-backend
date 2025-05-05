@@ -41,12 +41,15 @@ class EPSViewSet(viewsets.ModelViewSet):
         responses={200: EPSSerializer(many=True)},
     )
     def list(self, request, *args, **kwargs):
-        """
-        Listar todas las EPS.
-        """
-        queryset = self.get_queryset()
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+        queryset = self.filter_queryset(self.get_queryset())
+
+        if not queryset.exists():
+            return Response(
+                {"message": "No hay EPS registradas"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        return super().list(request, *args, **kwargs)
     
     @swagger_auto_schema(
         operation_summary="Crear una nueva EPS",

@@ -15,4 +15,19 @@ class Profesor(models.Model):
     salario = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
 
     def __str__(self):
-        return f"{self.nombre} {self.apellido}"
+        return (
+            f"ID: {self.id_profesor} | "
+            f"Usuario: {self.user} | "
+            f"Nombre: {self.nombre} {self.apellido} | "
+            f"Correo: {self.correo} | "
+            f"Teléfono: {self.telefono} | "
+            f"Documento: {self.numero_documento} | "
+            f"Fecha nacimiento: {self.fecha_nacimiento} | "
+            f"Fecha contratación: {self.fecha_contratacion} | "
+            f"Salario: {self.salario}"
+        )
+    
+    class Meta:
+        verbose_name = "Profesor"
+        verbose_name_plural = "Profesores"
+        ordering = ['id_profesor']
