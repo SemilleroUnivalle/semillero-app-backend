@@ -1,13 +1,13 @@
 from django.db import models
 from estudiante.models import Estudiante
-from oferta_modulo.models import OfertaModulo
 from grupo.models import Grupo
+from oferta_academica.models import OfertaAcademica
 
 class Inscripcion(models.Model):
     id_inscripcion = models.AutoField(primary_key=True)
     id_estudiante = models.ForeignKey(Estudiante, on_delete=models.CASCADE)
-    id_oferta_modulo = models.ForeignKey(OfertaModulo, on_delete=models.CASCADE)
     id_grupo = models.ForeignKey(Grupo, on_delete=models.CASCADE)
+    id_oferta_academica = models.ForeignKey(OfertaAcademica, on_delete=models.PROTECT)
     estado = models.CharField(max_length=20, choices=[
         ('A', 'Activo'),
         ('I', 'Inactivo'),
