@@ -20,11 +20,18 @@ class OfertaCategoria(models.Model):
     precio_univalle = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     fecha_finalizacion = models.DateField()
     
-    
-
     def __str__(self):
-        return self.id_oferta_categoria
+        return (
+            f"ID: {self.id_oferta_categoria} | "
+            f"Oferta Académica: {self.id_oferta_academica} | "
+            f"Categoría: {self.id_categoria} | "
+            f"Precio Público: {self.precio_publico} | "
+            f"Precio Privado: {self.precio_privado} | "
+            f"Precio Univalle: {self.precio_univalle} | "
+            f"Fecha Finalización: {self.fecha_finalizacion}"
+        )
     
     class Meta:
         verbose_name = 'Oferta Categoria'
         verbose_name_plural = 'Ofertas Categoria'
+        ordering = ['id_oferta_categoria']

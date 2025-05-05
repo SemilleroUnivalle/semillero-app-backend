@@ -9,4 +9,12 @@ class SeguimientoAcademico(models.Model):
     observaciones = models.TextField()
 
     def __str__(self):
-        return self.nombre
+        return (
+            f"ID: {self.id_seguimiento} | Inscripción: {self.id_inscripcion} | Fecha: {self.fecha} | "
+            f"Descripción: {self.descripcion} | Calificación: {self.calificacion} | "
+            f"Observaciones: {self.observaciones}"
+        )
+    class Meta:
+        verbose_name = 'Seguimiento Academico'
+        verbose_name_plural = 'Seguimientos Academicos'
+        ordering = ['fecha']

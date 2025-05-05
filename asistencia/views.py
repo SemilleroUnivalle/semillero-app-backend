@@ -42,7 +42,11 @@ class AsistenciaViewSet(viewsets.ModelViewSet):
         operation_description="Retorna una lista de todas las asistencias registradas"
     )
     def list(self, request, *args, **kwargs):
-        print("Listando asistencias")
+        queryset = self.filter_queryset(self.get_queryset())
+
+        if not queryset.exists:
+            return Response({"message": "No hay asistencias registradas"}, status=status.HTTP_204_NOT_FOUND)
+        
         return super().list(request, *args, **kwargs)
     @swagger_auto_schema(
         operation_summary="Crear una asistencia",
@@ -54,7 +58,6 @@ class AsistenciaViewSet(viewsets.ModelViewSet):
     )
     def create(self, request, *args, **kwargs):
         data = request.data
-        print(f"Creando asistencia con datos: {data}")
 
         #Crear el objeto usando el serializador
         serializer = self.get_serializer(data=data)
