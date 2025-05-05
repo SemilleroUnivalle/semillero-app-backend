@@ -9,4 +9,8 @@ class Pago(models.Model):
     enlace_recibido_pdf = models.URLField(max_length=200)
 
     def __str__(self):
-        return f"Pago {self.id} - {self.monto} - {self.estado}"
+        return f"Pago {self.id_pago} - Inscripción: {self.id_inscripcion} - Fecha: {self.fecha} - Monto: {self.monto} - Referencia: {self.referencia} - Enlace PDF: {self.enlace_recibido_pdf}"
+    class Meta:
+        verbose_name = "Pago"
+        verbose_name_plural = "Pagos"
+        ordering = ['fecha']

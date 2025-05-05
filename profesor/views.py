@@ -40,7 +40,11 @@ class ProfesorViewSet(viewsets.ModelViewSet):
         operation_description="Retorna una lista de todos los Profesores, registrados"
     )
     def list(self, request, *args, **kwargs):
-        print("Listando Profesores",)
+        queryset = self.filter_queryset(self.get_queryset())
+
+        if not queryset.exists():
+            return Response({'detail': 'No se encontraron profesores registrados'}, status=status.HTTP_204_NOT_CONTENT)
+        
         return super().list(request, *args, **kwargs)
     
     @swagger_auto_schema(

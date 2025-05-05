@@ -6,9 +6,9 @@ class Discapacidad(models.Model):
     info_discapacidad = models.TextField()
     
     class Meta:
-        db_table = 'discapacidad'
         verbose_name = 'Discapacidad'
         verbose_name_plural = 'Discapacidades'
+        ordering = ['id_discapacidad']
 
     def __str__(self):
-        return self.nombre
+        return f'{self.id_discapacidad} - {self.tipo_discapacidad} - {self.info_discapacidad}'
