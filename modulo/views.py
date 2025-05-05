@@ -157,7 +157,7 @@ class ModuloViewSet(viewsets.ModelViewSet):
         queryset = Modulo.objects.select_related('id_categoria')
         
         if solo_activos:
-            queryset = queryset.filter(activo=True)
+            queryset = queryset.filter(estado=True)
             
         if not queryset.exists():
             return Response({"mensaje": "No hay módulos registrados"}, status=status.HTTP_204_NO_CONTENT)
