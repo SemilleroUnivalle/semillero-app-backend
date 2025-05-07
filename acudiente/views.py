@@ -9,7 +9,7 @@ from .models import Acudiente
 #Serializadores
 from .serializers import AcudienteSerializer
 #Autenticacion
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 #Permisos
 from cuenta.permissions import IsEstudiante, IsProfesor, IsAdministrador, IsProfesorOrAdministrador
 
@@ -33,7 +33,10 @@ class AcudienteViewSet(viewsets.ModelViewSet):
         - list, retrieve, update, partial_update, destroy: Solo administradores
         """
         if self.action == 'create':
-            # Estudiantes y administradores pueden crear acudientes
+            #Cualquier usuario puedo crear un acudiente
+            permission_classes = [AllowAny]
+        elif self.action in ['update', 'partial_update']:
+            # estudiantes pueden actualizar la informacion del acudiente
             permission_classes = [IsEstudiante | IsAdministrador]
         else:
             # Solo administradores pueden listar, ver detalles, actualizar y eliminar
@@ -45,7 +48,6 @@ class AcudienteViewSet(viewsets.ModelViewSet):
         operation_description="Retorna una lista de todos los acudientes registrados"
     )
     def list(self, request, *args, **kwargs):
-        print("Listando acudientes")
         return super().list(request, *args, **kwargs)
     
     @swagger_auto_schema(
@@ -58,14 +60,19 @@ class AcudienteViewSet(viewsets.ModelViewSet):
     )
     def create(self, request, *args, **kwargs):
         data = request.data
-        print(f"Creando acudiente con datos: {data}")
+
+        # Verificar si ya existe un acudiente con el numero_documento_acudiente proporcionado
+        numero_documento = data.get('numero_documento_acudiente')
+        if numero_documento:
+            existing_acudiente = Acudiente.objects.filter(numero_documento_acudiente=numero_documento).first()
+            if existing_acudiente:
+                serializer = self.get_serializer(existing_acudiente)
+                return Response({"message": "Ya se encuentra registrado", "data": serializer.data}, status=status.HTTP_200_OK)
 
         #Crear el objeto usando el serializador
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
-
-        print("Acudiente creado exitosamente")
 
         #Responder con los datos del nuevo acudiente
         return Response(serializer.data, status=status.HTTP_201_CREATED)
