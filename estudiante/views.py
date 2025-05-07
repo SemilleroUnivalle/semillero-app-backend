@@ -8,10 +8,11 @@ from drf_yasg import openapi
 #Modelo
 from .models import Estudiante
 from cuenta.models import CustomUser
+from acudiente.models import Acudiente
 #Serializadores
 from .serializers import EstudianteSerializer
 #Autenticacion
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 #Permisos
 from cuenta.permissions import IsEstudiante, IsProfesor, IsAdministrador, IsProfesorOrAdministrador
 
@@ -41,7 +42,9 @@ class EstudianteViewSet(viewsets.ModelViewSet):
             # Estudiantes pueden ver/editar su perfil, administradores pueden todos
             # La restricción de que el estudiante solo vea su perfil se controla en retrieve
             permission_classes = [IsEstudiante | IsAdministrador]
-        elif self.action in ['create', 'destroy']:
+        elif self.action in ['create']:
+            permission_classes = [AllowAny]
+        elif self.action in ['destroy']:
             # Solo administradores pueden crear/eliminar
             permission_classes = [IsAdministrador]
         else:
@@ -82,7 +85,8 @@ class EstudianteViewSet(viewsets.ModelViewSet):
     )
     def create(self, request, *args, **kwargs):
         data = request.data
-
+        id_acudiente = request.data.get('acudiente')
+        acudiente_instancia = Acudiente.objects.get(id_acudiente=id_acudiente)
         # Verificar si el usuario ya existe
         username = data.get('numero_documento', '')
         if CustomUser.objects.filter(username=username).exists():
@@ -117,12 +121,11 @@ class EstudianteViewSet(viewsets.ModelViewSet):
             apellido=data.get('apellido'),
             email=data.get('email'),
             is_active=data.get('is_active'),
-            acudiente=data.get('acudiente'),
-            registro_fase=data.get('registro_fase'),
+            acudiente=acudiente_instancia,
             ciudad_residencia=data.get('ciudad_residencia'),
             ciudad_documento=data.get('ciudad_documento'),
-            id_eps=data.get('id_eps'),
-            id_grado=data.get('id_grado'),
+            eps=data.get('eps'),
+            grado=data.get('grado'),
             tipo_documento=data.get('tipo_documento'),
             genero=data.get('genero'),
             fecha_nacimiento=data.get('fecha_nacimiento'),

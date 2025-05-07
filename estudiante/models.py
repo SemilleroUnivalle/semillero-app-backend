@@ -15,7 +15,7 @@ class Estudiante(models.Model):
     email = models.EmailField(max_length=100)
     is_active = models.BooleanField(default=True)
     #Relacion uno a uno acudiente
-    acudiente = models.OneToOneField(
+    acudiente = models.ForeignKey(
         Acudiente,
         on_delete=models.CASCADE,
         related_name='estudiante',
@@ -24,13 +24,7 @@ class Estudiante(models.Model):
     )
     ciudad_residencia = models.CharField(max_length=100)
     ciudad_documento = models.CharField(max_length=100) #La ciudad donde se expidió el documento de identidad
-    id_eps = models.ForeignKey(
-        EPS,
-        on_delete=models.PROTECT,
-        related_name='estudiante',
-        blank=False,
-        null=False,
-    )
+    eps = models.CharField(max_length=100) #Entidad promotora de salud
     grado = models.CharField(max_length=20) #Grado al que pertenece el estudiante
     tipo_documento = models.CharField(max_length=20) #Tipo de documento de identidad
     genero = models.CharField(max_length=10) #Género del estudiante
