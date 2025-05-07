@@ -32,8 +32,6 @@ class ModuloWriteSerializer(serializers.ModelSerializer):
         fields = '__all__'
     
     def create(self, validated_data):
-        # Ya no es necesario extraer la categoría, Django manejará 
-        # automáticamente el campo ForeignKey
         return Modulo.objects.create(**validated_data)
     
     def update(self, instance, validated_data):
