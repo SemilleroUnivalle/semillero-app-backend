@@ -80,7 +80,6 @@ class CategoriaViewSet(viewsets.ModelViewSet):
     )
     def update(self, request, *args, **kwargs):
         data = request.data
-        print(f"Actualizandna Categoria, con ID {kwargs['pk']} y datos: {data}")
 
         #Actualizar el objeto usando el serializador
         partial = kwargs.pop('partial', False)
@@ -88,8 +87,6 @@ class CategoriaViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance, data=data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
-
-        print("Categoria actualizado exitosamente")
 
         #Responder con los datos dena Categoria", actualizado
         return Response(serializer.data)
