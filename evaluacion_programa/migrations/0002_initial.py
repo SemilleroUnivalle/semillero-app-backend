@@ -9,13 +9,13 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('asistencia', '0001_initial'),
+        ('evaluacion_programa', '0001_initial'),
         ('inscripcion', '0001_initial'),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='asistencia',
+            model_name='evaluacionprograma',
             name='id_inscripcion',
             field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='inscripcion.inscripcion'),
         ),

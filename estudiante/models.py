@@ -1,6 +1,5 @@
 from django.db import models
 from acudiente.models import Acudiente
-from eps.models import EPS
 from django.conf import settings
 
 class Estudiante(models.Model):

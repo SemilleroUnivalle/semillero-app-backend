@@ -55,7 +55,6 @@ INSTALLED_APPS = [
     'area',
     'asistencia',
     'discapacidad',
-    'eps',
     'evaluacion_programa',
     'grupo',
     'historial_cambios',
@@ -135,8 +134,16 @@ WSGI_APPLICATION = 'semillero_backend.wsgi.application'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-    # Configuración para usar SQLite
     'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'semillero_database',
+        'USER': 'postgres',
+        'PASSWORD': 'admin',
+        'HOST': 'localhost',
+        'PORT': '5432',
+    },
+    # Configuración para usar SQLite
+    'sqlite': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     },
@@ -145,7 +152,7 @@ DATABASES = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'semillero-database',
+        'NAME': 'semillero',
         'USER': 'semillero',
         'PASSWORD': 'adminsemillero',
         'HOST': 'database-semillero.cktk40yw6g7t.us-east-1.rds.amazonaws.com',
