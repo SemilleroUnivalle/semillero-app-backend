@@ -92,7 +92,6 @@ class AcudienteViewSet(viewsets.ModelViewSet):
     )
     def update(self, request, *args, **kwargs):
         data = request.data
-        print(f"Actualizando acudiente con datos: {data}")
 
         #Actualizar el objeto usando el serializador
         partial = kwargs.pop('partial', False)
@@ -100,8 +99,6 @@ class AcudienteViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance, data=data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
-
-        print("Acudiente actualizado exitosamente")
 
         #Responder con los datos del acudiente actualizado
         return Response(serializer.data, status=status.HTTP_200_OK)
