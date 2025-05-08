@@ -164,18 +164,37 @@ class ModuloViewSet(viewsets.ModelViewSet):
         
         # Agrupar módulos por categoría
         modulos_por_categoria = defaultdict(list)
-        
+        categorias_info = {}  # Para almacenar información de las categorías
+
         for modulo in queryset:
             if modulo.id_categoria:
                 # Serializar cada módulo
                 serialized_modulo = ModuloReadSerializer(modulo).data
                 
-                # Agrupar por nombre de categoría
-                categoria_nombre = modulo.id_categoria.nombre if hasattr(modulo.id_categoria, 'nombre') else str(modulo.id_categoria)
-                modulos_por_categoria[categoria_nombre].append(serialized_modulo)
+                # Obtener información de la categoría - extractar valores primitivos
+                categoria_obj = modulo.id_categoria
+                # Usar el id numérico como clave (valor primitivo)
+                categoria_id = categoria_obj.id_categoria  # Asegúrate que este es el nombre correcto del campo ID
+                categoria_nombre = categoria_obj.nombre if hasattr(categoria_obj, 'nombre') else str(categoria_obj)
+                
+                # Guardar info de la categoría usando el ID numérico como clave
+                categorias_info[categoria_id] = {"id": categoria_id, "nombre": categoria_nombre}
+                
+                # Agrupar por ID de categoría (valor numérico)
+                modulos_por_categoria[categoria_id].append(serialized_modulo)
+
+        # Construir el resultado final con el formato deseado
+        resultado = []
+        for cat_id, modulos in modulos_por_categoria.items():
+            cat_info = categorias_info[cat_id]
             
-        # Convertir defaultdict a un diccionario normal para la respuesta
-        resultado = dict(modulos_por_categoria)
+            # Crear un diccionario para esta categoría con sus propiedades y módulos
+            categoria_con_modulos = {
+                "id": cat_id,  # Ya tenemos el ID numérico directamente
+                "nombre": cat_info["nombre"],
+                "modulos": modulos
+            }
+            resultado.append(categoria_con_modulos)
         
         # Si no hay módulos con categoría, devolver mensaje específico
         if not resultado:
