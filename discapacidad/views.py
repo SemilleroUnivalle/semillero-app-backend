@@ -54,14 +54,11 @@ class DiscapacidadViewSet(viewsets.ModelViewSet):
     )
     def create(self, request, *args, **kwargs):
         data = request.data
-        print(f"Creando discapacidad con datos: {data}")
 
         #Crear el objeto usando el serializador
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
-
-        print("Discapacidad creada exitosamente")
 
         #Responder con los datos de la nueva asistencia
         return Response(serializer.data, status=status.HTTP_201_CREATED)

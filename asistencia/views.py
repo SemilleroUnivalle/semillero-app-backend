@@ -64,8 +64,6 @@ class AsistenciaViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
 
-        print("Asistencia creada exitosamente")
-
         #Responder con los datos de la nueva asistencia
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     @swagger_auto_schema(

@@ -33,7 +33,6 @@ urlpatterns = [
     path('area/', include('area.urls')),
     path('asistencia/', include('asistencia.urls')),
     path('discapacidad/', include('discapacidad.urls')),
-    path('eps/', include('eps.urls')),
     path('evaluacion_programa/', include('evaluacion_programa.urls')),
     path('grupo/', include('grupo.urls')),
     path('historial_cambios/', include('historial_cambios.urls')),
@@ -48,8 +47,8 @@ urlpatterns = [
     path('profesor/', include('profesor.urls')),
     path('login/', LoginView.as_view(), name='login'),
     path('logout/', LogoutView.as_view(), name='logout'),
-    #path('swagger<format>/', schema_view.without_ui(cache_timeout=0), name='schema-json'),
+    path('swagger<format>/', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
-    #path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+    path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
     path('', welcome_view, name='welcome'),
 ]
