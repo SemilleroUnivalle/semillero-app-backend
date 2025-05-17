@@ -134,31 +134,35 @@ WSGI_APPLICATION = 'semillero_backend.wsgi.application'
 
 # Base de datos
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-
-DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL', 'postgres://postgres:postgres@db:5432/postgres'),
-        conn_max_age=600
-    )
-}
-
-"""
 DATABASES = {
     # Configuración para usar SQLite
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     },
-}
-
-DATABASES = {
-    'default': {
+    'postgres': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'semillero',
         'USER': 'semillero',
         'PASSWORD': 'adminsemillero',
         'HOST': 'database-semillero.cktk40yw6g7t.us-east-1.rds.amazonaws.com',
         'PORT': '5432',
+    },
+}
+"""
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'postgres',
+        'USER': 'postgres',
+        'PASSWORD': 'admin',
+        'HOST': 'semillero_db',
+        'PORT': '5432',
+    },
+    # Configuración para usar SQLite
+    'sqlite': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     },
 }
 """
@@ -181,7 +185,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
 # Internacionalización
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
@@ -209,8 +215,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Configuración de CORS
 # Define la lista de orígenes permitidos para solicitudes de origen cruzado
 CORS_ALLOWED_ORIGINS = [
-    "http://191.104.218.125", #PC Alejandro
-    "http://181.78.17.229", #PC Sebastian
+    #"http://191.104.218.125", #PC Alejandro
+    #"http://181.78.17.229", #PC Sebastian
     "http://localhost:8080",  # Servidor de desarrollo local
     "http://127.0.0.1:8000",  # Localhost con el puerto predeterminado de Django
     "http://127.0.0.1:3000",
