@@ -86,7 +86,18 @@ class EstudianteViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         data = request.data
         id_acudiente = request.data.get('acudiente')
-        acudiente_instancia = Acudiente.objects.get(id_acudiente=id_acudiente)
+        if not id_acudiente:
+            return Response(
+                {"detail": 'El campo "acudiente" es obligatorio.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            acudiente_instancia = Acudiente.objects.get(id_acudiente=id_acudiente)
+        except Acudiente.DoesNotExist:
+            return Response(
+                {"detail": "El acudiente especificado no existe."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         # Verificar si el usuario ya existe
         username = data.get('numero_documento', '')
         if CustomUser.objects.filter(username=username).exists():
@@ -156,7 +167,6 @@ class EstudianteViewSet(viewsets.ModelViewSet):
     )
     def update(self, request, *args, **kwargs):
         data = request.data
-        print(f"Actualizando estudiante con ID {kwargs['pk']} y datos: {data}")
 
         #Actualizar el objeto usando el serializador
         partial = kwargs.pop('partial', False)
@@ -164,8 +174,6 @@ class EstudianteViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance, data=data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
-
-        print("Estudiante actualizado exitosamente")
 
         #Responder con los datos del estudiante actualizado
         return Response(serializer.data)
@@ -175,9 +183,61 @@ class EstudianteViewSet(viewsets.ModelViewSet):
         operation_description="Actualiza uno o más campos de un estudiante existente"
     )
     def partial_update(self, request, *args, **kwargs):
-        kwargs['partial'] = True
-        return self.update(request, *args, **kwargs)
-    
+        data = request.data.copy() 
+        instance = self.get_object()
+        user = instance.user
+        
+        # Manejar la contraseña si está presente
+        if 'contrasena' in data and data['contrasena']:
+            new_password = data.pop('contrasena') 
+            user.set_password(new_password)
+            user.save()
+            hashed_password = make_password(new_password)
+            instance.contrasena = hashed_password
+            instance.save()
+            
+        #Manejar is_active
+        if 'is_active' in data:
+            is_active = data.pop('is_active')
+            user.is_active = is_active
+            user.save()
+            instance.is_active = is_active
+            instance.save()
+        
+        #Manejar el nombre de usuario
+        if 'nombre' in data:
+            nombre = data.pop('nombre')
+            user.first_name = nombre
+            user.save()
+            instance.nombre = nombre
+            instance.save()
+            
+        #Manejar el apellido
+        if 'apellido' in data:
+            apellido = data.pop('apellido')
+            user.last_name = apellido
+            user.save()
+            instance.apellido = apellido
+            instance.save()
+        
+        #Manejar el email
+        if 'email' in data:
+            email = data.pop('email')
+            user.email = email
+            user.save()
+            instance.email = email
+            instance.save()
+        
+        if data:
+            serializer = self.get_serializer(instance, data=data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+            return Response(serializer.data)
+        else:
+            # Si solo se cambió la contraseña y no hay otros campos, devolvemos los datos actualizados
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data)
+        
     @swagger_auto_schema(
         operation_summary="Eliminar un estudiante",
         operation_description="Elimina permanentemente un estudiante del sistema"
