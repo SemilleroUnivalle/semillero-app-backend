@@ -38,7 +38,9 @@ class InscripcionViewSet(viewsets.ModelViewSet):
         operation_description="Retorna una lista de todos los Inscripciones registrados"
     )
     def list(self, request, *args, **kwargs):
-        print("Listando los Inscripciones")
+        queryset = self.filter_queryset(self.get_queryset())
+        if not queryset.exists():
+            return Response(status=status.HTTP_204_NO_CONTENT)
         return super().list(request, *args, **kwargs)
     
     @swagger_auto_schema(
@@ -51,14 +53,11 @@ class InscripcionViewSet(viewsets.ModelViewSet):
     )
     def create(self, request, *args, **kwargs):
         data = request.data
-        print(f"Creando un inscripcion, con datos: {data}")
 
         #Crear el objeto usando el serializador
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
-
-        print("inscripcion creada exitosamente")
 
         #Responder con los datos del nuevna inscripcion",
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -76,7 +75,6 @@ class InscripcionViewSet(viewsets.ModelViewSet):
     )
     def update(self, request, *args, **kwargs):
         data = request.data
-        print(f"Actualizandna inscripcion, con ID {kwargs['pk']} y datos: {data}")
 
         #Actualizar el objeto usando el serializador
         partial = kwargs.pop('partial', False)
@@ -84,8 +82,6 @@ class InscripcionViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance, data=data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
-
-        print("inscripcion actualizado exitosamente")
 
         #Responder con los datos dena inscripcion", actualizado
         return Response(serializer.data)

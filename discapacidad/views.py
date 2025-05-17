@@ -45,6 +45,8 @@ class DiscapacidadViewSet(viewsets.ModelViewSet):
         Listar todas las discapacidaddes.
         """
         queryset = self.get_queryset()
+        if not queryset.exists():
+            return Response(status=status.HTTP_204_NO_CONTENT)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
     @swagger_auto_schema(

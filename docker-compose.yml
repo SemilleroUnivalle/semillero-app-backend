@@ -1,9 +1,10 @@
 services:
-  web:
+  backend:
     build: .
     command: sh -c "python manage.py migrate && gunicorn -c gunicorn_config.py semillero_backend.wsgi:application"
     volumes:
       - .:/app
+    container_name: semillero_backend
     ports:
       - "8080:8080"
     environment:
@@ -11,12 +12,14 @@ services:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/postgres
       - SECRET_KEY=dev_secret_key_change_in_production
     depends_on:
-      - db
+      - database
 
-  db:
-    image: postgres:13
+  database:
+    image: postgres:14
+    restart: always
     volumes:
       - postgres_data:/var/lib/postgresql/data/
+    container_name: semillero_db
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: admin

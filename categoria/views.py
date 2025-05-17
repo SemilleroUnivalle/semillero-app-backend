@@ -41,10 +41,7 @@ class CategoriaViewSet(viewsets.ModelViewSet):
         queryset = self.filter_queryset(self.get_queryset())
         
         if not queryset.exists():
-            return Response(
-                {"message": "No hay categorías registradas"}, 
-                status=status.HTTP_204_NO_CONTENT
-            )
+            return Response(status=status.HTTP_204_NO_CONTENT)
         
         return super().list(request, *args, **kwargs)
     

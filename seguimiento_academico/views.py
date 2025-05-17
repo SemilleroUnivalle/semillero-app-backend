@@ -38,7 +38,9 @@ class SeguimientoAcademicoViewSet(viewsets.ModelViewSet):
         operation_description="Retorna una lista de todos los seguimiento academico registrados"
     )
     def list(self, request, *args, **kwargs):
-        print("Listando los seguimiento academico")
+        queryset = self.filter_queryset(self.get_queryset())
+        if not queryset.exists():
+            return Response(status=status.HTTP_204_NO_CONTENT)
         return super().list(request, *args, **kwargs)
     
     @swagger_auto_schema(
@@ -51,14 +53,11 @@ class SeguimientoAcademicoViewSet(viewsets.ModelViewSet):
     )
     def create(self, request, *args, **kwargs):
         data = request.data
-        print(f"Creando un SeguimientoAcademico, con datos: {data}")
 
         #Crear el objeto usando el serializador
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
-
-        print("SeguimientoAcademico creada exitosamente")
 
         #Responder con los datos del nuevna SeguimientoAcademico",
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -76,7 +75,6 @@ class SeguimientoAcademicoViewSet(viewsets.ModelViewSet):
     )
     def update(self, request, *args, **kwargs):
         data = request.data
-        print(f"Actualizandna SeguimientoAcademico, con ID {kwargs['pk']} y datos: {data}")
 
         #Actualizar el objeto usando el serializador
         partial = kwargs.pop('partial', False)
@@ -84,8 +82,6 @@ class SeguimientoAcademicoViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance, data=data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
-
-        print("SeguimientoAcademico actualizado exitosamente")
 
         #Responder con los datos dena SeguimientoAcademico", actualizado
         return Response(serializer.data)
