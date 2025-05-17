@@ -6,6 +6,7 @@ class Acudiente(models.Model):
     apellido_acudiente = models.CharField(max_length=100)
     tipo_documento_acudiente = models.CharField(max_length=20, unique=True)
     numero_documento_acudiente = models.CharField(max_length=20)
+    email_acudiente = models.EmailField(max_length=100, unique=True)
     celular_acudiente = models.CharField(max_length=20)
 
     def __str__(self):
