@@ -39,6 +39,7 @@ class LoginView(APIView):
 
         # Usaremos el número de documento como username
         user = authenticate(username=numero_documento, password=contrasena)
+        
         if user is None:
             return Response({'detail': 'Credenciales inválidas'}, status=status.HTTP_401_UNAUTHORIZED)
 
