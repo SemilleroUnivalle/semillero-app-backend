@@ -9,15 +9,13 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copiar requirements.txt primero para aprovechar la caché de Docker
+# Instalar dependencias de Python
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copiar el resto del código fuente
 COPY . .
 
-# Puerto en el que se ejecuta Gunicorn
 EXPOSE 8080
 
-# Comando para ejecutar al iniciar el contenedor
 CMD ["sh", "-c", "python manage.py migrate && gunicorn -c gunicorn_config.py semillero_backend.wsgi:application"]

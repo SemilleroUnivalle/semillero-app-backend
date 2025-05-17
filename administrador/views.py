@@ -25,9 +25,9 @@ class AdministradorViewSet(viewsets.ModelViewSet):
     """
     queryset = Administrador.objects.all()
     serializer_class = AdministradorSerializer
-    """
-    permission_classes = [IsAuthenticated, IsAdministrador]
     
+    #permission_classes = [IsAuthenticated, IsAdministrador]
+    """
     def get_permissions(self):
         
         Define permisos para todas las acciones:
@@ -36,7 +36,8 @@ class AdministradorViewSet(viewsets.ModelViewSet):
         
         permission_classes = [IsAuthenticated, IsAdministrador]
         return [permission() for permission in permission_classes]
-    """
+        """
+    
     @swagger_auto_schema(
         operation_summary="Listar todos los administradores",
         operation_description="Retorna una lista de todos los administradores, registrados"
@@ -109,7 +110,6 @@ class AdministradorViewSet(viewsets.ModelViewSet):
     )
     def update(self, request, *args, **kwargs):
         data = request.data
-        print(f"Actualizando administrador con ID {kwargs['pk']} y datos: {data}")
 
         #Actualizar el objeto usando el serializador
         partial = kwargs.pop('partial', False)
@@ -117,8 +117,6 @@ class AdministradorViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance, data=data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
-
-        print("Administrador actualizado exitosamente")
 
         #Responder con los datos del administrador actualizado
         return Response(serializer.data)
