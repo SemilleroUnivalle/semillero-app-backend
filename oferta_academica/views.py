@@ -90,7 +90,6 @@ class OfertaAcademicaViewSet(viewsets.ModelViewSet):
     )
     def update(self, request, *args, **kwargs):
         data = request.data
-        print(f"Actualizandna oferta academica, con ID {kwargs['pk']} y datos: {data}")
 
         #Actualizar el objeto usando el serializador
         partial = kwargs.pop('partial', False)
@@ -98,8 +97,6 @@ class OfertaAcademicaViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance, data=data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
-
-        print("oferta academica actualizado exitosamente")
 
         #Responder con los datos dena oferta academica", actualizado
         return Response(serializer.data)

@@ -43,7 +43,7 @@ class ProfesorViewSet(viewsets.ModelViewSet):
         queryset = self.filter_queryset(self.get_queryset())
 
         if not queryset.exists():
-            return Response({'detail': 'No se encontraron profesores registrados'}, status=status.HTTP_204_NOT_CONTENT)
+            return Response(status=status.HTTP_204_NO_CONTENT)
         
         return super().list(request, *args, **kwargs)
     
@@ -99,7 +99,7 @@ class ProfesorViewSet(viewsets.ModelViewSet):
         )
 
         # Puedes retornar la información deseada
-        return Response({'detail': 'Profesor creado exitosamente'}, status=status.HTTP_201_CREATED)
+        return Response(status=status.HTTP_201_CREATED)
 
     @swagger_auto_schema(
         operation_summary="Obtener un profesor específico",
@@ -114,16 +114,13 @@ class ProfesorViewSet(viewsets.ModelViewSet):
     )
     def update(self, request, *args, **kwargs):
         data = request.data
-        print(f"Actualizando profesor con ID {kwargs['pk']} y datos: {data}")
-
+        
         #Actualizar el objeto usando el serializador
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
-
-        print("Administrador actualizado exitosamente")
 
         #Responder con los datos del profesor actualizado
         return Response(serializer.data)

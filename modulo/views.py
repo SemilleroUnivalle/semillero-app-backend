@@ -53,7 +53,7 @@ class ModuloViewSet(viewsets.ModelViewSet):
         queryset = self.filter_queryset(self.get_queryset())
 
         if not queryset.exists():
-            return Response({"No hay modulos registrados"}, status=status.HTTP_204_NOT_CONTENT)
+            return Response(status=status.HTTP_204_NO_CONTENT)
         
         return super().list(request, *args, **kwargs)
     
@@ -198,6 +198,6 @@ class ModuloViewSet(viewsets.ModelViewSet):
         
         # Si no hay módulos con categoría, devolver mensaje específico
         if not resultado:
-            return Response({"mensaje": "No hay módulos con categoría asignada"}, status=status.HTTP_200_OK)
+            return Response(status=status.HTTP_204_NO_CONTENT)
         
         return Response(resultado, status=status.HTTP_200_OK)
