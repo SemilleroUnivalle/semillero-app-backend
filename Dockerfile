@@ -1,27 +1,23 @@
-# Base image for Python
 FROM python:3.10-slim
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-
-# Working directory
 WORKDIR /app
 
-# Install system dependencies
+# Instalar dependencias del sistema necesarias
 RUN apt-get update && apt-get install -y \
-    libpq-dev gcc \
-    && apt-get clean
+    gcc \
+    postgresql-client \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-COPY requirements.txt /app/
+# Copiar requirements.txt primero para aprovechar la caché de Docker
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the project files
-COPY . /app/
+# Copiar el resto del código fuente
+COPY . .
 
-# Expose the port that Gunicorn will run on
+# Puerto en el que se ejecuta Gunicorn
 EXPOSE 8080
 
-# Command to start the application
-CMD ["gunicorn", "-c", "gunicorn_config.py", "semillero_backend.wsgi:application"]
+# Comando para ejecutar al iniciar el contenedor
+CMD ["sh", "-c", "python manage.py migrate && gunicorn -c gunicorn_config.py semillero_backend.wsgi:application"]
