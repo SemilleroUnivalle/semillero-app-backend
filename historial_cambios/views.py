@@ -38,7 +38,9 @@ class HistorialCambiosViewSet(viewsets.ModelViewSet):
         operation_description="Retorna una lista de todos los historiales de cambios registrados"
     )
     def list(self, request, *args, **kwargs):
-        print("Listando los historiales de cambios")
+        queryset = self.filter_queryset(self.get_queryset())
+        if not queryset.exists():
+            return Response(status=status.HTTP_204_NO_CONTENT)
         return super().list(request, *args, **kwargs)
     
     @swagger_auto_schema(
@@ -51,14 +53,11 @@ class HistorialCambiosViewSet(viewsets.ModelViewSet):
     )
     def create(self, request, *args, **kwargs):
         data = request.data
-        print(f"Creando un historiald e cambios, con datos: {data}")
 
         #Crear el objeto usando el serializador
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
-
-        print("historiald e cambios creada exitosamente")
 
         #Responder con los datos del nuevna historiald e cambios",
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -76,7 +75,6 @@ class HistorialCambiosViewSet(viewsets.ModelViewSet):
     )
     def update(self, request, *args, **kwargs):
         data = request.data
-        print(f"Actualizandna historiald e cambios, con ID {kwargs['pk']} y datos: {data}")
 
         #Actualizar el objeto usando el serializador
         partial = kwargs.pop('partial', False)
@@ -84,8 +82,6 @@ class HistorialCambiosViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance, data=data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
-
-        print("historiald e cambios actualizado exitosamente")
 
         #Responder con los datos dena historiald e cambios", actualizado
         return Response(serializer.data)
