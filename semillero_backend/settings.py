@@ -253,7 +253,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 AUTH_USER_MODEL = 'cuenta.CustomUser'
 
-#Configuraciones para servisor SMTP google
+#Configuraciones para servidor SMTP google
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
