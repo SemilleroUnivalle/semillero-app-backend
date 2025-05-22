@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'rest_framework.authtoken',
+    'django_rest_passwordreset',
     'drf_yasg',
     'psycopg2',
     'estudiante',
@@ -70,6 +71,7 @@ INSTALLED_APPS = [
     'oferta_academica',
     'categoria',
     'oferta_categoria',
+    'recuperacion_contrasena',
 ]
 
 REST_FRAMEWORK = {
@@ -243,4 +245,13 @@ CORS_ALLOW_HEADERS = [
 CORS_ALLOW_ALL_ORIGINS = True
 
 AUTH_USER_MODEL = 'cuenta.CustomUser'
+
+#Configuraciones para servisor SMTP google
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'johan.tombe@correounivalle.edu.co'
+EMAIL_HOST_PASSWORD = 'wnpe lbwq teqi zxpn'
+DEFAULT_FROM_EMAIL = 'johan.tombe@correounivalle.edu.co'
 
