@@ -12,13 +12,15 @@ class OfertaCategoria(models.Model):
     )
     id_categoria = models.ForeignKey(
         Categoria, 
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         related_name='oferta_categoria',
+        null=True
     )
     precio_publico = models.DecimalField(max_digits=10, decimal_places=2)
     precio_privado = models.DecimalField(max_digits=10, decimal_places=2)
     precio_univalle = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     fecha_finalizacion = models.DateField()
+    estado = models.BooleanField(default=False)
     
     def __str__(self):
         return (
@@ -29,6 +31,7 @@ class OfertaCategoria(models.Model):
             f"Precio Privado: {self.precio_privado} | "
             f"Precio Univalle: {self.precio_univalle} | "
             f"Fecha Finalización: {self.fecha_finalizacion}"
+            f" | Estado: {'Activo' if self.estado else 'Inactivo'}"
         )
     
     class Meta:
