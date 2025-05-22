@@ -259,6 +259,6 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'johan.tombe@correounivalle.edu.co'
-EMAIL_HOST_PASSWORD = 'wnpe lbwq teqi zxpn'
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = 'johan.tombe@correounivalle.edu.co'
 
