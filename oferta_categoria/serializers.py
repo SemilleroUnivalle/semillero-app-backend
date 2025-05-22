@@ -11,9 +11,7 @@ class ModuloSerializer(serializers.ModelSerializer):
 
 # Serializador para lecturas (GET) - con depth=1 para mostrar relaciones anidadas
 class OfertaCategoriaReadSerializer(serializers.ModelSerializer):
-    # Incluimos los módulos relacionados
     modulo = ModuloSerializer(many=True, read_only=True)
-
     class Meta:
         model = OfertaCategoria
         fields = '__all__'
@@ -32,27 +30,16 @@ class OfertaCategoriaWriteSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def create(self, validated_data):
-        # Extraemos los módulos enviados por el frontend
         modulos = validated_data.pop('modulo', []) 
-        
-        # Creamos la oferta categoría
         oferta_categoria = OfertaCategoria.objects.create(**validated_data)
-        
-        # Asociamos los módulos a la oferta creada
-        oferta_categoria.modulo.set(modulos)  # Usamos `set()` para establecer la relación
-        
+        oferta_categoria.modulo.set(modulos)
         return oferta_categoria
 
     def update(self, instance, validated_data):
-        # Extraemos los IDs de los módulos enviados por el frontend
-        modulos = validated_data.pop('modulo', [])  # Correcto: usamos 'modulo'
-        
-        # Actualizamos los campos de la OfertaCategoria
+        modulos = validated_data.pop('modulo', [])
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
-
-        # Actualizamos la relación con los módulos
-        instance.modulo.set(modulos)  # Usamos `set()` para actualizar la relación
+        instance.modulo.set(modulos) 
         
         return instance
