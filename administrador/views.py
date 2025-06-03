@@ -134,4 +134,23 @@ class AdministradorViewSet(viewsets.ModelViewSet):
         operation_description="Elimina permanentemente un administrador del sistema"
     )
     def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        
+        user = None
+        
+        try:
+            user = instance.user
+        except Exception:
+            pass
+        
+        if user:
+            try:
+                # Primero eliminar tokens asociados si los hay
+                from rest_framework.authtoken.models import Token
+                Token.objects.filter(user=user).delete()
+                # Luego eliminar el usuario
+                user.delete()
+            except Exception as e:
+                # Log the error but don't interrupt the response
+                print(f"Error eliminando usuario: {str(e)}")
         return super().destroy(request, *args, **kwargs)

@@ -43,3 +43,6 @@ ENV/
 *.sqlite3
 *.sqlite
 *.sqlite-journal
+
+#credentials
+*.env

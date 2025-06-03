@@ -11,7 +11,7 @@ class Inscripcion(models.Model):
         ('I', 'Inactivo'),
         ('R', 'Rechazado'),
     ], default='A')
-    grupo = models.CharField(max_length=255)
+    grupo = models.CharField(max_length=255, default='Grupo 0')
     fecha_inscripcion = models.DateField(auto_now_add=True)
     tipo_vinculacion = models.CharField(max_length=255)
     terminos = models.BooleanField(default=True)
