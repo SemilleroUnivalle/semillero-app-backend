@@ -36,5 +36,5 @@ class CustomResetPasswordRequestToken(ResetPasswordRequestToken):
         # Ahora arma un request con el email del usuario y pásalo a la vista original
         mutable_data = request.data.copy()
         mutable_data['email'] = user.email
-        request._full_data = mutable_data  # hack
+        request._full_data = mutable_data 
         return super().post(request, *args, **kwargs)

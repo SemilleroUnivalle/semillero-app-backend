@@ -15,9 +15,16 @@ class Modulo(models.Model):
     related_name='modulo_categoria',
     null=True)
     id_area = models.ForeignKey(Area, on_delete=models.SET_NULL, related_name='modulo',null=True)
-
     nombre_modulo = models.CharField(max_length=100, unique=True)
     descripcion_modulo = models.TextField(blank=True, null=True)
+    intensidad_horaria = models.PositiveIntegerField(default=0)
+    ditigido_a = models.CharField(max_length=100, blank=True, null=True)
+    incluye = models.TextField(blank=True, null=True)
+    imagen_modulo = models.ImageField(
+        upload_to='modulos/', 
+        blank=True, 
+        null=True
+    )
     estado = models.BooleanField(default=True)
 
     def __str__(self):
