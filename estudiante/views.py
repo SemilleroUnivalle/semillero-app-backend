@@ -1,6 +1,6 @@
+import os
 from dotenv import load_dotenv
 load_dotenv()
-import os
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from django.contrib.auth.hashers import make_password
