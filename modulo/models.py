@@ -18,7 +18,7 @@ class Modulo(models.Model):
     nombre_modulo = models.CharField(max_length=100, unique=True)
     descripcion_modulo = models.TextField(blank=True, null=True)
     intensidad_horaria = models.PositiveIntegerField(default=0)
-    ditigido_a = models.CharField(max_length=100, blank=True, null=True)
+    dirigido_a = models.CharField(max_length=100, blank=True, null=True)
     incluye = models.TextField(blank=True, null=True)
     imagen_modulo = models.ImageField(
         upload_to='modulos/', 
