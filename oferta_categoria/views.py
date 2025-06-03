@@ -1,5 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
+from rest_framework.decorators import action
+from collections import defaultdict
 
 # Documentación
 from drf_yasg.utils import swagger_auto_schema
@@ -50,7 +52,9 @@ class OfertaCategoriaViewSet(viewsets.ModelViewSet):
         }
     )
     def list(self, request, *args, **kwargs):
-        print("Listando los Oferta categoria")
+        queryset = self.filter_queryset(self.get_queryset())
+        if not queryset.exists():
+            return Response(status=status.HTTP_204_NO_CONTENT)
         return super().list(request, *args, **kwargs)
     
     @swagger_auto_schema(
@@ -131,3 +135,56 @@ class OfertaCategoriaViewSet(viewsets.ModelViewSet):
     )
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
+    
+    @swagger_auto_schema(
+        operation_summary="Obtener OfertaCategoria agrupadas por OfertaAcademica",
+        operation_description="Retorna todas las OfertaCategoria agrupadas por OfertaAcademica",
+        responses={
+            status.HTTP_200_OK: openapi.Response(
+                description="Lista de OfertaCategoria agrupadas por OfertaAcademica",
+                examples={
+                    "application/json": {
+                        "oferta_academica_1": [
+                            {
+                                "id": 1,
+                                "nombre": "Oferta Categoria 1"
+                            },
+                            {
+                                "id": 2,
+                                "nombre": "Oferta Categoria 2"
+                            }
+                        ],
+                        "oferta_academica_2": [
+                            {
+                                "id": 3,
+                                "nombre": "Oferta Categoria 3"
+                            }
+                        ]
+                    }
+                }
+            )
+        }
+    )
+    
+   
+
+    @action(detail=False, methods=['get'], url_path='por-oferta-academica')
+    def obtener_oferta_categoria_por_oferta_academica(self, request):
+        """
+        Obtener todas las OfertaCategoria agrupadas por OfertaAcademica.
+        """
+        queryset = self.get_queryset()
+        oferta_categoria_por_oferta_academica = defaultdict(list)
+
+        for oferta_categoria in queryset:
+            key = str(oferta_categoria.id_oferta_academica_id)  # Usar el ID como string para la clave
+            oferta_categoria_por_oferta_academica[key].append(oferta_categoria)
+
+        # Serializar cada grupo por separado
+        resultado = {}
+        for key, items in oferta_categoria_por_oferta_academica.items():
+            serializer = OfertaCategoriaReadSerializer(items, many=True)
+            resultado[key] = serializer.data
+
+        return Response(resultado, status=status.HTTP_200_OK)
+    

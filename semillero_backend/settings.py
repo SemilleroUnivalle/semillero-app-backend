@@ -9,10 +9,21 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 Para la lista completa de configuraciones y sus valores, consulta
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
+<<<<<<< HEAD
 
 from pathlib import Path
 from datetime import timedelta
 import os
+=======
+from dotenv import load_dotenv
+load_dotenv()
+from pathlib import Path
+from datetime import timedelta
+import os
+import dj_database_url
+from storages.backends.s3boto3 import S3Boto3Storage
+
+>>>>>>> staging
 # Construye rutas dentro del proyecto como esta: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -32,8 +43,11 @@ ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
     '0.0.0.0',
+<<<<<<< HEAD
     #ip publica servidor aws
     # otros hosts permitidos...
+=======
+>>>>>>> staging
 ]
 
 # Definición de aplicaciones
@@ -48,6 +62,10 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'rest_framework.authtoken',
+<<<<<<< HEAD
+=======
+    'django_rest_passwordreset',
+>>>>>>> staging
     'drf_yasg',
     'psycopg2',
     'estudiante',
@@ -70,6 +88,11 @@ INSTALLED_APPS = [
     'oferta_academica',
     'categoria',
     'oferta_categoria',
+<<<<<<< HEAD
+=======
+    'recuperacion_contrasena',
+    'storages',
+>>>>>>> staging
 ]
 
 REST_FRAMEWORK = {
@@ -132,17 +155,13 @@ WSGI_APPLICATION = 'semillero_backend.wsgi.application'
 
 # Base de datos
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-
 DATABASES = {
     # Configuración para usar SQLite
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     },
-}
-"""
-DATABASES = {
-    'default': {
+    'postgres': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'semillero',
         'USER': 'semillero',
@@ -151,8 +170,6 @@ DATABASES = {
         'PORT': '5432',
     },
 }
-"""
-
 # Validación de contraseñas
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
@@ -171,7 +188,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
 # Internacionalización
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
@@ -199,8 +218,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Configuración de CORS
 # Define la lista de orígenes permitidos para solicitudes de origen cruzado
 CORS_ALLOWED_ORIGINS = [
-    "http://191.104.218.125", #PC Alejandro
-    "http://181.78.17.229", #PC Sebastian
+    #"http://191.104.218.125", #PC Alejandro
+    #"http://181.78.17.229", #PC Sebastian
     "http://localhost:8080",  # Servidor de desarrollo local
     "http://127.0.0.1:8000",  # Localhost con el puerto predeterminado de Django
     "http://127.0.0.1:3000",
@@ -233,4 +252,35 @@ CORS_ALLOW_HEADERS = [
 CORS_ALLOW_ALL_ORIGINS = True
 
 AUTH_USER_MODEL = 'cuenta.CustomUser'
+
+#Configuraciones para servidor SMTP google
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = os.getenv('EMAIL_HOST', '')
+EMAIL_PORT = os.getenv('EMAIL_PORT', '587') 
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', '')
+
+# AWS S3 Configuration
+AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID', '')
+AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY', '')
+AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME', 'archivos-estudiantes')
+AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', 'us-east-1')
+AWS_DEFAULT_ACL = 'private'
+AWS_S3_FILE_OVERWRITE = False
+AWS_S3_SIGNATURE_VERSION = 's3v4'
+AWS_S3_ADDRESSING_STYLE = 'virtual'
+
+STORAGES = {
+    "default": {
+        "BACKEND": "semillero_backend.storage_backends.MediaStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
+
+MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/media/'
+
 

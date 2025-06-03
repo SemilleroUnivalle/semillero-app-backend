@@ -11,9 +11,9 @@ from cuenta.models import CustomUser
 #Serializadores
 from .serializers import ProfesorSerializer
 #Autenticacion
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 #Permisos
-from cuenta.permissions import IsEstudiante, IsProfesor, IsAdministrador, IsProfesorOrAdministrador
+from cuenta.permissions import IsAdministrador, IsProfesorOrAdministrador
 
 
 class ProfesorViewSet(viewsets.ModelViewSet):
@@ -32,7 +32,12 @@ class ProfesorViewSet(viewsets.ModelViewSet):
         - Solo los administradores pueden realizar cualquier operación
         - Estudiantes y profesores no tienen acceso
         """
-        permission_classes = [IsAuthenticated, IsAdministrador]
+        if self.action in ['create']:
+            permission_classes = [AllowAny]
+        elif self.action in ['update', 'partial_update', 'retrive']:
+            permission_classes = [IsProfesorOrAdministrador]
+        else: 
+            permission_classes = [IsAdministrador]
         return [permission() for permission in permission_classes]
     
     @swagger_auto_schema(
@@ -43,7 +48,7 @@ class ProfesorViewSet(viewsets.ModelViewSet):
         queryset = self.filter_queryset(self.get_queryset())
 
         if not queryset.exists():
-            return Response({'detail': 'No se encontraron profesores registrados'}, status=status.HTTP_204_NOT_CONTENT)
+            return Response(status=status.HTTP_204_NO_CONTENT)
         
         return super().list(request, *args, **kwargs)
     
@@ -99,7 +104,7 @@ class ProfesorViewSet(viewsets.ModelViewSet):
         )
 
         # Puedes retornar la información deseada
-        return Response({'detail': 'Profesor creado exitosamente'}, status=status.HTTP_201_CREATED)
+        return Response(status=status.HTTP_201_CREATED)
 
     @swagger_auto_schema(
         operation_summary="Obtener un profesor específico",
@@ -114,16 +119,13 @@ class ProfesorViewSet(viewsets.ModelViewSet):
     )
     def update(self, request, *args, **kwargs):
         data = request.data
-        print(f"Actualizando profesor con ID {kwargs['pk']} y datos: {data}")
-
+        
         #Actualizar el objeto usando el serializador
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
-
-        print("Administrador actualizado exitosamente")
 
         #Responder con los datos del profesor actualizado
         return Response(serializer.data)
@@ -141,4 +143,24 @@ class ProfesorViewSet(viewsets.ModelViewSet):
         operation_description="Elimina permanentemente un profesor del sistema"
     )
     def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        
+        user = None
+        
+        try:
+            user = instance.user
+        except Exception:
+            pass
+        
+        self.perform_destroy(instance)
+        if user:
+            try:
+                # Primero eliminar tokens asociados si los hay
+                from rest_framework.authtoken.models import Token
+                Token.objects.filter(user=user).delete()
+                # Luego eliminar el usuario
+                user.delete()
+            except Exception as e:
+                # Log the error but don't interrupt the response
+                print(f"Error eliminando usuario: {str(e)}")
         return super().destroy(request, *args, **kwargs)

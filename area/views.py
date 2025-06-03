@@ -39,10 +39,7 @@ class AreaViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         if not queryset.exists():
-            return Response(
-                {"message": "No hay áreas registradas"}, 
-                status=status.HTTP_204_NO_CONTENT
-            )
+            return Response(status=status.HTTP_204_NO_CONTENT)
         return super().list(request, *args, **kwargs)
     
     @swagger_auto_schema(
@@ -55,14 +52,11 @@ class AreaViewSet(viewsets.ModelViewSet):
     )
     def create(self, request, *args, **kwargs):
         data = request.data
-        print(f"Creando área con datos: {data}")
 
         #Crear el objeto usando el serializador
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
-
-        print("Área creada exitosamente")
 
         #Responder con los datos del nuevo área
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -82,6 +76,7 @@ class AreaViewSet(viewsets.ModelViewSet):
     )
     def update(self, request, *args, **kwargs):
         return super().update(request, *args, **kwargs)
+    
     @swagger_auto_schema(
         operation_summary="Eliminar un área",
         operation_description="Elimina un área existente por su ID",

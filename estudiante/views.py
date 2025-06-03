@@ -1,3 +1,9 @@
+<<<<<<< HEAD
+=======
+import os
+from dotenv import load_dotenv
+load_dotenv()
+>>>>>>> staging
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from django.contrib.auth.hashers import make_password
@@ -10,12 +16,28 @@ from .models import Estudiante
 from cuenta.models import CustomUser
 from acudiente.models import Acudiente
 #Serializadores
+<<<<<<< HEAD
 from .serializers import EstudianteSerializer
 #Autenticacion
 from rest_framework.permissions import IsAuthenticated, AllowAny
 #Permisos
 from cuenta.permissions import IsEstudiante, IsProfesor, IsAdministrador, IsProfesorOrAdministrador
 
+=======
+from .serializers import EstudianteSerializer, LoteEliminarSerializer
+#Autenticacion
+from rest_framework.permissions import IsAuthenticated, AllowAny
+#Permisos
+from cuenta.permissions import IsEstudiante, IsProfesor, IsAdministrador, IsProfesorOrAdministrador, IsEstudianteOrProfesor, IsEstudianteOrAdministrador
+from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
+#Transacciones atomicas
+from django.db import transaction
+
+import boto3
+from botocore.exceptions import NoCredentialsError, ClientError
+from rest_framework.decorators import action
+from rest_framework.response import Response
+>>>>>>> staging
 
 class EstudianteViewSet(viewsets.ModelViewSet):
     """
@@ -25,7 +47,7 @@ class EstudianteViewSet(viewsets.ModelViewSet):
     """
     queryset = Estudiante.objects.all()
     serializer_class = EstudianteSerializer
-    
+    parser_classes = (JSONParser, MultiPartParser, FormParser)
     permission_classes = [IsAuthenticated]  
     
     def get_permissions(self):
@@ -41,7 +63,7 @@ class EstudianteViewSet(viewsets.ModelViewSet):
         elif self.action in ['retrieve', 'update', 'partial_update']:
             # Estudiantes pueden ver/editar su perfil, administradores pueden todos
             # La restricción de que el estudiante solo vea su perfil se controla en retrieve
-            permission_classes = [IsEstudiante | IsAdministrador]
+            permission_classes = [IsEstudianteOrAdministrador]
         elif self.action in ['create']:
             permission_classes = [AllowAny]
         elif self.action in ['destroy']:
@@ -72,7 +94,9 @@ class EstudianteViewSet(viewsets.ModelViewSet):
         operation_description="Retorna una lista de todos los estudiantes registrados"
     )
     def list(self, request, *args, **kwargs):
-        print("Listando estudiantes")
+        queryset = self.filter_queryset(self.get_queryset())
+        if not queryset.exists():
+            return Response(status=status.HTTP_204_NO_CONTENT)
         return super().list(request, *args, **kwargs)
     
     @swagger_auto_schema(
@@ -84,9 +108,20 @@ class EstudianteViewSet(viewsets.ModelViewSet):
         }
     )
     def create(self, request, *args, **kwargs):
-        data = request.data
+        data = request.data.copy()
         id_acudiente = request.data.get('acudiente')
-        acudiente_instancia = Acudiente.objects.get(id_acudiente=id_acudiente)
+        if not id_acudiente:
+            return Response(
+                {"detail": 'El campo "acudiente" es obligatorio.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            acudiente_instancia = Acudiente.objects.get(id_acudiente=id_acudiente)
+        except Acudiente.DoesNotExist:
+            return Response(
+                {"detail": "El acudiente especificado no existe."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         # Verificar si el usuario ya existe
         username = data.get('numero_documento', '')
         if CustomUser.objects.filter(username=username).exists():
@@ -99,64 +134,63 @@ class EstudianteViewSet(viewsets.ModelViewSet):
         # Hashear la contraseña
         hashed_password = make_password(data['contrasena'])
         
-        # Crear el usuario
-        user = CustomUser.objects.create(
-            username=data.get('numero_documento'),
-            password=hashed_password,
-            user_type='estudiante',
-            first_name=data.get('nombre'),
-            last_name=data.get('apellido'),
-            email=data.get('email'),
-            is_superuser=False,
-            is_staff=False,
-            is_active=data.get('is_active', True),
-        )
-        
-        # Crear el perfil de estudiante
-        Estudiante.objects.create(
-            user=user,
-            numero_documento=data.get('numero_documento'),
-            contrasena=hashed_password,
-            nombre=data.get('nombre'),
-            apellido=data.get('apellido'),
-            email=data.get('email'),
-            is_active=data.get('is_active'),
-            acudiente=acudiente_instancia,
-            ciudad_residencia=data.get('ciudad_residencia'),
-            ciudad_documento=data.get('ciudad_documento'),
-            eps=data.get('eps'),
-            grado=data.get('grado'),
-            tipo_documento=data.get('tipo_documento'),
-            genero=data.get('genero'),
-            fecha_nacimiento=data.get('fecha_nacimiento'),
-            telefono_fijo=data.get('telefono_fijo'),
-            celular=data.get('celular'),
-            departamento_residencia=data.get('departamento_residencia'),
-            comuna_residencia=data.get('comuna_residencia'),
-            direccion_residencia=data.get('direccion_residencia'),
-            estamento=data.get('estamento'),
-            discapacidad=data.get('discapacidad'),
-            tipo_discapacidad=data.get('tipo_discapacidad'),
-            descripcion_discapacidad=data.get('descripcion_discapacidad')
-        )
+        try:
+            with transaction.atomic():
+                # Crear el usuario
+                user = CustomUser.objects.create(
+                    username=data.get('numero_documento'),
+                    password=hashed_password,
+                    user_type='estudiante',
+                    first_name=data.get('nombre'),
+                    last_name=data.get('apellido'),
+                    email=data.get('email'),
+                    is_superuser=False,
+                    is_staff=False,
+                    is_active=data.get('is_active', True),
+                )
+                
+                # Crear el perfil de estudiante
+                Estudiante.objects.create(
+                    user=user,
+                    numero_documento=data.get('numero_documento'),
+                    contrasena=hashed_password,
+                    nombre=data.get('nombre'),
+                    apellido=data.get('apellido'),
+                    email=data.get('email'),
+                    is_active=data.get('is_active'),
+                    acudiente=acudiente_instancia,
+                    ciudad_residencia=data.get('ciudad_residencia'),
+                    ciudad_documento=data.get('ciudad_documento'),
+                    eps=data.get('eps'),
+                    grado=data.get('grado'),
+                    tipo_documento=data.get('tipo_documento'),
+                    genero=data.get('genero'),
+                    fecha_nacimiento=data.get('fecha_nacimiento'),
+                    telefono_fijo=data.get('telefono_fijo'),
+                    celular=data.get('celular'),
+                    departamento_residencia=data.get('departamento_residencia'),
+                    comuna_residencia=data.get('comuna_residencia'),
+                    direccion_residencia=data.get('direccion_residencia'),
+                    estamento=data.get('estamento'),
+                    discapacidad=data.get('discapacidad'),
+                    tipo_discapacidad=data.get('tipo_discapacidad'),
+                    descripcion_discapacidad=data.get('descripcion_discapacidad'),
+                    documento_identidad=request.FILES.get('documento_identidad'),
+                    recibo_pago=request.FILES.get('recibo_pago'),
+                    foto=request.FILES.get('foto'),
+                    constancia_estudios=request.FILES.get('constancia_estudios'),
+                )
 
-        # Puedes retornar la información deseada
-        return Response({'detail': 'Estudiante creado exitosamente'}, status=status.HTTP_201_CREATED)
-
-    @swagger_auto_schema(
-        operation_summary="Obtener un estudiante específico",
-        operation_description="Retorna los detalles de un estudiante específico por su ID"
-    )
-    def retrieve(self, request, *args, **kwargs):
-        return super().retrieve(request, *args, **kwargs)
-    
+            # Puedes retornar la información deseada
+            return Response({'detail': 'Estudiante creado exitosamente'}, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({'detail': f'Error al crear estudiante: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
     @swagger_auto_schema(
         operation_summary="Actualizar un estudiante",
         operation_description="Actualiza todos los campos de un estudiante existente"
     )
     def update(self, request, *args, **kwargs):
         data = request.data
-        print(f"Actualizando estudiante con ID {kwargs['pk']} y datos: {data}")
 
         #Actualizar el objeto usando el serializador
         partial = kwargs.pop('partial', False)
@@ -164,8 +198,6 @@ class EstudianteViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance, data=data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
-
-        print("Estudiante actualizado exitosamente")
 
         #Responder con los datos del estudiante actualizado
         return Response(serializer.data)
@@ -175,12 +207,190 @@ class EstudianteViewSet(viewsets.ModelViewSet):
         operation_description="Actualiza uno o más campos de un estudiante existente"
     )
     def partial_update(self, request, *args, **kwargs):
-        kwargs['partial'] = True
-        return self.update(request, *args, **kwargs)
+        data = request.data.copy() 
+        instance = self.get_object()
+        user = instance.user
+        
+        # Manejar la contraseña si está presente
+        if 'contrasena' in data and data['contrasena']:
+            new_password = data.pop('contrasena') 
+            user.set_password(new_password)
+            user.save()
+            hashed_password = make_password(new_password)
+            instance.contrasena = hashed_password
+            instance.save()
+            
+        #Manejar is_active
+        if 'is_active' in data:
+            is_active = data.pop('is_active')
+            user.is_active = is_active
+            user.save()
+            instance.is_active = is_active
+            instance.save()
+        
+        #Manejar el nombre de usuario
+        if 'nombre' in data:
+            nombre = data.pop('nombre')
+            user.first_name = nombre
+            user.save()
+            instance.nombre = nombre
+            instance.save()
+            
+        #Manejar el apellido
+        if 'apellido' in data:
+            apellido = data.pop('apellido')
+            user.last_name = apellido
+            user.save()
+            instance.apellido = apellido
+            instance.save()
+        
+        #Manejar el email
+        if 'email' in data:
+            email = data.pop('email')
+            user.email = email
+            user.save()
+            instance.email = email
+            instance.save()
+        
+        if data:
+            serializer = self.get_serializer(instance, data=data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+            return Response(serializer.data)
+        else:
+            # Si solo se cambió la contraseña y no hay otros campos, devolvemos los datos actualizados
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data)
+    
+    def get_s3_client(self):
+        """
+        Retorna un cliente de boto3 para S3 usando las variables de entorno.
+        """
+        return boto3.client(
+            's3',
+            aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID', ''),
+            aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY', ''),
+            region_name=os.getenv('AWS_S3_REGION_NAME', 'us-east-1'),
+    )
     
     @swagger_auto_schema(
         operation_summary="Eliminar un estudiante",
         operation_description="Elimina permanentemente un estudiante del sistema"
     )
     def destroy(self, request, *args, **kwargs):
-        return super().destroy(request, *args, **kwargs)
+        instance = self.get_object()
+        user = None
+        s3 = self.get_s3_client()
+        bucket_name = os.getenv('AWS_STORAGE_BUCKET_NAME', 'archivos-estudiantes')
+
+        archivos = [
+            instance.documento_identidad,
+            instance.recibo_pago,
+            instance.foto,
+            instance.constancia_estudios,
+        ]
+        for archivo in archivos:
+            if archivo and hasattr(archivo, 'name') and archivo.name:
+                key = f"media/{archivo.name.lstrip('/')}"  # Asegura el prefijo correcto
+                try:
+                    print(f"Eliminando archivo {key} de S3...")
+                    s3.delete_object(Bucket=bucket_name, Key=key)
+                except Exception as e:
+                    print(f"Error eliminando archivo {key} de S3: {str(e)}")
+
+        try:
+            user = instance.user
+        except Exception:
+            pass
+
+        self.perform_destroy(instance)
+        if user:
+            try:
+                from rest_framework.authtoken.models import Token
+                Token.objects.filter(user=user).delete()
+                user.delete()
+            except Exception as e:
+                print(f"Error eliminando usuario: {str(e)}")
+        # Retorna respuesta exitosa sin llamar a super().destroy()
+        return Response({"detail": "Estudiante y archivos eliminados correctamente."}, status=status.HTTP_204_NO_CONTENT)
+    
+    @swagger_auto_schema(
+        operation_summary="Comprobar la conexión con Amazon S3",
+        operation_description="Establece una conexión con Amazon S3 y retorna un mensaje de éxito o error"
+    )
+    @action(detail=False, methods=['get'], permission_classes=[IsAdministrador])
+    def conexion_s3(self, request):
+        """
+        Establece la conexión con Amazon S3.
+        """
+        try:
+            s3 = self.get_s3_client()
+            # Verificar si el bucket existe
+            s3.head_bucket(Bucket=os.getenv('AWS_STORAGE_BUCKET_NAME', 'archivos-estudiantes'))
+            return Response({"detail": "Conexión exitosa a Amazon S3"}, status=status.HTTP_200_OK)
+        except NoCredentialsError:
+            return Response({"detail": "Credenciales de AWS no válidas"}, status=status.HTTP_400_BAD_REQUEST)
+        except ClientError as e:
+            return Response({"detail": f"Error al conectar con S3: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(
+        method='post',
+        operation_summary="Eliminar estudiantes por lote",
+        operation_description="Elimina varios estudiantes y sus archivos de S3. Recibe una lista de IDs.",
+        request_body=LoteEliminarSerializer,
+        responses={200: 'Estudiantes eliminados correctamente', 400: 'Error en la solicitud'}
+    )
+    @action(detail=False, methods=['post'], permission_classes=[IsAdministrador])
+    def eliminar_lote(self, request):
+        serializer = LoteEliminarSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        ids = serializer.validated_data['ids']
+        
+        s3 = boto3.client(
+            's3',
+            aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID', ''),
+            aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY', ''),
+            region_name=os.getenv('AWS_S3_REGION_NAME', 'us-east-1'),
+        )
+        bucket_name = os.getenv('AWS_STORAGE_BUCKET_NAME', 'archivos-estudiantes')
+
+        eliminados = []
+        errores = []
+        for id_est in ids:
+            try:
+                estudiante = Estudiante.objects.get(pk=id_est)
+                archivos = [
+                    estudiante.documento_identidad,
+                    estudiante.recibo_pago,
+                    estudiante.foto,
+                    estudiante.constancia_estudios,
+                ]
+                for archivo in archivos:
+                    if archivo and hasattr(archivo, 'name') and archivo.name:
+                        key = f"media/{archivo.name.lstrip('/')}"
+                        try:
+                            s3.delete_object(Bucket=bucket_name, Key=key)
+                        except Exception as e:
+                            print(f"Error eliminando archivo {key} de S3: {str(e)}")
+                user = getattr(estudiante, 'user', None)
+                estudiante.delete()
+                if user:
+                    try:
+                        from rest_framework.authtoken.models import Token
+                        Token.objects.filter(user=user).delete()
+                        user.delete()
+                    except Exception as e:
+                        print(f"Error eliminando usuario: {str(e)}")
+                eliminados.append(id_est)
+            except Estudiante.DoesNotExist:
+                errores.append(id_est)
+        
+        return Response({
+            "eliminados": eliminados,
+            "no_encontrados": errores,
+            "detail": "Proceso de eliminación por lote finalizado."
+        }, status=status.HTTP_200_OK)
+
+
+

@@ -25,9 +25,9 @@ class AdministradorViewSet(viewsets.ModelViewSet):
     """
     queryset = Administrador.objects.all()
     serializer_class = AdministradorSerializer
-    """
-    permission_classes = [IsAuthenticated, IsAdministrador]
     
+    #permission_classes = [IsAuthenticated, IsAdministrador]
+    """
     def get_permissions(self):
         
         Define permisos para todas las acciones:
@@ -36,13 +36,13 @@ class AdministradorViewSet(viewsets.ModelViewSet):
         
         permission_classes = [IsAuthenticated, IsAdministrador]
         return [permission() for permission in permission_classes]
-    """
+        """
+    
     @swagger_auto_schema(
         operation_summary="Listar todos los administradores",
         operation_description="Retorna una lista de todos los administradores, registrados"
     )
     def list(self, request, *args, **kwargs):
-        print("Listando administradores",)
         return super().list(request, *args, **kwargs)
     
     @swagger_auto_schema(
@@ -109,7 +109,6 @@ class AdministradorViewSet(viewsets.ModelViewSet):
     )
     def update(self, request, *args, **kwargs):
         data = request.data
-        print(f"Actualizando administrador con ID {kwargs['pk']} y datos: {data}")
 
         #Actualizar el objeto usando el serializador
         partial = kwargs.pop('partial', False)
@@ -117,8 +116,6 @@ class AdministradorViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance, data=data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
-
-        print("Administrador actualizado exitosamente")
 
         #Responder con los datos del administrador actualizado
         return Response(serializer.data)
@@ -136,4 +133,23 @@ class AdministradorViewSet(viewsets.ModelViewSet):
         operation_description="Elimina permanentemente un administrador del sistema"
     )
     def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        
+        user = None
+        
+        try:
+            user = instance.user
+        except Exception:
+            pass
+        
+        if user:
+            try:
+                # Primero eliminar tokens asociados si los hay
+                from rest_framework.authtoken.models import Token
+                Token.objects.filter(user=user).delete()
+                # Luego eliminar el usuario
+                user.delete()
+            except Exception as e:
+                # Log the error but don't interrupt the response
+                print(f"Error eliminando usuario: {str(e)}")
         return super().destroy(request, *args, **kwargs)

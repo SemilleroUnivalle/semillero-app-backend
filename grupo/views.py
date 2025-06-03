@@ -26,16 +26,11 @@ class GrupoViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         """
-        Define permisos según la acción solicitada:
-        - create: Estudiantes y administradores pueden crear
-        - list, retrieve, update, partial_update, destroy: Solo administradores
+        Define permisos para todas las acciones:
+        - Solo los administradores pueden realizar cualquier operación
+        - Estudiantes y profesores no tienen acceso
         """
-        if self.action == 'create':
-            # Estudiantes y administradores pueden crear acudientes
-            permission_classes = [IsEstudiante | IsAdministrador]
-        else:
-            # Solo administradores pueden listar, ver detalles, actualizar y eliminar
-            permission_classes = [IsAdministrador]
+        permission_classes = [IsAuthenticated, IsAdministrador]
         return [permission() for permission in permission_classes]
     
     @swagger_auto_schema(
@@ -43,7 +38,9 @@ class GrupoViewSet(viewsets.ModelViewSet):
         operation_description="Retorna una lista de todos los grupos registrados"
     )
     def list(self, request, *args, **kwargs):
-        print("Listando los grupos")
+        queryset = self.filter_queryset(self.get_queryset())
+        if not queryset.exists():
+            return Response(status=status.HTTP_204_NO_CONTENT)
         return super().list(request, *args, **kwargs)
     
     @swagger_auto_schema(
@@ -56,14 +53,11 @@ class GrupoViewSet(viewsets.ModelViewSet):
     )
     def create(self, request, *args, **kwargs):
         data = request.data
-        print(f"Creando un grupo, con datos: {data}")
 
         #Crear el objeto usando el serializador
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
-
-        print("grupo creada exitosamente")
 
         #Responder con los datos del nuevna grupo",
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -81,7 +75,6 @@ class GrupoViewSet(viewsets.ModelViewSet):
     )
     def update(self, request, *args, **kwargs):
         data = request.data
-        print(f"Actualizandna grupo, con ID {kwargs['pk']} y datos: {data}")
 
         #Actualizar el objeto usando el serializador
         partial = kwargs.pop('partial', False)
@@ -89,8 +82,6 @@ class GrupoViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance, data=data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
-
-        print("grupo actualizado exitosamente")
 
         #Responder con los datos dena grupo", actualizado
         return Response(serializer.data)
