@@ -12,13 +12,6 @@ def delete_user_when_estudiante_deleted(sender, instance, **kwargs):
         Token.objects.filter(user=user).delete()
         # Luego elimina el usuario
         user.delete()
-    except AttributeError as e:
-        # Si no hay usuario, simplemente continúa
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.warning(f"Error al acceder al usuario del estudiante: {e}")
-    except Token.DoesNotExist as e:
-        # Si no hay tokens, simplemente continúa
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.warning(f"Error al eliminar tokens: {e}")
+    except Exception:
+        # Si no hay usuario o tokens, simplemente continúa
+        pass

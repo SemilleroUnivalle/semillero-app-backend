@@ -11,7 +11,7 @@ from .serializers import AcudienteSerializer
 #Autenticacion
 from rest_framework.permissions import IsAuthenticated, AllowAny
 #Permisos
-from cuenta.permissions import IsEstudiante, IsProfesor, IsAdministrador, IsProfesorOrAdministrador
+from cuenta.permissions import IsEstudiante, IsProfesor, IsAdministrador, IsProfesorOrAdministrador, IsEstudianteOrAdministrador
 
 class AcudienteViewSet(viewsets.ModelViewSet):
     """
@@ -37,7 +37,7 @@ class AcudienteViewSet(viewsets.ModelViewSet):
             permission_classes = [AllowAny]
         elif self.action in ['update', 'partial_update']:
             # estudiantes pueden actualizar la informacion del acudiente
-            permission_classes = [IsEstudiante | IsAdministrador]
+            permission_classes = [IsEstudianteOrAdministrador]
         else:
             # Solo administradores pueden listar, ver detalles, actualizar y eliminar
             permission_classes = [IsAdministrador]

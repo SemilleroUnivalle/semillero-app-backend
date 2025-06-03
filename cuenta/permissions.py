@@ -29,3 +29,21 @@ class IsProfesorOrAdministrador(permissions.BasePermission):
         if not request.user.is_authenticated:
             return False
         return request.user.user_type in ['profesor', 'administrador']
+    
+class  IsEstudianteOrProfesor(permissions.BasePermission):
+    """
+    Permite acceso a usuarios que son estudiantes o profesores
+    """
+    def has_permission(self, request, view):
+        if not request.user.is_authenticated:
+            return False
+        return request.user.user_type in ['estudiante', 'profesor']
+    
+class IsEstudianteOrAdministrador(permissions.BasePermission):
+    """
+    Permite acceso a usuarios que son estudiantes o administradores
+    """
+    def has_permission(self, request, view):
+        if not request.user.is_authenticated:
+            return False
+        return request.user.user_type in ['estudiante', 'administrador']

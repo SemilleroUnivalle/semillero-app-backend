@@ -11,9 +11,9 @@ from cuenta.models import CustomUser
 #Serializadores
 from .serializers import ProfesorSerializer
 #Autenticacion
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 #Permisos
-from cuenta.permissions import IsEstudiante, IsProfesor, IsAdministrador, IsProfesorOrAdministrador
+from cuenta.permissions import IsAdministrador, IsProfesorOrAdministrador
 
 
 class ProfesorViewSet(viewsets.ModelViewSet):
@@ -32,7 +32,12 @@ class ProfesorViewSet(viewsets.ModelViewSet):
         - Solo los administradores pueden realizar cualquier operación
         - Estudiantes y profesores no tienen acceso
         """
-        permission_classes = [IsAuthenticated, IsAdministrador]
+        if self.action in ['create']:
+            permission_classes = [AllowAny]
+        elif self.action in ['update', 'partial_update', 'retrive']:
+            permission_classes = [IsProfesorOrAdministrador]
+        else: 
+            permission_classes = [IsAdministrador]
         return [permission() for permission in permission_classes]
     
     @swagger_auto_schema(

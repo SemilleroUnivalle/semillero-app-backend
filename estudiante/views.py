@@ -17,7 +17,7 @@ from .serializers import EstudianteSerializer, LoteEliminarSerializer
 #Autenticacion
 from rest_framework.permissions import IsAuthenticated, AllowAny
 #Permisos
-from cuenta.permissions import IsEstudiante, IsProfesor, IsAdministrador, IsProfesorOrAdministrador
+from cuenta.permissions import IsEstudiante, IsProfesor, IsAdministrador, IsProfesorOrAdministrador, IsEstudianteOrProfesor, IsEstudianteOrAdministrador
 from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 #Transacciones atomicas
 from django.db import transaction
@@ -51,7 +51,7 @@ class EstudianteViewSet(viewsets.ModelViewSet):
         elif self.action in ['retrieve', 'update', 'partial_update']:
             # Estudiantes pueden ver/editar su perfil, administradores pueden todos
             # La restricción de que el estudiante solo vea su perfil se controla en retrieve
-            permission_classes = [IsEstudiante | IsAdministrador]
+            permission_classes = [IsEstudianteOrAdministrador]
         elif self.action in ['create']:
             permission_classes = [AllowAny]
         elif self.action in ['destroy']:
@@ -173,14 +173,6 @@ class EstudianteViewSet(viewsets.ModelViewSet):
             return Response({'detail': 'Estudiante creado exitosamente'}, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({'detail': f'Error al crear estudiante: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
-
-    @swagger_auto_schema(
-        operation_summary="Obtener un estudiante específico",
-        operation_description="Retorna los detalles de un estudiante específico por su ID"
-    )
-    def retrieve(self, request, *args, **kwargs):
-        return super().retrieve(request, *args, **kwargs)
-    
     @swagger_auto_schema(
         operation_summary="Actualizar un estudiante",
         operation_description="Actualiza todos los campos de un estudiante existente"
@@ -257,7 +249,18 @@ class EstudianteViewSet(viewsets.ModelViewSet):
             # Si solo se cambió la contraseña y no hay otros campos, devolvemos los datos actualizados
             serializer = self.get_serializer(instance)
             return Response(serializer.data)
-        
+    
+    def get_s3_client(self):
+        """
+        Retorna un cliente de boto3 para S3 usando las variables de entorno.
+        """
+        return boto3.client(
+            's3',
+            aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID', ''),
+            aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY', ''),
+            region_name=os.getenv('AWS_S3_REGION_NAME', 'us-east-1'),
+    )
+    
     @swagger_auto_schema(
         operation_summary="Eliminar un estudiante",
         operation_description="Elimina permanentemente un estudiante del sistema"
@@ -309,12 +312,7 @@ class EstudianteViewSet(viewsets.ModelViewSet):
         Establece la conexión con Amazon S3.
         """
         try:
-            s3 = boto3.client(
-                's3',
-                aws_access_key_id= os.getenv('AWS_ACCESS_KEY_ID', ''),
-                aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY', ''),
-                region_name=os.getenv('AWS_S3_REGION_NAME', 'us-east-1'),
-        )
+            s3 = self.get_s3_client()
             # Verificar si el bucket existe
             s3.head_bucket(Bucket=os.getenv('AWS_STORAGE_BUCKET_NAME', 'archivos-estudiantes'))
             return Response({"detail": "Conexión exitosa a Amazon S3"}, status=status.HTTP_200_OK)

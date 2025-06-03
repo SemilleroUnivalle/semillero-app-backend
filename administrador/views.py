@@ -43,7 +43,6 @@ class AdministradorViewSet(viewsets.ModelViewSet):
         operation_description="Retorna una lista de todos los administradores, registrados"
     )
     def list(self, request, *args, **kwargs):
-        print("Listando administradores",)
         return super().list(request, *args, **kwargs)
     
     @swagger_auto_schema(

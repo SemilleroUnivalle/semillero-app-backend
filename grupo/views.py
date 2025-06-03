@@ -26,16 +26,11 @@ class GrupoViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         """
-        Define permisos según la acción solicitada:
-        - create: Estudiantes y administradores pueden crear
-        - list, retrieve, update, partial_update, destroy: Solo administradores
+        Define permisos para todas las acciones:
+        - Solo los administradores pueden realizar cualquier operación
+        - Estudiantes y profesores no tienen acceso
         """
-        if self.action == 'create':
-            # Estudiantes y administradores pueden crear acudientes
-            permission_classes = [IsEstudiante | IsAdministrador]
-        else:
-            # Solo administradores pueden listar, ver detalles, actualizar y eliminar
-            permission_classes = [IsAdministrador]
+        permission_classes = [IsAuthenticated, IsAdministrador]
         return [permission() for permission in permission_classes]
     
     @swagger_auto_schema(

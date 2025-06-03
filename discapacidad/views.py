@@ -11,7 +11,7 @@ from .serializers import DiscapacidadSerializer
 #Autenticacion
 from rest_framework.permissions import IsAuthenticated
 #Permisos
-from cuenta.permissions import IsEstudiante, IsProfesor, IsAdministrador, IsProfesorOrAdministrador
+from cuenta.permissions import IsAdministrador, IsEstudianteOrAdministrador
 
 class DiscapacidadViewSet(viewsets.ModelViewSet):
     """
@@ -30,7 +30,7 @@ class DiscapacidadViewSet(viewsets.ModelViewSet):
         """
         if self.action == 'create':
             # Estudiantes y administradores pueden crear acudientes
-            permission_classes = [IsEstudiante | IsAdministrador]
+            permission_classes = [IsEstudianteOrAdministrador]
         else:
             # Solo administradores pueden listar, ver detalles, actualizar y eliminar
             permission_classes = [IsAdministrador]

@@ -11,4 +11,4 @@ staticfiles/
 venv/
 ENV/
 node_modules/
-.env 
+.env

@@ -30,7 +30,7 @@ class SeguimientoAcademicoViewSet(viewsets.ModelViewSet):
         - Solo los administradores pueden realizar cualquier operación
         - Estudiantes y profesores no tienen acceso
         """
-        permission_classes = [IsAuthenticated, IsAdministrador]
+        permission_classes = [IsAuthenticated, IsProfesorOrAdministrador]
         return [permission() for permission in permission_classes]
     
     @swagger_auto_schema(
