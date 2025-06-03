@@ -1,9 +1,6 @@
-<<<<<<< HEAD
-=======
 import os
 from dotenv import load_dotenv
 load_dotenv()
->>>>>>> staging
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from django.contrib.auth.hashers import make_password
@@ -16,14 +13,6 @@ from .models import Estudiante
 from cuenta.models import CustomUser
 from acudiente.models import Acudiente
 #Serializadores
-<<<<<<< HEAD
-from .serializers import EstudianteSerializer
-#Autenticacion
-from rest_framework.permissions import IsAuthenticated, AllowAny
-#Permisos
-from cuenta.permissions import IsEstudiante, IsProfesor, IsAdministrador, IsProfesorOrAdministrador
-
-=======
 from .serializers import EstudianteSerializer, LoteEliminarSerializer
 #Autenticacion
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -37,7 +26,6 @@ import boto3
 from botocore.exceptions import NoCredentialsError, ClientError
 from rest_framework.decorators import action
 from rest_framework.response import Response
->>>>>>> staging
 
 class EstudianteViewSet(viewsets.ModelViewSet):
     """
