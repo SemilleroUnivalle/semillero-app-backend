@@ -9,12 +9,6 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 Para la lista completa de configuraciones y sus valores, consulta
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
-<<<<<<< HEAD
-
-from pathlib import Path
-from datetime import timedelta
-import os
-=======
 from dotenv import load_dotenv
 load_dotenv()
 from pathlib import Path
@@ -23,7 +17,6 @@ import os
 import dj_database_url
 from storages.backends.s3boto3 import S3Boto3Storage
 
->>>>>>> staging
 # Construye rutas dentro del proyecto como esta: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -43,11 +36,6 @@ ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
     '0.0.0.0',
-<<<<<<< HEAD
-    #ip publica servidor aws
-    # otros hosts permitidos...
-=======
->>>>>>> staging
 ]
 
 # Definición de aplicaciones
@@ -62,10 +50,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'rest_framework.authtoken',
-<<<<<<< HEAD
-=======
     'django_rest_passwordreset',
->>>>>>> staging
     'drf_yasg',
     'psycopg2',
     'estudiante',
@@ -88,11 +73,8 @@ INSTALLED_APPS = [
     'oferta_academica',
     'categoria',
     'oferta_categoria',
-<<<<<<< HEAD
-=======
     'recuperacion_contrasena',
     'storages',
->>>>>>> staging
 ]
 
 REST_FRAMEWORK = {
