@@ -143,7 +143,6 @@ class AdministradorViewSet(viewsets.ModelViewSet):
         except Exception:
             pass
         
-        self.perform_destroy(instance)
         if user:
             try:
                 # Primero eliminar tokens asociados si los hay
