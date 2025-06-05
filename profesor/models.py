@@ -10,6 +10,8 @@ class Profesor(models.Model):
     celular = models.CharField(max_length=15, blank=True, null=True)
     contrasena = models.CharField(max_length=100)
     numero_documento = models.CharField(max_length=20, unique=True)
+    area_desempeño = models.CharField(max_length=100, blank=True, null=True)
+    grado_escolaridad = models.CharField(max_length=100, blank=True, null=True)
     
 
     def __str__(self):
