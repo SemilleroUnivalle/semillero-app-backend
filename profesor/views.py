@@ -1,6 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from django.contrib.auth.hashers import make_password
+from rest_framework.decorators import action
 
 #Documentacion
 from drf_yasg.utils import swagger_auto_schema
@@ -8,13 +9,16 @@ from drf_yasg import openapi
 #Modelo
 from .models import Profesor
 from cuenta.models import CustomUser
+from modulo.models import Modulo
+from .serializers import ProfesorSerializer, AsignacionProfesorSerializer
 #Serializadores
 from .serializers import ProfesorSerializer
 #Autenticacion
 from rest_framework.permissions import IsAuthenticated, AllowAny
 #Permisos
 from cuenta.permissions import IsAdministrador, IsProfesorOrAdministrador
-
+#Transacciones atomicas
+from django.db import transaction
 
 class ProfesorViewSet(viewsets.ModelViewSet):
     """
@@ -75,36 +79,38 @@ class ProfesorViewSet(viewsets.ModelViewSet):
         # Hashear la contraseña
         hashed_password = make_password(data['contrasena'])
         
-        # Crear el usuario
-        user = CustomUser.objects.create(
-            username=data.get('numero_documento'),
-            password=hashed_password,
-            user_type='profesor',
-            first_name=data.get('nombre'),
-            last_name=data.get('apellido'),
-            email=data.get('correo'),
-            is_active=True,
-            is_staff=True,
-            is_superuser=False,
-        )
-        
-        # Crear el perfil de profesor
-        Profesor.objects.create(
-            user=user,
-            numero_documento=data.get('numero_documento'),
-            nombre=data.get('nombre'),
-            apellido=data.get('apellido'),
-            correo=data.get('correo'),
-            telefono=data.get('telefono'),
-            contrasena=hashed_password,
-            fecha_nacimiento=data.get('fecha_nacimiento'),
-            fecha_contratacion=data.get('fecha_contratacion'),
-            salario=data.get('salario'),
-            
-        )
-
-        # Puedes retornar la información deseada
-        return Response(status=status.HTTP_201_CREATED)
+        try:
+            with transaction.atomic():
+                # Crear el usuario
+                user = CustomUser.objects.create(
+                    username=data.get('numero_documento'),
+                    password=hashed_password,
+                    user_type='profesor',
+                    first_name=data.get('nombre'),
+                    last_name=data.get('apellido'),
+                    email=data.get('email'),
+                    is_active=True,
+                    is_staff=True,
+                    is_superuser=False,
+                )
+                
+                # Crear el perfil de profesor
+                Profesor.objects.create(
+                    user=user,
+                    numero_documento=data.get('numero_documento'),
+                    nombre=data.get('nombre'),
+                    apellido=data.get('apellido'),
+                    email=data.get('email'),
+                    celular=data.get('celular'),
+                    contrasena=hashed_password,
+                    area_desempeño=data.get('area_desempeño', ''),
+                    grado_escolaridad=data.get('grado_escolaridad', ''),
+                    modulo=data.get('modulo', None)
+                )
+                # Puedes retornar la información deseada
+            return Response({'detail': 'Profesor creado exitosamente'}, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({'detail': f'Error al crear profesor: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(
         operation_summary="Obtener un profesor específico",
@@ -164,3 +170,67 @@ class ProfesorViewSet(viewsets.ModelViewSet):
                 # Log the error but don't interrupt the response
                 print(f"Error eliminando usuario: {str(e)}")
         return super().destroy(request, *args, **kwargs)
+    
+    @swagger_auto_schema(
+        operation_summary="Asignar un módulo a un profesor",
+        operation_description="Asigna un módulo específico a un profesor. Si el profesor ya tenía un módulo asignado, se actualiza la asignación.",
+        request_body=AsignacionProfesorSerializer,
+        responses={
+            status.HTTP_200_OK: openapi.Response(
+                description="Asignación exitosa",
+                examples={
+                    "application/json": {
+                        "mensaje": "Asignación realizada correctamente",
+                        "profesor": {
+                            "id": 1,
+                            "nombre": "Juan Pérez"
+                        },
+                        "modulo": {
+                            "id": 2,
+                            "nombre": "Matemáticas"
+                        }
+                    }
+                }
+            ),
+            status.HTTP_404_NOT_FOUND: "Profesor o módulo no encontrado",
+            status.HTTP_400_BAD_REQUEST: "Datos de entrada inválidos"
+        }
+    )
+    @action(detail=False, methods=['post'])
+    def asignar_modulo(self, request):
+        serializer = AsignacionProfesorSerializer(data=request.data)
+        
+        if serializer.is_valid():
+            profesor_id = serializer.validated_data['id_profesor']
+            modulo_id = serializer.validated_data['id_modulo']
+            
+            try:
+                profesor = Profesor.objects.get(id_profesor=profesor_id)
+                modulo = Modulo.objects.get(id_modulo=modulo_id)
+                
+                # Si el profesor ya tenía un módulo asignado, mostramos mensaje informativo
+                mensaje = "Asignación realizada correctamente"
+                if profesor.modulo:
+                    mensaje = f"El profesor estaba asignado al módulo {profesor.modulo.nombre_modulo}. Se ha actualizado la asignación."
+                
+                profesor.modulo = modulo
+                profesor.save()
+                
+                return Response({
+                    "mensaje": mensaje,
+                    "profesor": {
+                        "id": profesor.id_profesor,
+                        "nombre": f"{profesor.nombre} {profesor.apellido}"
+                    },
+                    "modulo": {
+                        "id": modulo.id_modulo,
+                        "nombre": modulo.nombre_modulo
+                    }
+                }, status=status.HTTP_200_OK)
+                
+            except Profesor.DoesNotExist:
+                return Response({"error": "Profesor no encontrado"}, status=status.HTTP_404_NOT_FOUND)
+            except Modulo.DoesNotExist:
+                return Response({"error": "Módulo no encontrado"}, status=status.HTTP_404_NOT_FOUND)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

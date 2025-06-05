@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from modulo.models import Modulo
 
 class Profesor(models.Model):
     id_profesor = models.AutoField(primary_key=True)
@@ -12,8 +13,8 @@ class Profesor(models.Model):
     numero_documento = models.CharField(max_length=20, unique=True)
     area_desempeño = models.CharField(max_length=100, blank=True, null=True)
     grado_escolaridad = models.CharField(max_length=100, blank=True, null=True)
+    modulo = models.ForeignKey(Modulo, on_delete=models.SET_NULL, related_name='profesores', null=True, blank=True)
     
-
     def __str__(self):
         return (
             f"ID: {self.id_profesor} | "
