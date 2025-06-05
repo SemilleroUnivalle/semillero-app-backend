@@ -14,18 +14,22 @@ class LoginView(APIView):
     
     @swagger_auto_schema(
         operation_summary="Iniciar sesión",
-        operation_description="Permite a un estudiante iniciar sesión con su número de documento y contraseña",
+        operation_description="Permite a un usuario iniciar sesión con su número de documento y contraseña",
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                'numero_documento': openapi.Schema(type=openapi.TYPE_STRING, description='Número de documento del estudiante'),
-                'contrasena': openapi.Schema(type=openapi.TYPE_STRING, description='Contraseña del estudiante')
+                'numero_documento': openapi.Schema(type=openapi.TYPE_STRING, description='Número de documento del usuario'),
+                'contrasena': openapi.Schema(type=openapi.TYPE_STRING, description='Contraseña del usuario')
             }
         ),
         responses={
             status.HTTP_200_OK: openapi.Response('Inicio de sesión exitoso',
-                                                  openapi.Schema(type=openapi.TYPE_OBJECT,
-                                                  properties={'token': openapi.Schema(type=openapi.TYPE_STRING)})),
+                                                openapi.Schema(type=openapi.TYPE_OBJECT,
+                                                properties={
+                                                    'token': openapi.Schema(type=openapi.TYPE_STRING),
+                                                    'tipo_usuario': openapi.Schema(type=openapi.TYPE_STRING, description='Tipo de usuario: administrador, profesor o estudiante'),
+                                                    'id': openapi.Schema(type=openapi.TYPE_INTEGER, description='ID específico del usuario según su tipo')
+                                                })),
             status.HTTP_400_BAD_REQUEST: "Falta numero_documento o contrasena",
             status.HTTP_401_UNAUTHORIZED: "Credenciales inválidas"
         }
@@ -44,4 +48,36 @@ class LoginView(APIView):
             return Response({'detail': 'Credenciales inválidas'}, status=status.HTTP_401_UNAUTHORIZED)
 
         token, created = Token.objects.get_or_create(user=user)
-        return Response({'token': token.key, 'tipo_usuario':user.user_type}, status=status.HTTP_200_OK)
+        
+        # Obtener el ID específico según el tipo de usuario
+        user_id = None
+        tipo_usuario = user.user_type
+        
+        if tipo_usuario == 'administrador':
+            try:
+                from administrador.models import Administrador
+                admin = Administrador.objects.get(numero_documento=numero_documento)
+                user_id = admin.id_administrador
+            except Exception as e:
+                print(f"Error al buscar administrador: {str(e)}")
+        elif tipo_usuario == 'profesor':
+            try:
+                from profesor.models import Profesor
+                profesor = Profesor.objects.get(numero_documento=numero_documento)
+                user_id = profesor.id_profesor
+            except Exception as e:
+                print(f"Error al buscar profesor: {str(e)}")
+        elif tipo_usuario == 'estudiante':
+            try:
+                from estudiante.models import Estudiante
+                estudiante = Estudiante.objects.get(numero_documento=numero_documento)
+                user_id = estudiante.id_estudiante
+            except Exception as e:
+                print(f"Error al buscar estudiante: {str(e)}")
+        
+        # Devolver token, tipo de usuario y el ID específico
+        return Response({
+            'token': token.key,
+            'tipo_usuario': tipo_usuario,
+            'id': user_id
+        }, status=status.HTTP_200_OK)
