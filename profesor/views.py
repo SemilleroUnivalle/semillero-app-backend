@@ -12,7 +12,6 @@ from cuenta.models import CustomUser
 from modulo.models import Modulo
 from .serializers import ProfesorSerializer, AsignacionProfesorSerializer
 #Serializadores
-from .serializers import ProfesorSerializer
 #Autenticacion
 from rest_framework.permissions import IsAuthenticated, AllowAny
 #Permisos
