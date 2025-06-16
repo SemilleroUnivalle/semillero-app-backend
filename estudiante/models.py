@@ -38,7 +38,6 @@ class Estudiante(models.Model):
         blank=False,
     )
     ciudad_residencia = models.CharField(max_length=100)
-    ciudad_documento = models.CharField(max_length=100) #La ciudad donde se expidió el documento de identidad
     eps = models.CharField(max_length=100) #Entidad promotora de salud
     grado = models.CharField(max_length=20) #Grado al que pertenece el estudiante
     tipo_documento = models.CharField(max_length=20) #Tipo de documento de identidad
@@ -77,8 +76,8 @@ class Estudiante(models.Model):
             f"ID: {self.id_estudiante} | Usuario: {self.user} | "
             f"Nombre: {self.nombre} {self.apellido} | Doc: {self.tipo_documento} {self.numero_documento} | "
             f"Email: {self.email} | Activo: {self.is_active} |"
-            f"{acudiente_info} | Ciudad res.: {self.ciudad_residencia} | Ciudad doc.: {self.ciudad_documento} | "
-            f"EPS: {self.id_eps} | Grado: {self.grado} | Género: {self.genero} | "
+            f"{acudiente_info} | Ciudad res.: {self.ciudad_residencia} |"
+            f"EPS: {self.eps} | Grado: {self.grado} | Género: {self.genero} | "
             f"Fecha nac.: {self.fecha_nacimiento} | Tel. fijo: {self.telefono_fijo} | "
             f"Celular: {self.celular} | Dpto. res.: {self.departamento_residencia} | "
             f"Comuna: {self.comuna_residencia} | Dirección: {self.direccion_residencia} | "

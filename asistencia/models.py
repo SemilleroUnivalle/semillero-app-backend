@@ -1,5 +1,7 @@
 from django.db import models
 from inscripcion.models import Inscripcion
+from django.db.models.signals import post_save
+import json
 
 class Asistencia(models.Model):
     id_asistencia = models.AutoField(primary_key=True)

@@ -75,6 +75,7 @@ INSTALLED_APPS = [
     'oferta_categoria',
     'recuperacion_contrasena',
     'storages',
+    'channels'
 ]
 
 REST_FRAMEWORK = {
@@ -277,5 +278,4 @@ STORAGES = {
 }
 
 MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/media/'
-
 
