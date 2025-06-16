@@ -21,11 +21,18 @@ from cuenta.permissions import IsEstudiante, IsProfesor, IsAdministrador, IsProf
 from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 #Transacciones atomicas
 from django.db import transaction
-
+#HTTP
+from django.http import HttpResponse
+from rest_framework.response import Response
+#fecha y hora 
+from datetime import datetime
+#Amazon S3
 import boto3
 from botocore.exceptions import NoCredentialsError, ClientError
+#Acciones
 from rest_framework.decorators import action
-from rest_framework.response import Response
+#Excel
+import xlwt
 
 class EstudianteViewSet(viewsets.ModelViewSet):
     """
@@ -148,7 +155,6 @@ class EstudianteViewSet(viewsets.ModelViewSet):
                     is_active=data.get('is_active'),
                     acudiente=acudiente_instancia,
                     ciudad_residencia=data.get('ciudad_residencia'),
-                    ciudad_documento=data.get('ciudad_documento'),
                     eps=data.get('eps'),
                     grado=data.get('grado'),
                     tipo_documento=data.get('tipo_documento'),
@@ -379,6 +385,101 @@ class EstudianteViewSet(viewsets.ModelViewSet):
             "no_encontrados": errores,
             "detail": "Proceso de eliminación por lote finalizado."
         }, status=status.HTTP_200_OK)
+        
+    @action(detail=False, methods=['get'], url_path='export-excel',
+            permission_classes=[IsAdministrador])
+    def export_excel(self, request):
+        # Obtener todos los acudientes
+        acudientes = self.get_queryset()
+        
+        # Crear un nuevo libro de trabajo y una hoja
+        workbook = xlwt.Workbook(encoding='utf-8')
+        worksheet = workbook.add_sheet('Estudiantes')
+        
+        # Definir estilo para el encabezado
+        header_style = xlwt.easyxf('font: bold True, color black; align: horiz center; pattern: pattern solid, fore_color gray25;')
+        
+        # Definir encabezados
+        headers = [
+            'ID', 'Nombre', 'Apellido', 'Número Documento', 'Email', 'Activo',
+            'Acudiente', 'Ciudad Residencia', 'Ciudad Documento', 'EPS',
+            'Grado', 'Tipo Documento', 'Género', 'Fecha Nacimiento',
+            'Teléfono Fijo', 'Celular', 'Departamento Residencia',
+            'Comuna Residencia', 'Dirección Residencia', 'Estamento',
+            'Discapacidad', 'Tipo Discapacidad', 'Descripción Discapacidad',
+            'Documento Identidad', 'Recibo Pago', 'Foto', 'Constancia Estudios'
+        ]
+        
+        # Escribir encabezados
+        for col_num, header in enumerate(headers):
+            worksheet.write(0, col_num, header, header_style)
+            # Ajustar ancho de columna
+            worksheet.col(col_num).width = 256 * 18  # Aproximadamente 18 caracteres de ancho
+        
+        # Estilo para fechas
+        date_style = xlwt.easyxf(num_format_str='DD/MM/YYYY')
+        
+        # Obtener todos los estudiantes
+        estudiantes = Estudiante.objects.all()
+        
+        # Escribir datos de estudiantes
+        for row_num, estudiante in enumerate(estudiantes, 1):
+            # Preparar URL base para archivos
+            base_url = request.build_absolute_uri('/').rstrip('/')
+            
+            # Verificar si hay archivos y obtener URLs
+            doc_identidad_url = base_url + estudiante.documento_identidad.url if estudiante.documento_identidad else "No disponible"
+            recibo_url = base_url + estudiante.recibo_pago.url if estudiante.recibo_pago else "No disponible"
+            foto_url = base_url + estudiante.foto.url if estudiante.foto else "No disponible"
+            constancia_url = base_url + estudiante.constancia_estudios.url if estudiante.constancia_estudios else "No disponible"
+            
+            # Obtener nombre del acudiente
+            nombre_acudiente = f"{estudiante.acudiente.nombre_acudiente} {estudiante.acudiente.apellido_acudiente}" if estudiante.acudiente else "No asignado"
+            
+            # Lista de datos
+            row = [
+                estudiante.id_estudiante,
+                estudiante.nombre,
+                estudiante.apellido,
+                estudiante.numero_documento,
+                estudiante.email,
+                "Sí" if estudiante.is_active else "No",
+                nombre_acudiente,
+                estudiante.ciudad_residencia,
+                estudiante.eps,
+                estudiante.grado,
+                estudiante.tipo_documento,
+                estudiante.genero,
+                estudiante.fecha_nacimiento,  # Se aplicará estilo de fecha
+                estudiante.telefono_fijo,
+                estudiante.celular,
+                estudiante.departamento_residencia,
+                estudiante.comuna_residencia,
+                estudiante.direccion_residencia,
+                estudiante.estamento,
+                "Sí" if estudiante.discapacidad else "No",
+                estudiante.tipo_discapacidad,
+                estudiante.descripcion_discapacidad,
+                doc_identidad_url,
+                recibo_url,
+                foto_url,
+                constancia_url
+            ]
+            
+            # Escribir fila de datos
+            for col_num, cell_value in enumerate(row):
+                if col_num == 13:  # Columna de fecha (fecha_nacimiento)
+                    worksheet.write(row_num, col_num, cell_value, date_style)
+                else:
+                    worksheet.write(row_num, col_num, cell_value)
+        
+        # Configurar respuesta HTTP con el archivo Excel
+        response = HttpResponse(content_type='application/ms-excel')
+        filename = f'estudiantes_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xls'
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        workbook.save(response)
+        
+        return response
 
 
 
