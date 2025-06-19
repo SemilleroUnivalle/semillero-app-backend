@@ -40,6 +40,7 @@ class Estudiante(models.Model):
     ciudad_residencia = models.CharField(max_length=100)
     eps = models.CharField(max_length=100) #Entidad promotora de salud
     grado = models.CharField(max_length=20) #Grado al que pertenece el estudiante
+    colegio = models.CharField(max_length=100, default='N/A') #Colegio al que pertenece el estudiante
     tipo_documento = models.CharField(max_length=20) #Tipo de documento de identidad
     genero = models.CharField(max_length=10) #Género del estudiante
     fecha_nacimiento = models.DateField() #Fecha de nacimiento del estudiante
@@ -52,6 +53,8 @@ class Estudiante(models.Model):
     discapacidad = models.BooleanField(default=False) #Indica si el estudiante tiene alguna discapacidad
     tipo_discapacidad = models.CharField(max_length=50, default='Ninguna') #Tipo de discapacidad del estudiante
     descripcion_discapacidad = models.TextField(max_length=100, default='Ninguna') #Descripción de la discapacidad del estudiante
+    area_desempeño = models.CharField(max_length=100, blank=True, null=True) #En el caso de los profesores que van para formacion docente
+    grado_escolaridad = models.CharField(max_length=100, blank=True, null=True) #En el caso de los profesores que van para formacion docente
 
     documento_identidad = models.FileField(
         upload_to=documento_identidad_upload_to, null=True, blank=True,
