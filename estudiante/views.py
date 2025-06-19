@@ -31,8 +31,8 @@ import boto3
 from botocore.exceptions import NoCredentialsError, ClientError
 #Acciones
 from rest_framework.decorators import action
-#Excel
-import xlwt
+#pandas
+import pandas as pd
 
 class EstudianteViewSet(viewsets.ModelViewSet):
     """
@@ -389,96 +389,51 @@ class EstudianteViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], url_path='export-excel',
             permission_classes=[IsAdministrador])
     def export_excel(self, request):
-        # Obtener todos los acudientes
-        acudientes = self.get_queryset()
-        
-        # Crear un nuevo libro de trabajo y una hoja
-        workbook = xlwt.Workbook(encoding='utf-8')
-        worksheet = workbook.add_sheet('Estudiantes')
-        
-        # Definir estilo para el encabezado
-        header_style = xlwt.easyxf('font: bold True, color black; align: horiz center; pattern: pattern solid, fore_color gray25;')
-        
-        # Definir encabezados
-        headers = [
-            'ID', 'Nombre', 'Apellido', 'Número Documento', 'Email', 'Activo',
-            'Acudiente', 'Ciudad Residencia', 'Ciudad Documento', 'EPS',
-            'Grado', 'Tipo Documento', 'Género', 'Fecha Nacimiento',
-            'Teléfono Fijo', 'Celular', 'Departamento Residencia',
-            'Comuna Residencia', 'Dirección Residencia', 'Estamento',
-            'Discapacidad', 'Tipo Discapacidad', 'Descripción Discapacidad',
-            'Documento Identidad', 'Recibo Pago', 'Foto', 'Constancia Estudios'
-        ]
-        
-        # Escribir encabezados
-        for col_num, header in enumerate(headers):
-            worksheet.write(0, col_num, header, header_style)
-            # Ajustar ancho de columna
-            worksheet.col(col_num).width = 256 * 18  # Aproximadamente 18 caracteres de ancho
-        
-        # Estilo para fechas
-        date_style = xlwt.easyxf(num_format_str='DD/MM/YYYY')
-        
-        # Obtener todos los estudiantes
-        estudiantes = Estudiante.objects.all()
-        
-        # Escribir datos de estudiantes
-        for row_num, estudiante in enumerate(estudiantes, 1):
-            # Preparar URL base para archivos
-            base_url = request.build_absolute_uri('/').rstrip('/')
-            
-            # Verificar si hay archivos y obtener URLs
-            doc_identidad_url = base_url + estudiante.documento_identidad.url if estudiante.documento_identidad else "No disponible"
-            recibo_url = base_url + estudiante.recibo_pago.url if estudiante.recibo_pago else "No disponible"
-            foto_url = base_url + estudiante.foto.url if estudiante.foto else "No disponible"
-            constancia_url = base_url + estudiante.constancia_estudios.url if estudiante.constancia_estudios else "No disponible"
-            
-            # Obtener nombre del acudiente
-            nombre_acudiente = f"{estudiante.acudiente.nombre_acudiente} {estudiante.acudiente.apellido_acudiente}" if estudiante.acudiente else "No asignado"
-            
-            # Lista de datos
-            row = [
-                estudiante.id_estudiante,
-                estudiante.nombre,
-                estudiante.apellido,
-                estudiante.numero_documento,
-                estudiante.email,
-                "Sí" if estudiante.is_active else "No",
-                nombre_acudiente,
-                estudiante.ciudad_residencia,
-                estudiante.eps,
-                estudiante.grado,
-                estudiante.tipo_documento,
-                estudiante.genero,
-                estudiante.fecha_nacimiento,  # Se aplicará estilo de fecha
-                estudiante.telefono_fijo,
-                estudiante.celular,
-                estudiante.departamento_residencia,
-                estudiante.comuna_residencia,
-                estudiante.direccion_residencia,
-                estudiante.estamento,
-                "Sí" if estudiante.discapacidad else "No",
-                estudiante.tipo_discapacidad,
-                estudiante.descripcion_discapacidad,
-                doc_identidad_url,
-                recibo_url,
-                foto_url,
-                constancia_url
-            ]
-            
-            # Escribir fila de datos
-            for col_num, cell_value in enumerate(row):
-                if col_num == 13:  # Columna de fecha (fecha_nacimiento)
-                    worksheet.write(row_num, col_num, cell_value, date_style)
-                else:
-                    worksheet.write(row_num, col_num, cell_value)
-        
-        # Configurar respuesta HTTP con el archivo Excel
-        response = HttpResponse(content_type='application/ms-excel')
-        filename = f'estudiantes_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xls'
+        estudiantes = Estudiante.objects.all().select_related('acudiente')
+        data = []
+        for estudiante in estudiantes:
+            row = {
+                'nombre': estudiante.nombre,
+                'apellido': estudiante.apellido,
+                'numero_documento': estudiante.numero_documento,
+                'email': estudiante.email,
+                'ciudad_residencia': estudiante.ciudad_residencia,
+                'eps': estudiante.eps,
+                'grado': estudiante.grado,
+                'tipo_documento': estudiante.tipo_documento,
+                'genero': estudiante.genero,
+                'fecha_nacimiento': estudiante.fecha_nacimiento,
+                'telefono_fijo': estudiante.telefono_fijo,
+                'celular': estudiante.celular,
+                'departamento_residencia': estudiante.departamento_residencia,
+                'comuna_residencia': estudiante.comuna_residencia,
+                'direccion_residencia': estudiante.direccion_residencia,
+                'estamento': estudiante.estamento,
+                'discapacidad': estudiante.discapacidad,
+                'tipo_discapacidad': estudiante.tipo_discapacidad,
+                'descripcion_discapacidad': estudiante.descripcion_discapacidad,
+            }
+            # Agrega los datos del acudiente al final
+            acudiente = estudiante.acudiente
+            if acudiente:
+                row['acudiente_nombre'] = acudiente.nombre_acudiente
+                row['acudiente_apellido'] = acudiente.apellido_acudiente
+                row['acudiente_tipo_documento'] = acudiente.tipo_documento_acudiente
+                row['acudiente_numero_documento'] = acudiente.numero_documento_acudiente
+                row['acudiente_celular'] = acudiente.celular_acudiente
+            else:
+                row['acudiente_nombre'] = ''
+                row['acudiente_apellido'] = ''
+                row['acudiente_tipo_documento'] = ''
+                row['acudiente_numero_documento'] = ''
+                row['acudiente_celular'] = ''
+            data.append(row)
+
+        df = pd.DataFrame(data)
+        filename = f'estudiantes_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
-        workbook.save(response)
-        
+        df.to_excel(response, index=False)
         return response
 
 
