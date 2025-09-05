@@ -75,7 +75,6 @@ INSTALLED_APPS = [
     'oferta_categoria',
     'recuperacion_contrasena',
     'storages',
-    'channels'
 ]
 
 REST_FRAMEWORK = {
@@ -83,6 +82,9 @@ REST_FRAMEWORK = {
          'rest_framework.authentication.TokenAuthentication',
     ),
     'EXCEPTION_HANDLER': 'cuenta.utils.custom_exception_handler',
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend'
+    ]
 }
 
 SIMPLE_JWT = {
@@ -138,7 +140,7 @@ WSGI_APPLICATION = 'semillero_backend.wsgi.application'
 
 # Base de datos
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-
+"""
 DATABASES = {
     # Configuración para usar SQLite
     'default': {
@@ -165,7 +167,7 @@ DATABASES = {
         'PORT': '5432',
     },
 }
-"""
+
 # Validación de contraseñas
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
