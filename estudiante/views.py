@@ -33,6 +33,8 @@ from botocore.exceptions import NoCredentialsError, ClientError
 from rest_framework.decorators import action
 #pandas
 import pandas as pd
+#filtros
+from django_filters.rest_framework import DjangoFilterBackend
 
 class EstudianteViewSet(viewsets.ModelViewSet):
     """
@@ -72,16 +74,25 @@ class EstudianteViewSet(viewsets.ModelViewSet):
     # Modificar retrieve para que estudiante solo vea su propio perfil
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
-        # Si es estudiante, solo puede ver su propio perfil
-        if request.user.user_type == 'estudiante' and (
-            not hasattr(request.user, 'estudiante') or 
-            request.user.estudiante.id_estudiante != instance.id_estudiante
-        ):
-            return Response(
-                {"detail": "No tienes permiso para ver este perfil"}, 
-                status=status.HTTP_403_FORBIDDEN
-            )
+        user = request.user
+        if getattr(user, 'user_type', None) == 'estudiante':
+            estudiante_rel = getattr(user, 'estudiante', None)
+            if not estudiante_rel or estudiante_rel.id_estudiante != instance.id_estudiante:
+                return Response(
+                    {"detail": "No tienes permiso para ver este perfil"},
+                    status=status.HTTP_403_FORBIDDEN
+                )
         serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+    # Acción "me"
+    @action(detail=False, methods=['get'], url_path='me')
+    def me(self, request):
+        if getattr(request.user, 'user_type', None) != 'estudiante':
+            return Response({'detail': 'El usuario autenticado no es estudiante'}, status=status.HTTP_403_FORBIDDEN)
+        # Asumiendo relación OneToOne user.estudiante
+        est = request.user.estudiante
+        serializer = self.get_serializer(est)
         return Response(serializer.data)
     
     @swagger_auto_schema(
@@ -435,6 +446,34 @@ class EstudianteViewSet(viewsets.ModelViewSet):
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
         df.to_excel(response, index=False)
         return response
-
-
-
+    
+    #Filtros
+    @swagger_auto_schema(
+        operation_summary="Filtrar estudiantes por género",
+        operation_description="Filtra los estudiantes por género especificado en los parámetros de la solicitud"
+    )
+    @action(detail=False, methods=['get'], url_path='filtro-genero',
+            permission_classes=[IsAdministrador])
+    def filtro_genero(self, request, *args, **kwargs):
+        
+        genero = request.query_params.get('genero', None)
+        queryset = self.get_queryset()
+        if genero:
+            queryset = queryset.filter(genero=genero)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+    
+    @swagger_auto_schema(
+        operation_summary="Filtrar estudiantes por estamento",
+        operation_description="Filtra los estudiantes por estamento especificado en los parámetros de la solicitud"
+    )
+    @action(detail=False, methods=['get'], url_path='filtro-estamento',
+            permission_classes=[IsAdministrador])
+    def filtro_estamento(self, request, *args, **kwargs):
+        
+        estamento = request.query_params.get('estamento', None)
+        queryset = self.get_queryset()
+        if estamento:
+            queryset = queryset.filter(estamento=estamento)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)

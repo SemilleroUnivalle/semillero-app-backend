@@ -9,9 +9,11 @@ from .models import Inscripcion
 #Serializadores
 from .serializers import InscripcionSerializer
 #Autenticacion
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 #Permisos
 from cuenta.permissions import IsAdministrador, IsEstudianteOrAdministrador
+#Actions
+from rest_framework.decorators import action
 
 
 class InscripcionViewSet(viewsets.ModelViewSet):
@@ -31,7 +33,7 @@ class InscripcionViewSet(viewsets.ModelViewSet):
         - Estudiantes pueden crear inscripciones
         """
         if self.action == 'create':
-            permission_classes = [IsEstudianteOrAdministrador]
+            permission_classes = [AllowAny]
         else:
             permission_classes = [IsAdministrador]
         return [permission() for permission in permission_classes]
@@ -62,7 +64,7 @@ class InscripcionViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
 
-        #Responder con los datos del nuevna inscripcion",
+        #Responder con los datos de la nueva inscripción
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @swagger_auto_schema(
@@ -103,3 +105,50 @@ class InscripcionViewSet(viewsets.ModelViewSet):
     )
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
+
+    #Filtros
+    @swagger_auto_schema(
+        operation_summary="Filtrar inscripcion por tipo de tipo de vinculacion",
+        operation_description="Filtra la inscripcion por tipo de vinculacion especificado en los parámetros de la solicitud"
+    )
+    @action (detail=False, methods=['get'], url_path='filtro-vinculacion',
+            permission_classes=[IsAdministrador])
+    def filtro_tipo_vinculacion(self, request, *args, **kwargs):
+        tipo_vinculacion = request.query_params.get('tipo_vinculacion', None)
+        queryset = self.get_queryset()
+        if tipo_vinculacion:
+            queryset = queryset.filter(tipo_vinculacion=tipo_vinculacion)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @swagger_auto_schema(
+        operation_summary="Filtrar inscripcion por estado (Activo o Inactivo)",
+        operation_description="Filtra la inscripcion por estado especificado en los parámetros de la solicitud"
+    )
+    @action (detail=False, methods=['get'], url_path='filtro-estado',
+            permission_classes=[IsAdministrador])
+    def filtro_estado(self, request, *args, **kwargs):
+        estado = request.query_params.get('estado', None)
+        queryset = self.get_queryset()
+        if estado:
+            queryset = queryset.filter(estado=estado)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @swagger_auto_schema(
+        operation_summary="Filtrar inscripcion por grupo",
+        operation_description="Filtra la inscripcion por el grupo especificado en los parámetros de la solicitud"
+    )
+    @action (detail=False, methods=['get'], url_path='filtro-grupo',
+            permission_classes=[IsAdministrador])
+    def filtro_grupo(self, request, *args, **kwargs):
+        grupo = request.query_params.get('grupo', None)
+        queryset = self.get_queryset()
+        if grupo:
+            queryset = queryset.filter(grupo=grupo)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def asignar_grupos():
+        pass
+

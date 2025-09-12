@@ -75,7 +75,6 @@ INSTALLED_APPS = [
     'oferta_categoria',
     'recuperacion_contrasena',
     'storages',
-    'channels'
 ]
 
 REST_FRAMEWORK = {
@@ -83,6 +82,9 @@ REST_FRAMEWORK = {
          'rest_framework.authentication.TokenAuthentication',
     ),
     'EXCEPTION_HANDLER': 'cuenta.utils.custom_exception_handler',
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend'
+    ]
 }
 
 SIMPLE_JWT = {
