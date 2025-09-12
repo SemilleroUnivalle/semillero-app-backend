@@ -11,7 +11,7 @@ from .models import OfertaCategoria
 # Serializadores
 from .serializers import OfertaCategoriaReadSerializer, OfertaCategoriaWriteSerializer
 # Autenticación
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 # Permisos
 from cuenta.permissions import IsEstudiante, IsProfesor, IsAdministrador, IsProfesorOrAdministrador
 
@@ -41,7 +41,10 @@ class OfertaCategoriaViewSet(viewsets.ModelViewSet):
         - Solo los administradores pueden realizar cualquier operación
         - Estudiantes y profesores no tienen acceso
         """
-        permission_classes = [IsAuthenticated, IsAdministrador]
+        if self.action == 'obtener_oferta_categoria_por_oferta_academica':
+            permission_classes = [AllowAny] 
+        else:
+            permission_classes = [IsAuthenticated, IsAdministrador]
         return [permission() for permission in permission_classes]
     
     @swagger_auto_schema(
