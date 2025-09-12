@@ -140,7 +140,7 @@ WSGI_APPLICATION = 'semillero_backend.wsgi.application'
 
 # Base de datos
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-"""
+
 DATABASES = {
     # Configuración para usar SQLite
     'default': {
@@ -167,7 +167,7 @@ DATABASES = {
         'PORT': '5432',
     },
 }
-
+"""
 # Validación de contraseñas
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
@@ -216,6 +216,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Configuración de CORS
 # Define la lista de orígenes permitidos para solicitudes de origen cruzado
 CORS_ALLOWED_ORIGINS = [
+    #"http://191.104.218.125", #PC Alejandro
+    #"http://181.78.17.229", #PC Sebastian
     #"http://191.104.218.125", #PC Alejandro
     #"http://181.78.17.229", #PC Sebastian
     "http://localhost:8080",  # Servidor de desarrollo local

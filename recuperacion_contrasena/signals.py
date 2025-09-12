@@ -8,7 +8,7 @@ def password_reset_token_created(sender, instance, reset_password_token, *args, 
     user = reset_password_token.user
     reset_url = f"https://recuperacion-contrasena-semillero.vercel.app/?token={reset_password_token.key}"
     
-    subject = "SEMILLERO - Restablecimiento de contraseña"
+    subject = "SEMILLERO UNIVALLE - Restablecimiento de contraseña"
     from_email = "no-reply@tudominio.com"
     to_email = [user.email]
     
