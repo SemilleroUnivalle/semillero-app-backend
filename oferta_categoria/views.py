@@ -190,3 +190,4 @@ class OfertaCategoriaViewSet(viewsets.ModelViewSet):
 
     return Response(resultado, status=status.HTTP_200_OK)
     
+
