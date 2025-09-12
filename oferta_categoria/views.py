@@ -165,28 +165,25 @@ class OfertaCategoriaViewSet(viewsets.ModelViewSet):
             )
         }
     )
-    
-   
-
     @action(detail=False, methods=['get'], url_path='por-oferta-academica')
     def obtener_oferta_categoria_por_oferta_academica(self, request):
-    """
-    Obtener todas las OfertaCategoria agrupadas por OfertaAcademica
-    **solo donde la OfertaAcademica tiene estado='activo'**.
-    """
-    # Filtrar por estado activo
-    queryset = self.get_queryset().filter(id_oferta_academica__estado='activo')
-    oferta_categoria_por_oferta_academica = defaultdict(list)
+        """
+        Obtener todas las OfertaCategoria agrupadas por OfertaAcademica
+        **solo donde la OfertaAcademica tiene estado='activo'**.
+        """
+        # Filtrar por estado activo
+        queryset = self.get_queryset().filter(id_oferta_academica__estado='activo')
+        oferta_categoria_por_oferta_academica = defaultdict(list)
 
-    for oferta_categoria in queryset:
-        key = str(oferta_categoria.id_oferta_academica_id)  # Usar el ID como string para la clave
-        oferta_categoria_por_oferta_academica[key].append(oferta_categoria)
+        for oferta_categoria in queryset:
+            key = str(oferta_categoria.id_oferta_academica_id)  # Usar el ID como string para la clave
+            oferta_categoria_por_oferta_academica[key].append(oferta_categoria)
 
-    # Serializar cada grupo por separado
-    resultado = {}
-    for key, items in oferta_categoria_por_oferta_academica.items():
-        serializer = OfertaCategoriaReadSerializer(items, many=True)
-        resultado[key] = serializer.data
+        # Serializar cada grupo por separado
+        resultado = {}
+        for key, items in oferta_categoria_por_oferta_academica.items():
+            serializer = OfertaCategoriaReadSerializer(items, many=True)
+            resultado[key] = serializer.data
 
-    return Response(resultado, status=status.HTTP_200_OK)
-    
+        return Response(resultado, status=status.HTTP_200_OK)
+        
