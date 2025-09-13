@@ -11,4 +11,4 @@ class Area(models.Model):
         ordering = ['id_area']
 
     def __str__(self):
-        return f"ID: {self.id_area} | Nombre: {self.nombre_area} | Estado: {'Activo' if self.estado_area else 'Inactivo'}"
+        return f"ID: {self.id_area} | Nombre: {self.nombre_area} | Estado: {self.estado_area}"

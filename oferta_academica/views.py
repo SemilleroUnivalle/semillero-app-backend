@@ -115,3 +115,7 @@ class OfertaAcademicaViewSet(viewsets.ModelViewSet):
     )
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
+
+    #Este metodo activa la oferta academica y la oferta categoria que estan desactivadas por defecto
+    def activar_oferta_academica():
+        pass

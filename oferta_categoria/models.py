@@ -18,7 +18,8 @@ class OfertaCategoria(models.Model):
     )
     precio_publico = models.DecimalField(max_digits=10, decimal_places=2)
     precio_privado = models.DecimalField(max_digits=10, decimal_places=2)
-    precio_univalle = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    precio_univalle = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True) #Hijos de funcionarios, Trabajadores o Profesores
+    precio_univalle_egresados = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True) # Hijos de egresados o Fonvalle
     fecha_finalizacion = models.DateField()
     estado = models.BooleanField(default=False)
     
@@ -29,9 +30,10 @@ class OfertaCategoria(models.Model):
             f"Categoría: {self.id_categoria} | "
             f"Precio Público: {self.precio_publico} | "
             f"Precio Privado: {self.precio_privado} | "
-            f"Precio Univalle: {self.precio_univalle} | "
+            f"Precio Univalle Funcionarios: {self.precio_univalle} | "
+            f"Precio Univalle Egresados:{self.precio_univalle_egresados} |"
             f"Fecha Finalización: {self.fecha_finalizacion}"
-            f" | Estado: {'Activo' if self.estado else 'Inactivo'}"
+            f" | Estado: {self.estado}"
         )
     
     class Meta:

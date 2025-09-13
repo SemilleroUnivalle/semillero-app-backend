@@ -157,13 +157,14 @@ DATABASES = {
     },
 }
 """
+#La conexion a db cambia
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres',
+        'NAME': 'db_semillero',
         'USER': 'postgres',
-        'PASSWORD': 'admin',
-        'HOST': 'semillero_db',
+        'PASSWORD': 'postgres',
+        'HOST': 'db_semillero',
         'PORT': '5432',
     },
 }

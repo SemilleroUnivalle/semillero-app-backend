@@ -4,7 +4,7 @@ class OfertaAcademica(models.Model):
     id_oferta_academica = models.AutoField(primary_key=True)
     nombre = models.CharField(max_length=100)
     fecha_inicio = models.DateField()
-    estado = models.CharField(max_length=20, choices=[('activo', 'Activo'), ('inactivo', 'Inactivo')], default='activo')
+    estado = models.BooleanField(default=False)
 
     def __str__(self):
         return f"Oferta Académica {self.id_oferta_academica} - Nombre: {self.nombre} - Fecha Inicio: {self.fecha_inicio} - Estado: {self.estado}"
