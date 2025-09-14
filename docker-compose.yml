@@ -1,9 +1,10 @@
 services:
   backend:
-    build: .
+    build: 
+      context: ./HTTP
     command: sh -c "python manage.py migrate && gunicorn -c gunicorn_config.py semillero_backend.wsgi:application"
     volumes:
-      - .:/app
+      - ./HTTP:/app
     container_name: semillero_backend
     ports:
       - "8080:8080"
@@ -16,11 +17,11 @@ services:
 
   websocket:
     build: 
-      context: ../websocket_fastapi
+      context: ./websocket
     container_name: semillero_websocket
     command: uvicorn main:app --reload --host 0.0.0.0 --port 8000
     volumes:
-      - ../websocket_fastapi:/app
+      - ./websocket:/app
     ports:
       - "8000:8000"
     environment:

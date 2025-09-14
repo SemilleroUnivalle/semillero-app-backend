@@ -1,0 +1,14 @@
+.git
+.gitignore
+.env
+*.pyc
+__pycache__/
+*.py[cod]
+*$py.class
+media/
+staticfiles/
+.venv/
+venv/
+ENV/
+node_modules/
+.env

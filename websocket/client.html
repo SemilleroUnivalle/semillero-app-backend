@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test WebSocket FastAPI</title>
+</head>
+<body>
+  <button id="enviar">Enviar asistencia</button>
+  <pre id="salida"></pre>
+  <script>
+    const ws = new WebSocket("ws://localhost:8000/ws/asistencia");
+    ws.onopen = () => {
+      document.getElementById("enviar").onclick = () => {
+        ws.send(JSON.stringify({estudiante: "Juan", curso: "Math"}));
+      }
+    };
+    ws.onmessage = (event) => {
+      const asistencias = JSON.parse(event.data);
+      const salida = asistencias.map(a =>
+        `ID: ${a.id} - Estudiante: ${a.estudiante} - Curso: ${a.curso}`
+      ).join('<br>');
+      document.getElementById("salida").innerHTML = salida;
+    };
+    ws.onerror = (e) => alert("Error de WebSocket");
+  </script>
+</body>
+</html>

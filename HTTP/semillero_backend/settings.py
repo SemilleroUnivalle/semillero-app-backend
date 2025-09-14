@@ -157,7 +157,7 @@ DATABASES = {
     },
 }
 """
-#La conexion a db cambia
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
