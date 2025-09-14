@@ -1,83 +1,68 @@
-name: Build & Deploy to EC2 with CodeDeploy
+name: Construir y Desplegar Docker a EC2
 
 on:
   push:
     branches:
       - main
 
-# Variables de entorno globales
 env:
-  BUCKET_NAME: "bucket-api-semillero"
-  AWS_REGION: "us-east-1"  
-  ARTIFACT_NAME: "api.zip"
-  APPLICATION_NAME: "aplication-api-semillero"
-  DEPLOYMENT_GROUP_NAME: "group-aplication-api-semillero-1"
+  AWS_REGION: "us-east-1"
+  ECR_REGISTRY: "897722690560.dkr.ecr.us-east-1.amazonaws.com"
+  ECR_REPOSITORY: "api-semillero"
+  IMAGE_TAG: "latest"
 
 jobs:
-  build:
-    name: Build and Package
+  build-and-push:
+    name: Construir y Empujar la Imagen de Docker a ECR
     runs-on: ubuntu-latest
-    
-    # Para asumir roles con OIDC necesitas id-token: write
-    permissions:
-      contents: read
-      id-token: write
-    
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Configurar credenciales de AWS
-        uses: aws-actions/configure-aws-credentials@v1
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
         with:
-          role-to-assume: "arn:aws:iam::897722690560:role/GitHubActionsRole"
-          role-session-name: "GitHubActionsRole"
-          aws-region: "us-east-1"
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
-      - name: Instalar dependencias
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push Docker image
         run: |
-          pip install -r requirements.txt
-          python manage.py migrate
-          # python manage.py collectstatic --noinput
-
-      #- name: Ejecutar tests (opcional)
-        #run: |
-          #pytest
-
-      - name: Crear artefacto (zip)
-        run: |
-          zip -r $ARTIFACT_NAME .
-
-      - name: Subir artefacto a S3
-        run: |
-          aws s3 cp $ARTIFACT_NAME s3://$BUCKET_NAME/$ARTIFACT_NAME
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
   deploy:
-    name: Deploy to EC2 via CodeDeploy
+    name: Deploy to EC2
     runs-on: ubuntu-latest
-    needs: build
-    
-    # Para asumir rol en el job de deploy, también necesitas id-token: write
-    permissions:
-      id-token: write
-    
+    needs: build-and-push
+
     steps:
-      - name: Configurar credenciales de AWS
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          role-to-assume: "arn:aws:iam::897722690560:role/GitHubActionsRole"
-          role-session-name: "GitHubActionsRole"
-          aws-region: "us-east-1"
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: Echo "Deploy branch"
-        shell: bash
-        run: echo "BRANCH=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
-  
-      - name: Create CodeDeploy Deployment
+      - name: Copy SSH key
         run: |
-          aws deploy create-deployment \
-          --application-name aplication-api-semillero \
-          --deployment-group-name group-aplication-api-semillero-1 \
-          --s3-location bucket=bucket-api-semillero,key=api.zip,bundleType=zip \
-          --region us-east-1 \
+          echo "${{ secrets.EC2_SSH_KEY }}" > private_key.pem
+          chmod 600 private_key.pem
 
+      - name: Copiar código y archivos a EC2
+        run: |
+          rsync -avz -e "ssh -o StrictHostKeyChecking=no -i private_key.pem" ./ ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER }}/mi-app
+
+      - name: Deploy on EC2 via SSH
+        env:
+          REGISTRY: ${{ env.ECR_REGISTRY }}
+          REPO: ${{ env.ECR_REPOSITORY }}
+          TAG: ${{ env.IMAGE_TAG }}
+          AWS_REGION: ${{ env.AWS_REGION }}
+        run: |
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << EOF
+            cd /home/${{ secrets.EC2_USER }}/mi-app
+            aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $REGISTRY
+            docker-compose pull || true  # Si usas imágenes en ECR
+            docker-compose down || true
+            docker-compose up -d --build
+          EOF
