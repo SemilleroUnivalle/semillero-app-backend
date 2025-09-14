@@ -6,7 +6,7 @@ class Categoria(models.Model):
     estado = models.BooleanField(default=True)
     
     def __str__(self):
-        return f'{self.id_categoria} - {self.nombre} - {"Activo" if self.estado else "Inactivo"}'
+        return f'{self.id_categoria} - {self.nombre} - {self.estado}'
     class Meta:
         verbose_name = 'Categoria'
         verbose_name_plural = 'Categorias'
