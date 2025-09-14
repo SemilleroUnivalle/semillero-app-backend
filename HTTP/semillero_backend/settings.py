@@ -140,7 +140,7 @@ WSGI_APPLICATION = 'semillero_backend.wsgi.application'
 
 # Base de datos
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-
+"""
 DATABASES = {
     # Configuración para usar SQLite
     'default': {
@@ -157,7 +157,7 @@ DATABASES = {
     },
 }
 """
-#La conexion a db cambia
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -168,7 +168,7 @@ DATABASES = {
         'PORT': '5432',
     },
 }
-"""
+
 # Validación de contraseñas
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
