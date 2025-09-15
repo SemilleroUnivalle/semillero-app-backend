@@ -181,7 +181,7 @@ class EstudianteViewSet(viewsets.ModelViewSet):
                     tipo_discapacidad=data.get('tipo_discapacidad'),
                     descripcion_discapacidad=data.get('descripcion_discapacidad'),
                     documento_identidad=request.FILES.get('documento_identidad'),
-                    foto=request.FILES.get('foto')
+                    foto=request.FILES.get('foto'),
                 )
 
             # Puedes retornar la información deseada
