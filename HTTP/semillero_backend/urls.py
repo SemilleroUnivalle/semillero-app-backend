@@ -38,7 +38,7 @@ urlpatterns = [
     path('evaluacion_programa/', include('evaluacion_programa.urls')),
     path('grupo/', include('grupo.urls')),
     path('historial_cambios/', include('historial_cambios.urls')),
-    path('inscripcion/', include('inscripcion.urls')),
+    path('matricula/', include('inscripcion.urls')),
     path('modulo/', include('modulo.urls')),
     path('pago/', include('pago.urls')),
     path('oferta_categoria/', include('oferta_categoria.urls')),

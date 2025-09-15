@@ -13,11 +13,6 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterField(
             model_name='estudiante',
-            name='constancia_estudios',
-            field=models.FileField(blank=True, help_text='Sube una imagen de la constancia de estudios del estudiante', null=True, upload_to=estudiante.models.constancia_estudios_upload_to),
-        ),
-        migrations.AlterField(
-            model_name='estudiante',
             name='documento_identidad',
             field=models.FileField(blank=True, help_text='Sube una imagen del documento de identidad del estudiante', null=True, upload_to=estudiante.models.documento_identidad_upload_to),
         ),
@@ -25,10 +20,5 @@ class Migration(migrations.Migration):
             model_name='estudiante',
             name='foto',
             field=models.ImageField(blank=True, help_text='Sube una imagen del estudiante', null=True, upload_to=estudiante.models.foto_upload_to),
-        ),
-        migrations.AlterField(
-            model_name='estudiante',
-            name='recibo_pago',
-            field=models.FileField(blank=True, help_text='Sube una imagen del recibo de pago del estudiante', null=True, upload_to=estudiante.models.recibo_pago_upload_to),
         ),
     ]

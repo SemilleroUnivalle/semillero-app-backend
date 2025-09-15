@@ -181,9 +181,7 @@ class EstudianteViewSet(viewsets.ModelViewSet):
                     tipo_discapacidad=data.get('tipo_discapacidad'),
                     descripcion_discapacidad=data.get('descripcion_discapacidad'),
                     documento_identidad=request.FILES.get('documento_identidad'),
-                    recibo_pago=request.FILES.get('recibo_pago'),
                     foto=request.FILES.get('foto'),
-                    constancia_estudios=request.FILES.get('constancia_estudios'),
                 )
 
             # Puedes retornar la información deseada
@@ -397,6 +395,10 @@ class EstudianteViewSet(viewsets.ModelViewSet):
             "detail": "Proceso de eliminación por lote finalizado."
         }, status=status.HTTP_200_OK)
         
+    @swagger_auto_schema(
+        operation_summary="Exporta a excel todos los estudiantes",
+        operation_description="Exporta a excel todos los estudiantes"
+    )
     @action(detail=False, methods=['get'], url_path='export-excel',
             permission_classes=[IsAdministrador])
     def export_excel(self, request):
