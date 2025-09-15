@@ -6,17 +6,9 @@ def documento_identidad_upload_to(instance, filename):
     ext = filename.split('.')[-1]
     return f'documentos_identidad/{instance.numero_documento}.{ext}'
 
-def recibo_pago_upload_to(instance, filename):
-    ext = filename.split('.')[-1]
-    return f'recibos_pago/{instance.numero_documento}.{ext}'
-
 def foto_upload_to(instance, filename):
     ext = filename.split('.')[-1]
     return f'fotos/{instance.numero_documento}.{ext}'
-
-def constancia_estudios_upload_to(instance, filename):
-    ext = filename.split('.')[-1]
-    return f'constancias/{instance.numero_documento}.{ext}'
 
 class Estudiante(models.Model):
     """Modelo de usuario para estudiantes"""
@@ -58,19 +50,11 @@ class Estudiante(models.Model):
 
     documento_identidad = models.FileField(
         upload_to=documento_identidad_upload_to, null=True, blank=True,
-        help_text="Sube una imagen del documento de identidad del estudiante"
-    )
-    recibo_pago = models.FileField(
-        upload_to=recibo_pago_upload_to, null=True, blank=True,
-        help_text="Sube una imagen del recibo de pago del estudiante"
+        help_text="Sube un documento pdf del documento de identidad del estudiante"
     )
     foto = models.ImageField(
         upload_to=foto_upload_to, null=True, blank=True,
         help_text="Sube una imagen del estudiante"
-    )
-    constancia_estudios = models.FileField(
-        upload_to=constancia_estudios_upload_to, null=True, blank=True,
-        help_text="Sube una imagen de la constancia de estudios del estudiante"
     )
     
     def __str__(self):
