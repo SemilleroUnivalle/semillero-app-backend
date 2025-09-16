@@ -175,7 +175,7 @@ class OfertaCategoriaViewSet(viewsets.ModelViewSet):
         **solo donde la OfertaAcademica tiene estado=true**.
         """
         # Filtrar por estado activo
-        queryset = self.get_queryset().filter(id_oferta_academica__estado=true)
+        queryset = self.get_queryset().filter(id_oferta_academica__estado=True)
         oferta_categoria_por_oferta_academica = defaultdict(list)
 
         for oferta_categoria in queryset:
