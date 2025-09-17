@@ -15,6 +15,19 @@ from cuenta.permissions import IsAdministrador, IsEstudianteOrAdministrador
 #Actions
 from rest_framework.decorators import action
 
+def file_update(instance, data, field_name):
+        """
+        Elimina el archivo anterior y asigna el nuevo si se envía uno.
+        """
+        uploaded_file = data.get(field_name)
+        if uploaded_file:
+            # Elimina el archivo anterior de S3 si existe
+            old_file = getattr(instance, field_name, None)
+            if old_file:
+                old_file.delete(save=False)
+            setattr(instance, field_name, uploaded_file)
+            instance.save()
+            data.pop(field_name)
 
 class InscripcionViewSet(viewsets.ModelViewSet):
     """
@@ -79,16 +92,18 @@ class InscripcionViewSet(viewsets.ModelViewSet):
         operation_description="Actualiza todos los campos de una inscripcion, existente"
     )
     def update(self, request, *args, **kwargs):
-        data = request.data
-
-        #Actualizar el objeto usando el serializador
-        partial = kwargs.pop('partial', False)
+        data = request.data.copy()
         instance = self.get_object()
-        serializer = self.get_serializer(instance, data=data, partial=partial)
+
+        file_update(instance, data, 'recibos_pago')
+        file_update(instance, data, 'constancia')
+        file_update(instance, data, 'certificado')
+
+        partial = kwargs.pop('partial', False)
+        serializer = self.get_serializer(instance, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
 
-        #Responder con los datos dena inscripcion", actualizado
         return Response(serializer.data)
 
     @swagger_auto_schema(
@@ -96,8 +111,19 @@ class InscripcionViewSet(viewsets.ModelViewSet):
         operation_description="Actualiza uno o más campos de una inscripcion, existente"
     )
     def partial_update(self, request, *args, **kwargs):
-        kwargs['partial'] = True
-        return self.update(request, *args, **kwargs)
+        data = request.data.copy() 
+        instance = self.get_object()
+
+        file_update(instance, data, 'recibos_pago')
+        file_update(instance, data, 'constancia')
+        file_update(instance, data, 'certificado')
+
+        partial = kwargs.pop('partial', False)
+        serializer = self.get_serializer(instance, data=data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        return Response(serializer.data)
     
     @swagger_auto_schema(
         operation_summary="Eliminar una inscripcion",
