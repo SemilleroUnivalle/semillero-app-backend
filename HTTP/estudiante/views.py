@@ -36,6 +36,20 @@ import pandas as pd
 #filtros
 from django_filters.rest_framework import DjangoFilterBackend
 
+def file_update(instance, data, field_name):
+        """
+        Elimina el archivo anterior y asigna el nuevo si se envía uno.
+        """
+        uploaded_file = data.get(field_name)
+        if uploaded_file:
+            # Elimina el archivo anterior de S3 si existe
+            old_file = getattr(instance, field_name, None)
+            if old_file:
+                old_file.delete(save=False)
+            setattr(instance, field_name, uploaded_file)
+            instance.save()
+            data.pop(field_name)
+            
 class EstudianteViewSet(viewsets.ModelViewSet):
     """
     API endpoint para gestionar estudiantes.
@@ -188,21 +202,23 @@ class EstudianteViewSet(viewsets.ModelViewSet):
             return Response({'detail': 'Estudiante creado exitosamente'}, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({'detail': f'Error al crear estudiante: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
     @swagger_auto_schema(
         operation_summary="Actualizar un estudiante",
         operation_description="Actualiza todos los campos de un estudiante existente"
     )
     def update(self, request, *args, **kwargs):
-        data = request.data
-
-        #Actualizar el objeto usando el serializador
-        partial = kwargs.pop('partial', False)
+        data = request.data.copy()
         instance = self.get_object()
+
+        file_update(instance, data, 'documento_identidad')
+        file_update(instance, data, 'foto')
+
+        partial = kwargs.pop('partial', False)
         serializer = self.get_serializer(instance, data=data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
 
-        #Responder con los datos del estudiante actualizado
         return Response(serializer.data)
 
     @swagger_auto_schema(
@@ -255,6 +271,9 @@ class EstudianteViewSet(viewsets.ModelViewSet):
             instance.email = email
             instance.save()
         
+        file_update(instance, data, 'documento_identidad')
+        file_update(instance, data, 'foto')
+
         if data:
             serializer = self.get_serializer(instance, data=data, partial=True)
             serializer.is_valid(raise_exception=True)

@@ -8,6 +8,7 @@ class EstudianteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Estudiante
         fields = '__all__'
+        
 class LoteEliminarSerializer(serializers.Serializer):
     ids = serializers.ListField(
         child=serializers.IntegerField(),

@@ -161,7 +161,7 @@ DATABASES = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres',
+        'NAME': 'db_semillero',
         'USER': 'postgres',
         'PASSWORD': 'postgres',
         'HOST': 'db_semillero',
