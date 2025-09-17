@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='acudiente',
             name='email_acudiente',
-            field=models.CharField(default='maria@gmail.com', max_length=50),
+            field=models.CharField(default='noemail@example.com', max_length=50),
             preserve_default=False,
         ),
     ]
