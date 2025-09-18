@@ -1,6 +1,7 @@
 from django.db import models
 from estudiante.models import Estudiante
 from modulo.models import Modulo
+from oferta_categoria.models import OfertaCategoria
 
 def recibo_pago_upload_to(instance, filename):
     ext = filename.split('.')[-1]
@@ -21,6 +22,7 @@ class Inscripcion(models.Model):
     id_inscripcion = models.AutoField(primary_key=True)
     id_estudiante = models.ForeignKey(Estudiante, on_delete=models.CASCADE)
     id_modulo = models.ForeignKey(Modulo, on_delete=models.SET_NULL, null=True)
+    id_oferta_categoria = models.ForeignKey(OfertaCategoria, on_delete=models.SET_NULL, null=True)
     estado = models.CharField(max_length=20, choices=[
         ('A', 'Activo'),
         ('I', 'Inactivo'),

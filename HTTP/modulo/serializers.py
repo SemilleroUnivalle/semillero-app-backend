@@ -14,7 +14,7 @@ class CategoriaSerializer(serializers.ModelSerializer):
 class ModuloReadSerializer(serializers.ModelSerializer):
     # Incluimos la categoría relacionada (ahora como objeto único)
     id_categoria = CategoriaSerializer(read_only=True)
-    id_oferta_categoria = OfertaCategoriaReadSerializer (many=True, read_only=True)
+    #id_oferta_categoria = OfertaCategoriaReadSerializer (many=True, read_only=True)
 
     class Meta:
         model = Modulo

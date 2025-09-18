@@ -1,5 +1,6 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
+from modulo.models import Modulo
 
 #Documentacion
 from drf_yasg.utils import swagger_auto_schema
@@ -70,8 +71,23 @@ class InscripcionViewSet(viewsets.ModelViewSet):
         }
     )
     def create(self, request, *args, **kwargs):
-        data = request.data
+        data = request.data.copy()
 
+        id_modulo = data.get("id_modulo")
+        if not id_modulo:
+            return Response(
+                {"detail": "id_modulo es requerido."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            modulo = Modulo.objects.get(id_modulo=id_modulo)
+        except Modulo.DoesNotExist:
+            return Response(
+                {"detail": "El módulo no existe."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        data["id_oferta_categoria"] = modulo.id_oferta_categoria.first().id_oferta_categoria
         #Crear el objeto usando el serializador
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)

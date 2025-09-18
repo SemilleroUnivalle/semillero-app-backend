@@ -12,13 +12,19 @@ class ModuloSerializer(serializers.ModelSerializer):
 
 # Serializador para lecturas (GET) - con depth=1 para mostrar relaciones anidadas
 class OfertaCategoriaReadSerializer(serializers.ModelSerializer):
-    modulo = ModuloSerializer(many=True, read_only=True)
+    #modulo = ModuloSerializer(many=True, read_only=True)
     id_oferta_academica = OfertaAcademicaSerializer(read_only=True)
 
     class Meta:
         model = OfertaCategoria
         fields = '__all__'
-        depth = 1
+        
+class OfertaCategoriaInscripcionReadSerializer(serializers.ModelSerializer):
+    id_oferta_academica = OfertaAcademicaSerializer(read_only=True)
+
+    class Meta:
+        model = OfertaCategoria
+        fields = '__all__'
 
 # Serializador para escrituras (POST/PUT/PATCH) - sin depth
 class OfertaCategoriaWriteSerializer(serializers.ModelSerializer):
