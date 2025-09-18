@@ -92,38 +92,65 @@ class InscripcionViewSet(viewsets.ModelViewSet):
         operation_description="Actualiza todos los campos de una inscripcion, existente"
     )
     def update(self, request, *args, **kwargs):
-        data = request.data.copy()
-        instance = self.get_object()
+        try:
+            data = request.data.copy()  # Esto puede fallar con archivos grandes
+            instance = self.get_object()
 
-        file_update(instance, data, 'recibos_pago')
-        file_update(instance, data, 'constancia')
-        file_update(instance, data, 'certificado')
+            file_update(instance, data, 'recibos_pago')
+            file_update(instance, data, 'constancia')
+            file_update(instance, data, 'certificado')
 
-        partial = kwargs.pop('partial', False)
-        serializer = self.get_serializer(instance, data=data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
+            partial = kwargs.pop('partial', False)
+            serializer = self.get_serializer(instance, data=data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
 
-        return Response(serializer.data)
+            return Response(serializer.data)
+        except TypeError as e:
+            # Este error ocurre si intentas copiar archivos grandes
+            return Response(
+                {"detail": "Error procesando archivos grandes.", "error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            # Cubre cualquier otro error inesperado
+            return Response(
+                {"detail": "Ocurrió un error inesperado.", "error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     @swagger_auto_schema(
         operation_summary="Actualizar parcialmente una inscripcion",
         operation_description="Actualiza uno o más campos de una inscripcion, existente"
     )
     def partial_update(self, request, *args, **kwargs):
-        data = request.data.copy() 
-        instance = self.get_object()
+        try:
+            data = request.data.copy() 
+            instance = self.get_object()
 
-        file_update(instance, data, 'recibos_pago')
-        file_update(instance, data, 'constancia')
-        file_update(instance, data, 'certificado')
+            file_update(instance, data, 'recibos_pago')
+            file_update(instance, data, 'constancia')
+            file_update(instance, data, 'certificado')
 
-        partial = kwargs.pop('partial', False)
-        serializer = self.get_serializer(instance, data=data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
+            partial = kwargs.pop('partial', False)
+            serializer = self.get_serializer(instance, data=data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
 
-        return Response(serializer.data)
+            return Response(serializer.data)
+
+        except TypeError as e:
+            # Este error ocurre si intentas copiar archivos grandes
+            return Response(
+                {"detail": "Error procesando archivos grandes.", "error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            # Cubre cualquier otro error inesperado
+            return Response(
+                {"detail": "Ocurrió un error inesperado.", "error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     
     @swagger_auto_schema(
         operation_summary="Eliminar una inscripcion",

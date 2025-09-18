@@ -208,81 +208,109 @@ class EstudianteViewSet(viewsets.ModelViewSet):
         operation_description="Actualiza todos los campos de un estudiante existente"
     )
     def update(self, request, *args, **kwargs):
-        data = request.data.copy()
-        instance = self.get_object()
+        try:
+            data = request.data.copy()
+            instance = self.get_object()
 
-        file_update(instance, data, 'documento_identidad')
-        file_update(instance, data, 'foto')
+            file_update(instance, data, 'documento_identidad')
+            file_update(instance, data, 'foto')
 
-        partial = kwargs.pop('partial', False)
-        serializer = self.get_serializer(instance, data=data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
+            partial = kwargs.pop('partial', False)
+            serializer = self.get_serializer(instance, data=data, partial=partial)
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
 
-        return Response(serializer.data)
+            return Response(serializer.data)
+
+        except TypeError as e:
+            # Este error ocurre si intentas copiar archivos grandes
+            return Response(
+                {"detail": "Error procesando archivos grandes.", "error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            # Cubre cualquier otro error inesperado
+            return Response(
+                {"detail": "Ocurrió un error inesperado.", "error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     @swagger_auto_schema(
         operation_summary="Actualizar parcialmente un estudiante",
         operation_description="Actualiza uno o más campos de un estudiante existente"
     )
     def partial_update(self, request, *args, **kwargs):
-        data = request.data.copy() 
-        instance = self.get_object()
-        user = instance.user
-        
-        # Manejar la contraseña si está presente
-        if 'contrasena' in data and data['contrasena']:
-            new_password = data.pop('contrasena') 
-            user.set_password(new_password)
-            user.save()
-            hashed_password = make_password(new_password)
-            instance.contrasena = hashed_password
-            instance.save()
+        try:
+            data = request.data.copy() 
+            instance = self.get_object()
+            user = instance.user
             
-        #Manejar is_active
-        if 'is_active' in data:
-            is_active = data.pop('is_active')
-            user.is_active = is_active
-            user.save()
-            instance.is_active = is_active
-            instance.save()
-        
-        #Manejar el nombre de usuario
-        if 'nombre' in data:
-            nombre = data.pop('nombre')
-            user.first_name = nombre
-            user.save()
-            instance.nombre = nombre
-            instance.save()
+            # Manejar la contraseña si está presente
+            if 'contrasena' in data and data['contrasena']:
+                new_password = data.pop('contrasena') 
+                user.set_password(new_password)
+                user.save()
+                hashed_password = make_password(new_password)
+                instance.contrasena = hashed_password
+                instance.save()
+                
+            #Manejar is_active
+            if 'is_active' in data:
+                is_active = data.pop('is_active')
+                user.is_active = is_active
+                user.save()
+                instance.is_active = is_active
+                instance.save()
             
-        #Manejar el apellido
-        if 'apellido' in data:
-            apellido = data.pop('apellido')
-            user.last_name = apellido
-            user.save()
-            instance.apellido = apellido
-            instance.save()
-        
-        #Manejar el email
-        if 'email' in data:
-            email = data.pop('email')
-            user.email = email
-            user.save()
-            instance.email = email
-            instance.save()
-        
-        file_update(instance, data, 'documento_identidad')
-        file_update(instance, data, 'foto')
+            #Manejar el nombre de usuario
+            if 'nombre' in data:
+                nombre = data.pop('nombre')
+                user.first_name = nombre
+                user.save()
+                instance.nombre = nombre
+                instance.save()
+                
+            #Manejar el apellido
+            if 'apellido' in data:
+                apellido = data.pop('apellido')
+                user.last_name = apellido
+                user.save()
+                instance.apellido = apellido
+                instance.save()
+            
+            #Manejar el email
+            if 'email' in data:
+                email = data.pop('email')
+                user.email = email
+                user.save()
+                instance.email = email
+                instance.save()
+            
+            file_update(instance, data, 'documento_identidad')
+            file_update(instance, data, 'foto')
 
-        if data:
-            serializer = self.get_serializer(instance, data=data, partial=True)
-            serializer.is_valid(raise_exception=True)
-            self.perform_update(serializer)
-            return Response(serializer.data)
-        else:
-            # Si solo se cambió la contraseña y no hay otros campos, devolvemos los datos actualizados
-            serializer = self.get_serializer(instance)
-            return Response(serializer.data)
+            if data:
+                serializer = self.get_serializer(instance, data=data, partial=True)
+                serializer.is_valid(raise_exception=True)
+                self.perform_update(serializer)
+                return Response(serializer.data)
+            else:
+                # Si solo se cambió la contraseña y no hay otros campos, devolvemos los datos actualizados
+                serializer = self.get_serializer(instance)
+                return Response(serializer.data)
+
+        except TypeError as e:
+            # Este error ocurre si intentas copiar archivos grandes
+            return Response(
+                {"detail": "Error procesando archivos grandes", "error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            # Cubre cualquier otro error inesperado
+            return Response(
+                {"detail": "Ocurrió un error inesperado.", "error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     
     def get_s3_client(self):
         """
