@@ -335,9 +335,7 @@ class EstudianteViewSet(viewsets.ModelViewSet):
 
         archivos = [
             instance.documento_identidad,
-            instance.recibo_pago,
             instance.foto,
-            instance.constancia_estudios,
         ]
         for archivo in archivos:
             if archivo and hasattr(archivo, 'name') and archivo.name:
@@ -412,9 +410,7 @@ class EstudianteViewSet(viewsets.ModelViewSet):
                 estudiante = Estudiante.objects.get(pk=id_est)
                 archivos = [
                     estudiante.documento_identidad,
-                    estudiante.recibo_pago,
                     estudiante.foto,
-                    estudiante.constancia_estudios,
                 ]
                 for archivo in archivos:
                     if archivo and hasattr(archivo, 'name') and archivo.name:

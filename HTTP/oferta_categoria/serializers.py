@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import OfertaCategoria
 from modulo.models import Modulo
+from oferta_academica.serializers import OfertaAcademicaSerializer
 
 # Serializador para los módulos
 class ModuloSerializer(serializers.ModelSerializer):
@@ -12,10 +13,12 @@ class ModuloSerializer(serializers.ModelSerializer):
 # Serializador para lecturas (GET) - con depth=1 para mostrar relaciones anidadas
 class OfertaCategoriaReadSerializer(serializers.ModelSerializer):
     modulo = ModuloSerializer(many=True, read_only=True)
+    id_oferta_academica = OfertaAcademicaSerializer(read_only=True)
+
     class Meta:
         model = OfertaCategoria
         fields = '__all__'
-        depth = 1  
+        depth = 1
 
 # Serializador para escrituras (POST/PUT/PATCH) - sin depth
 class OfertaCategoriaWriteSerializer(serializers.ModelSerializer):

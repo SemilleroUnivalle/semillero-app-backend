@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Modulo
 from categoria.models import Categoria
+from oferta_categoria.serializers import OfertaCategoriaReadSerializer
 
 # Serializador para las categorías
 class CategoriaSerializer(serializers.ModelSerializer):
@@ -13,11 +14,11 @@ class CategoriaSerializer(serializers.ModelSerializer):
 class ModuloReadSerializer(serializers.ModelSerializer):
     # Incluimos la categoría relacionada (ahora como objeto único)
     id_categoria = CategoriaSerializer(read_only=True)
+    id_oferta_categoria = OfertaCategoriaReadSerializer (many=True, read_only=True)
 
     class Meta:
         model = Modulo
         fields = '__all__'
-        depth = 1
 
 # Serializador para escrituras (POST/PUT/PATCH) - sin depth
 class ModuloWriteSerializer(serializers.ModelSerializer):
