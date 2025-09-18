@@ -302,7 +302,7 @@ class EstudianteViewSet(viewsets.ModelViewSet):
         except TypeError as e:
             # Este error ocurre si intentas copiar archivos grandes
             return Response(
-                {"detail": "Error procesando archivos grandes", "error": str(e)},
+                {"detail": "Error procesando archivos grandes.", "error": str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )
         except Exception as e:
