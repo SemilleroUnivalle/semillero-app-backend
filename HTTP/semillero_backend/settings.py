@@ -273,6 +273,8 @@ AWS_S3_FILE_OVERWRITE = False
 AWS_S3_SIGNATURE_VERSION = 's3v4'
 AWS_S3_ADDRESSING_STYLE = 'virtual'
 
+FILE_UPLOAD_MAX_MEMORY_SIZE = 2621440  # 2.5 MB en bytes
+
 STORAGES = {
     "default": {
         "BACKEND": "semillero_backend.storage_backends.MediaStorage",
