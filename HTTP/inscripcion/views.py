@@ -157,6 +157,15 @@ class InscripcionViewSet(viewsets.ModelViewSet):
         operation_description="Elimina permanentemente una inscripcion, del sistema"
     )
     def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        # Elimina los archivos de S3 si existen
+        if instance.recibo_pago:
+            instance.recibo_pago.delete(save=False)
+        if instance.constancia:
+            instance.constancia.delete(save=False)
+        if instance.certificado:
+            instance.certificado.delete(save=False)
+        # Ahora elimina la instancia del modelo
         return super().destroy(request, *args, **kwargs)
 
     #Filtros

@@ -8,7 +8,7 @@ class OfertaCategoria(models.Model):
     id_oferta_academica = models.ForeignKey(
         OfertaAcademica,
         on_delete=models.CASCADE,
-        related_name='oferta_categoria'
+        related_name='oferta_academica'
     )
     id_categoria = models.ForeignKey(
         Categoria, 
