@@ -49,7 +49,12 @@ def file_update(instance, data, field_name):
             setattr(instance, field_name, uploaded_file)
             instance.save()
             data.pop(field_name)
-            
+
+def extract_single_value(value):
+        if isinstance(value, list):
+            return value[0] if value else ''
+        return value
+                
 class EstudianteViewSet(viewsets.ModelViewSet):
     """
     API endpoint para gestionar estudiantes.
@@ -235,6 +240,10 @@ class EstudianteViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+    def extract_single_value(value):
+        if isinstance(value, list):
+            return value[0] if value else ''
+        return value
     @swagger_auto_schema(
         operation_summary="Actualizar parcialmente un estudiante",
         operation_description="Actualiza uno o más campos de un estudiante existente"
@@ -247,7 +256,7 @@ class EstudianteViewSet(viewsets.ModelViewSet):
             
             # Manejar la contraseña si está presente
             if 'contrasena' in data and data['contrasena']:
-                new_password = data.pop('contrasena') 
+                new_password = extract_single_value(data.pop('contrasena'))
                 user.set_password(new_password)
                 user.save()
                 hashed_password = make_password(new_password)
@@ -256,7 +265,7 @@ class EstudianteViewSet(viewsets.ModelViewSet):
                 
             #Manejar is_active
             if 'is_active' in data:
-                is_active = data.pop('is_active')
+                is_active = extract_single_value(data.pop('is_active'))
                 user.is_active = is_active
                 user.save()
                 instance.is_active = is_active
@@ -264,7 +273,7 @@ class EstudianteViewSet(viewsets.ModelViewSet):
             
             #Manejar el nombre de usuario
             if 'nombre' in data:
-                nombre = data.pop('nombre')
+                nombre = extract_single_value(data.pop('nombre'))
                 user.first_name = nombre
                 user.save()
                 instance.nombre = nombre
@@ -272,7 +281,7 @@ class EstudianteViewSet(viewsets.ModelViewSet):
                 
             #Manejar el apellido
             if 'apellido' in data:
-                apellido = data.pop('apellido')
+                apellido = extract_single_value(data.pop('apellido'))
                 user.last_name = apellido
                 user.save()
                 instance.apellido = apellido
@@ -280,7 +289,7 @@ class EstudianteViewSet(viewsets.ModelViewSet):
             
             #Manejar el email
             if 'email' in data:
-                email = data.pop('email')
+                email = extract_single_value(data.pop('email'))
                 user.email = email
                 user.save()
                 instance.email = email
