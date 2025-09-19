@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import OfertaCategoria
 from modulo.models import Modulo
 from oferta_academica.serializers import OfertaAcademicaSerializer
+from categoria.serializers import CategoriaSerializer
 
 # Serializador para los módulos
 class ModuloSerializer(serializers.ModelSerializer):
@@ -14,6 +15,7 @@ class ModuloSerializer(serializers.ModelSerializer):
 class OfertaCategoriaReadSerializer(serializers.ModelSerializer):
     modulo = ModuloSerializer(many=True, read_only=True)
     id_oferta_academica = OfertaAcademicaSerializer(read_only=True)
+    id_categoria = CategoriaSerializer(read_only=True)
 
     class Meta:
         model = OfertaCategoria
