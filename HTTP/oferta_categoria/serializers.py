@@ -47,10 +47,11 @@ class OfertaCategoriaWriteSerializer(serializers.ModelSerializer):
         return oferta_categoria
 
     def update(self, instance, validated_data):
-        modulos = validated_data.pop('modulo', [])
+        modulos = validated_data.pop('modulo', None)
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
-        instance.modulo.set(modulos) 
+        if modulos is not None:
+            instance.modulo.set(modulos) 
         
         return instance
