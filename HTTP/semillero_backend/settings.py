@@ -31,8 +31,8 @@ SECRET_KEY = 'django-insecure-3-!4cm82i1-s5hbg4*m_4x!=wg=lj1$0(-3hb&awt2^0nzpp@o
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    'ec2-54-234-86-157.compute-1.amazonaws.com',
-    '54.234.86.157',
+    'ec2-34-229-140-245.compute-1.amazonaws.com',
+    '34.229.140.245',
     'localhost',
     '127.0.0.1',
     '0.0.0.0',
@@ -216,13 +216,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Configuración de CORS
 # Define la lista de orígenes permitidos para solicitudes de origen cruzado
 CORS_ALLOWED_ORIGINS = [
-    #"http://191.104.218.125", #PC Alejandro
-    #"http://181.78.17.229", #PC Sebastian
-    #"http://191.104.218.125", #PC Alejandro
-    #"http://181.78.17.229", #PC Sebastian
-    "http://localhost:8080",  # Servidor de desarrollo local
-    "http://127.0.0.1:8000",  # Localhost con el puerto predeterminado de Django
-    "http://127.0.0.1:3000",
+    "http://localhost:8080",
 ]
 
 # Especifica los métodos HTTP permitidos para solicitudes de origen cruzado
