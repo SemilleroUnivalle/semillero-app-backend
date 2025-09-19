@@ -170,7 +170,7 @@ class EstudianteViewSet(viewsets.ModelViewSet):
                 )
                 
                 # Crear el perfil de estudiante
-                Estudiante.objects.create(
+                estudiante = Estudiante.objects.create(
                     user=user,
                     numero_documento=data.get('numero_documento'),
                     contrasena=hashed_password,
@@ -199,7 +199,7 @@ class EstudianteViewSet(viewsets.ModelViewSet):
                 )
 
             # Puedes retornar la información deseada
-            return Response({'detail': 'Estudiante creado exitosamente'}, status=status.HTTP_201_CREATED)
+            return Response({'id': estudiante.id_estudiante}, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({'detail': f'Error al crear estudiante: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
 
