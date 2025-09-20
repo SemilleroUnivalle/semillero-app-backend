@@ -23,11 +23,7 @@ class Inscripcion(models.Model):
     id_estudiante = models.ForeignKey(Estudiante, on_delete=models.CASCADE)
     id_modulo = models.ForeignKey(Modulo, on_delete=models.SET_NULL, null=True)
     id_oferta_categoria = models.ForeignKey(OfertaCategoria, on_delete=models.SET_NULL, null=True)
-    estado = models.CharField(max_length=20, choices=[
-        ('A', 'Activo'),
-        ('I', 'Inactivo'),
-        ('R', 'Rechazado'),
-    ], default='A')
+    estado = models.BooleanField(default=True)
     grupo = models.CharField(max_length=255, default='Grupo 0')
     fecha_inscripcion = models.DateField(auto_now_add=True)
     tipo_vinculacion = models.CharField(max_length=255)
