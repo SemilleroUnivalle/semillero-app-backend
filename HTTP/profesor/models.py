@@ -2,6 +2,11 @@ from django.db import models
 from django.conf import settings
 from modulo.models import Modulo
 
+
+def documento_identidad_upload_to(instance, filename):
+    ext = filename.split('.')[-1]
+    return f'documentos_identidad_profesor/{instance.numero_documento}.{ext}'
+
 class Profesor(models.Model):
     id_profesor = models.AutoField(primary_key=True)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, blank=True, null=True)
@@ -14,6 +19,10 @@ class Profesor(models.Model):
     area_desempeño = models.CharField(max_length=100, blank=True, null=True)
     grado_escolaridad = models.CharField(max_length=100, blank=True, null=True)
     modulo = models.ForeignKey(Modulo, on_delete=models.SET_NULL, related_name='profesores', null=True, blank=True)
+    documento_identidad_pdf = models.FileField(
+        upload_to=documento_identidad_upload_to, null=True, blank=True,
+        help_text="Sube un documento pdf del documento de identidad del profesor"
+    )
     
     def __str__(self):
         return (
