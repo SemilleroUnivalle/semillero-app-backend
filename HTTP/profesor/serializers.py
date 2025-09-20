@@ -1,16 +1,20 @@
 from rest_framework import serializers
 from .models import Profesor
 from modulo.models import Modulo
+from modulo.serializers import ModuloProfesorSerializer
 
 class ProfesorSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Profesor
         fields = '__all__' 
-        
-        # No incluir contraseña en los campos editables directamente
-        extra_kwargs = {
-            'contrasena': {'write_only': True},
-        }
+
+class ProfesorModuloSerializer(serializers.ModelSerializer):
+    modulo = ModuloProfesorSerializer(read_only=True)
+
+    class Meta:
+        model = Profesor
+        fields = '__all__' 
 
 class AsignacionProfesorSerializer(serializers.Serializer):
     id_profesor = serializers.IntegerField()

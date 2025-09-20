@@ -18,6 +18,22 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from cuenta.permissions import IsAdministrador, IsProfesorOrAdministrador
 #Transacciones atomicas
 from django.db import transaction
+#Serializador
+from profesor.serializers import ProfesorSerializer, ProfesorModuloSerializer
+from modulo.serializers import ModuloProfesorSerializer
+def file_update(instance, data, field_name):
+        """
+        Elimina el archivo anterior y asigna el nuevo si se envía uno.
+        """
+        uploaded_file = data.get(field_name)
+        if uploaded_file:
+            # Elimina el archivo anterior de S3 si existe
+            old_file = getattr(instance, field_name, None)
+            if old_file:
+                old_file.delete(save=False)
+            setattr(instance, field_name, uploaded_file)
+            instance.save()
+            data.pop(field_name)
 
 class ProfesorViewSet(viewsets.ModelViewSet):
     """
@@ -53,7 +69,8 @@ class ProfesorViewSet(viewsets.ModelViewSet):
         if not queryset.exists():
             return Response(status=status.HTTP_204_NO_CONTENT)
         
-        return super().list(request, *args, **kwargs)
+        serializer = ProfesorModuloSerializer(queryset, many=True)
+        return Response(serializer.data)
     
     @swagger_auto_schema(
         operation_summary="Crear un profesor",
@@ -64,7 +81,21 @@ class ProfesorViewSet(viewsets.ModelViewSet):
         }
     )
     def create(self, request, *args, **kwargs):
-        data = request.data
+        data = request.data.copy()
+
+        id_modulo = request.data.get('modulo')
+        if not id_modulo:
+            return Response(
+                {"detail": 'El campo "modulo" es obligatorio.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            modulo_instancia = Modulo.objects.get(id_modulo=id_modulo)
+        except Modulo.DoesNotExist:
+            return Response(
+                {"detail": "El modulo especificado no existe."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         # Verificar si el usuario ya existe
         username = data.get('numero_documento', '')
@@ -104,7 +135,8 @@ class ProfesorViewSet(viewsets.ModelViewSet):
                     contrasena=hashed_password,
                     area_desempeño=data.get('area_desempeño', ''),
                     grado_escolaridad=data.get('grado_escolaridad', ''),
-                    modulo=data.get('modulo', None)
+                    modulo=modulo_instancia,
+                    documento_identidad_pdf=request.FILES.get('documento_identidad_pdf'),
                 )
                 # Puedes retornar la información deseada
             return Response({'detail': 'Profesor creado exitosamente'}, status=status.HTTP_201_CREATED)
@@ -140,8 +172,76 @@ class ProfesorViewSet(viewsets.ModelViewSet):
         operation_description="Actualiza uno o más campos de un profesor existente"
     )
     def partial_update(self, request, *args, **kwargs):
-        kwargs['partial'] = True
-        return self.update(request, *args, **kwargs)
+        try:
+            data = request.data.copy() 
+            instance = self.get_object()
+            user = instance.user
+            
+            # Manejar la contraseña si está presente
+            if 'contrasena' in data and data['contrasena']:
+                new_password = extract_single_value(data.pop('contrasena'))
+                user.set_password(new_password)
+                user.save()
+                hashed_password = make_password(new_password)
+                instance.contrasena = hashed_password
+                instance.save()
+                
+            #Manejar is_active
+            if 'is_active' in data:
+                is_active = extract_single_value(data.pop('is_active'))
+                user.is_active = is_active
+                user.save()
+                instance.is_active = is_active
+                instance.save()
+            
+            #Manejar el nombre de usuario
+            if 'nombre' in data:
+                nombre = extract_single_value(data.pop('nombre'))
+                user.first_name = nombre
+                user.save()
+                instance.nombre = nombre
+                instance.save()
+                
+            #Manejar el apellido
+            if 'apellido' in data:
+                apellido = extract_single_value(data.pop('apellido'))
+                user.last_name = apellido
+                user.save()
+                instance.apellido = apellido
+                instance.save()
+            
+            #Manejar el email
+            if 'email' in data:
+                email = extract_single_value(data.pop('email'))
+                user.email = email
+                user.save()
+                instance.email = email
+                instance.save()
+            
+            file_update(instance, data, 'documento_identidad_pdf')
+
+            if data:
+                serializer = self.get_serializer(instance, data=data, partial=True)
+                serializer.is_valid(raise_exception=True)
+                self.perform_update(serializer)
+                return Response(serializer.data)
+            else:
+                # Si solo se cambió la contraseña y no hay otros campos, devolvemos los datos actualizados
+                serializer = self.get_serializer(instance)
+                return Response(serializer.data)
+
+        except TypeError as e:
+            # Este error ocurre si intentas copiar archivos grandes
+            return Response(
+                {"detail": "Error procesando archivos grandes", "error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            # Cubre cualquier otro error inesperado
+            return Response(
+                {"detail": "Ocurrió un error inesperado.", "error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     
     @swagger_auto_schema(
         operation_summary="Eliminar un profesor",
@@ -205,7 +305,9 @@ class ProfesorViewSet(viewsets.ModelViewSet):
             
             try:
                 profesor = Profesor.objects.get(id_profesor=profesor_id)
+                serializer_profesor = ProfesorSerializer(profesor)
                 modulo = Modulo.objects.get(id_modulo=modulo_id)
+                serializer_modulo = ModuloProfesorSerializer(modulo)
                 
                 # Si el profesor ya tenía un módulo asignado, mostramos mensaje informativo
                 mensaje = "Asignación realizada correctamente"
@@ -217,14 +319,8 @@ class ProfesorViewSet(viewsets.ModelViewSet):
                 
                 return Response({
                     "mensaje": mensaje,
-                    "profesor": {
-                        "id": profesor.id_profesor,
-                        "nombre": f"{profesor.nombre} {profesor.apellido}"
-                    },
-                    "modulo": {
-                        "id": modulo.id_modulo,
-                        "nombre": modulo.nombre_modulo
-                    }
+                    "profesor": serializer_profesor.data,
+                    "modulo": serializer_modulo.data,
                 }, status=status.HTTP_200_OK)
                 
             except Profesor.DoesNotExist:

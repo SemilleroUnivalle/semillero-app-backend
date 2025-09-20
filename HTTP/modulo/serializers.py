@@ -19,6 +19,11 @@ class ModuloReadSerializer(serializers.ModelSerializer):
     class Meta:
         model = Modulo
         fields = '__all__'
+#Serializador para mostrar el modulo que tiene el profesor osea que excluimos la información de la categoria
+class ModuloProfesorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Modulo
+        fields = '__all__'
 
 # Serializador para escrituras (POST/PUT/PATCH) - sin depth
 class ModuloWriteSerializer(serializers.ModelSerializer):

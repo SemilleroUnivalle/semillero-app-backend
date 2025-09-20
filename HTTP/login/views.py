@@ -7,6 +7,7 @@ from rest_framework.authtoken.models import Token
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
+
 class LoginView(APIView):
     # Permitir acceso sin autenticación (login no requiere token)
     authentication_classes = []
