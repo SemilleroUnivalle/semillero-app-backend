@@ -51,7 +51,7 @@ class OfertaAcademicaViewSet(viewsets.ModelViewSet):
         """
         Endpoint para listar únicamente la oferta académica con estado 'activo'
         """
-        ofertas_activas = OfertaAcademica.objects.filter(estado='activo')
+        ofertas_activas = OfertaAcademica.objects.filter(estado=True)
         serializer = self.get_serializer(ofertas_activas, many=True)
         return Response(serializer.data)
     

@@ -10,17 +10,16 @@ from drf_yasg import openapi
 from .models import Profesor
 from cuenta.models import CustomUser
 from modulo.models import Modulo
-from .serializers import ProfesorSerializer, AsignacionProfesorSerializer
-#Serializadores
 #Autenticacion
 from rest_framework.permissions import IsAuthenticated, AllowAny
 #Permisos
-from cuenta.permissions import IsAdministrador, IsProfesorOrAdministrador
+from cuenta.permissions import IsAdministrador, IsProfesorOrAdministrador, IsSelfOrAdmin
 #Transacciones atomicas
 from django.db import transaction
 #Serializador
-from profesor.serializers import ProfesorSerializer, ProfesorModuloSerializer
+from .serializers import ProfesorSerializer, AsignacionProfesorSerializer, ProfesorModuloSerializer
 from modulo.serializers import ModuloProfesorSerializer
+
 def file_update(instance, data, field_name):
         """
         Elimina el archivo anterior y asigna el nuevo si se envía uno.
@@ -34,7 +33,10 @@ def file_update(instance, data, field_name):
             setattr(instance, field_name, uploaded_file)
             instance.save()
             data.pop(field_name)
-
+def extract_single_value(value):
+        if isinstance(value, list):
+            return value[0] if value else ''
+        return value
 class ProfesorViewSet(viewsets.ModelViewSet):
     """
     API endpoint para gestionar Profesores.
@@ -54,14 +56,14 @@ class ProfesorViewSet(viewsets.ModelViewSet):
         if self.action in ['create']:
             permission_classes = [AllowAny]
         elif self.action in ['update', 'partial_update', 'retrive']:
-            permission_classes = [IsProfesorOrAdministrador]
+            permission_classes = [IsSelfOrAdmin]
         else: 
             permission_classes = [IsAdministrador]
         return [permission() for permission in permission_classes]
     
     @swagger_auto_schema(
         operation_summary="Listar todos los Profesores",
-        operation_description="Retorna una lista de todos los Profesores, registrados"
+        operation_description="Retorna una lista de todos los profesores, registrados"
     )
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
@@ -74,7 +76,6 @@ class ProfesorViewSet(viewsets.ModelViewSet):
     
     @swagger_auto_schema(
         operation_summary="Crear un profesor",
-        operation_description="Crea un nuevo registro de profesor",
         responses={
             status.HTTP_201_CREATED: ProfesorSerializer,
             status.HTTP_400_BAD_REQUEST: "Datos de entrada inválidos"
@@ -85,17 +86,15 @@ class ProfesorViewSet(viewsets.ModelViewSet):
 
         id_modulo = request.data.get('modulo')
         if not id_modulo:
-            return Response(
-                {"detail": 'El campo "modulo" es obligatorio.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        try:
-            modulo_instancia = Modulo.objects.get(id_modulo=id_modulo)
-        except Modulo.DoesNotExist:
-            return Response(
-                {"detail": "El modulo especificado no existe."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            modulo_instancia = None
+        else:
+            try:
+                modulo_instancia = Modulo.objects.get(id_modulo=id_modulo)
+            except Modulo.DoesNotExist:
+                return Response(
+                    {"detail": "El modulo especificado no existe."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
         # Verificar si el usuario ya existe
         username = data.get('numero_documento', '')
@@ -125,21 +124,36 @@ class ProfesorViewSet(viewsets.ModelViewSet):
                 )
                 
                 # Crear el perfil de profesor
-                Profesor.objects.create(
+                profesor = Profesor.objects.create(
                     user=user,
-                    numero_documento=data.get('numero_documento'),
                     nombre=data.get('nombre'),
                     apellido=data.get('apellido'),
-                    email=data.get('email'),
-                    celular=data.get('celular'),
                     contrasena=hashed_password,
+                    numero_documento=data.get('numero_documento'),
+                    email=data.get('email'),
+                    ciudad_residencia=data.get('ciudad_residencia'),
+                    eps=data.get('eps'),
+                    tipo_documento=data.get('tipo_documento'),
+                    genero=data.get('genero'),
+                    fecha_nacimiento=data.get('fecha_nacimiento'),
+                    telefono_fijo=data.get('telefono_fijo'),
+                    celular=data.get('celular'),
+                    departamento_residencia=data.get('departamento_residencia'),
+                    comuna_residencia=data.get('comuna_residencia'),
+                    direccion_residencia=data.get('direccion_residencia'),
+                    documento_identidad_pdf=request.FILES.get('documento_identidad_pdf'),
+                    rut_pdf=request.FILES.get('rut_pdf'),
+                    certificado_bancario_pdf=request.FILES.get('certificado_bancario_pdf'),
                     area_desempeño=data.get('area_desempeño', ''),
                     grado_escolaridad=data.get('grado_escolaridad', ''),
+                    hoja_vida_pdf=request.FILES.get('hoja_vida_pdf'),
+                    certificado_laboral_pdf=request.FILES.get('certificado_laboral_pdf'),
+                    certificado_academico_pdf=request.FILES.get('certificado_academico_pdf'),
                     modulo=modulo_instancia,
-                    documento_identidad_pdf=request.FILES.get('documento_identidad_pdf'),
+                    
                 )
                 # Puedes retornar la información deseada
-            return Response({'detail': 'Profesor creado exitosamente'}, status=status.HTTP_201_CREATED)
+            return Response({'id': profesor.id}, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({'detail': f'Error al crear profesor: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -176,6 +190,18 @@ class ProfesorViewSet(viewsets.ModelViewSet):
             data = request.data.copy() 
             instance = self.get_object()
             user = instance.user
+
+            pdf_fields = [
+                'documento_identidad_pdf',
+                'rut_pdf',
+                'certificado_bancario_pdf',
+                'hoja_vida_pdf',
+                'certificado_laboral_pdf',
+                'certificado_academico_pdf',
+            ]
+
+            numero_documento_actualizado = False
+            nuevo_numero_documento = None
             
             # Manejar la contraseña si está presente
             if 'contrasena' in data and data['contrasena']:
@@ -217,8 +243,46 @@ class ProfesorViewSet(viewsets.ModelViewSet):
                 user.save()
                 instance.email = email
                 instance.save()
+
+            if 'numero_documento' in data:
+                numero_documento = extract_single_value(data.pop('numero_documento'))
+                user.username = numero_documento
+                user.save()
+                instance.numero_documento = numero_documento
+                instance.save()
+                numero_documento_actualizado = True
+                nuevo_numero_documento = numero_documento
+
+            # Actualización de nombre de archivos PDF si numero_documento fue actualizado
+            if numero_documento_actualizado:
+                for field in pdf_fields:
+                    file_field = getattr(instance, field, None)
+                    if file_field and hasattr(file_field, 'name') and file_field.name:
+                        import os
+                        from django.core.files.base import ContentFile
+
+                        old_file_name = file_field.name  # Ruta completa en el bucket
+                        file_content = file_field.read()  # Lee el contenido antes de borrar
+
+                        # Elimina el archivo viejo del bucket
+                        storage = file_field.storage
+                        if storage.exists(old_file_name):
+                            storage.delete(old_file_name)
+
+                        # Construye el nuevo nombre
+                        new_filename = f"{nuevo_numero_documento}.pdf"
+                        file_dir = os.path.dirname(old_file_name)
+                        new_file_path = os.path.join(file_dir, new_filename)
+
+                        # Sube el archivo con el nuevo nombre
+                        getattr(instance, field).save(new_file_path, ContentFile(file_content), save=True)
             
             file_update(instance, data, 'documento_identidad_pdf')
+            file_update(instance, data, 'rut_pdf')
+            file_update(instance, data, 'certificado_bancario_pdf')
+            file_update(instance, data, 'hoja_vida_pdf')
+            file_update(instance, data, 'certificado_laboral_pdf')
+            file_update(instance, data, 'certificado_academico_pdf')
 
             if data:
                 serializer = self.get_serializer(instance, data=data, partial=True)
@@ -248,26 +312,6 @@ class ProfesorViewSet(viewsets.ModelViewSet):
         operation_description="Elimina permanentemente un profesor del sistema"
     )
     def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        
-        user = None
-        
-        try:
-            user = instance.user
-        except Exception:
-            pass
-        
-        self.perform_destroy(instance)
-        if user:
-            try:
-                # Primero eliminar tokens asociados si los hay
-                from rest_framework.authtoken.models import Token
-                Token.objects.filter(user=user).delete()
-                # Luego eliminar el usuario
-                user.delete()
-            except Exception as e:
-                # Log the error but don't interrupt the response
-                print(f"Error eliminando usuario: {str(e)}")
         return super().destroy(request, *args, **kwargs)
     
     @swagger_auto_schema(

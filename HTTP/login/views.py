@@ -65,7 +65,7 @@ class LoginView(APIView):
             try:
                 from profesor.models import Profesor
                 profesor = Profesor.objects.get(numero_documento=numero_documento)
-                user_id = profesor.id_profesor
+                user_id = profesor.id
             except Exception as e:
                 print(f"Error al buscar profesor: {str(e)}")
         elif tipo_usuario == 'estudiante':
@@ -75,6 +75,20 @@ class LoginView(APIView):
                 user_id = estudiante.id_estudiante
             except Exception as e:
                 print(f"Error al buscar estudiante: {str(e)}")
+        elif tipo_usuario == 'monitor_academico':
+            try:
+                from monitor_academico.models import MonitorAcademico
+                monitor_academico = MonitorAcademico.objects.get(numero_documento=numero_documento)
+                user_id = monitor_academico.id
+            except Exception as e:
+                print(f"Error al buscar el monitor academico: {str(e)}")
+        elif tipo_usuario == 'monitor_administrativo':
+            try:
+                from monitor_administrativo.models import MonitorAdministrativo
+                monitor_administrativo = MonitorAdministrativo.objects.get(numero_documento=numero_documento)
+                user_id = monitor_administrativo.id
+            except Exception as e:
+                print(f"Error al buscar el monitor administrativo: {str(e)}")
         
         # Devolver token, tipo de usuario y el ID específico
         return Response({
