@@ -1,32 +1,37 @@
 from django.db import models
 from django.conf import settings
 from modulo.models import Modulo
+from usuario.models import Usuario
 
 
-def documento_identidad_upload_to(instance, filename):
+def hoja_vida_upload_to(instance, filename):
     ext = filename.split('.')[-1]
-    return f'documentos_identidad_profesor/{instance.numero_documento}.{ext}'
+    return f'hoja_vida_profesor/{instance.numero_documento}.{ext}'
+def certificado_laboral_upload_to(instance, filename):
+    ext = filename.split('.')[-1]
+    return f'certificado_laboral_profesor/{instance.numero_documento}.{ext}'
+def certificado_academico_upload_to(instance, filename):
+    ext = filename.split('.')[-1]
+    return f'certificado_academico_profesor/{instance.numero_documento}.{ext}'
 
-class Profesor(models.Model):
-    id_profesor = models.AutoField(primary_key=True)
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, blank=True, null=True)
-    nombre = models.CharField(max_length=100)
-    apellido = models.CharField(max_length=100)
-    email = models.EmailField(max_length=100)
-    celular = models.CharField(max_length=15, blank=True, null=True)
-    contrasena = models.CharField(max_length=100)
-    numero_documento = models.CharField(max_length=20, unique=True)
-    area_desempeño = models.CharField(max_length=100, blank=True, null=True)
-    grado_escolaridad = models.CharField(max_length=100, blank=True, null=True)
+class Profesor(Usuario):
+    area_desempeño = models.CharField(max_length=50)
+    grado_escolaridad = models.CharField(max_length=50)
     modulo = models.ForeignKey(Modulo, on_delete=models.SET_NULL, related_name='profesores', null=True, blank=True)
-    documento_identidad_pdf = models.FileField(
-        upload_to=documento_identidad_upload_to, null=True, blank=True,
-        help_text="Sube un documento pdf del documento de identidad del profesor"
+    hoja_vida_pdf = models.FileField(
+        upload_to=hoja_vida_upload_to, null=True, blank=True,
     )
+    certificado_laboral_pdf = models.FileField(
+        upload_to=certificado_laboral_upload_to, null=True, blank=True,
+    )
+    certificado_academico_pdf = models.FileField(
+        upload_to=certificado_academico_upload_to, null=True, blank=True,
+    )
+
     
     def __str__(self):
         return (
-            f"ID: {self.id_profesor} | "
+            f"ID: {self.id} | "
             f"Usuario: {self.user} | "
             f"Nombre: {self.nombre} {self.apellido} | "
             f"Correo: {self.email} | "
@@ -39,4 +44,4 @@ class Profesor(models.Model):
     class Meta:
         verbose_name = "Profesor"
         verbose_name_plural = "Profesores"
-        ordering = ['id_profesor']
+        ordering = ['id']

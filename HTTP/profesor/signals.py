@@ -6,6 +6,24 @@ from rest_framework.authtoken.models import Token
 @receiver(pre_delete, sender=Profesor)
 def delete_user_when_professor_deleted(sender, instance, **kwargs):
     """Elimina tokens y usuario cuando se elimina un profesor"""
+    pdf_fields = [
+        'documento_identidad_pdf',
+        'rut_pdf',
+        'certificado_bancario_pdf',
+        'hoja_vida_pdf',
+        'certificado_laboral_pdf',
+        'certificado_academico_pdf',
+    ]
+
+    # Elimina todos los archivos PDF de S3 si existen
+    for field in pdf_fields:
+        pdf_file = getattr(instance, field, None)
+        if pdf_file:
+            try:
+                pdf_file.delete(save=False)
+            except Exception:
+                pass
+
     try:
         user = instance.user
         # Elimina tokens primero

@@ -36,6 +36,7 @@ ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
     '0.0.0.0',
+    '172.19.0.4',
 ]
 
 # Definición de aplicaciones
@@ -70,11 +71,15 @@ INSTALLED_APPS = [
     'cuenta',
     'administrador',
     'profesor',
+    'monitor_academico',
+    'monitor_administrativo',
     'oferta_academica',
     'categoria',
+    'usuario',
     'oferta_categoria',
     'recuperacion_contrasena',
     'storages',
+    "channels",
 ]
 
 REST_FRAMEWORK = {
@@ -137,7 +142,16 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'semillero_backend.wsgi.application'
+ASGI_APPLICATION = 'semillero_backend.asgi.application'
 
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("redis", 6379)],  
+        },
+    },
+}
 # Base de datos
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 

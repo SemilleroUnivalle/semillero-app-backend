@@ -47,6 +47,8 @@ urlpatterns = [
     path('oferta_academica/', include('oferta_academica.urls')),
     path('administrador/', include('administrador.urls')),
     path('profesor/', include('profesor.urls')),
+    path('monitor_administrativo/', include('monitor_administrativo.urls')),
+    path('monitor_academico/', include('monitor_academico.urls')),
     path('login/', LoginView.as_view(), name='login'),
     path('logout/', LogoutView.as_view(), name='logout'),
     path('recuperacion_contrasena/', include('recuperacion_contrasena.urls')),

@@ -17,7 +17,7 @@ from .serializers import EstudianteSerializer, LoteEliminarSerializer
 #Autenticacion
 from rest_framework.permissions import IsAuthenticated, AllowAny
 #Permisos
-from cuenta.permissions import IsEstudiante, IsProfesor, IsAdministrador, IsProfesorOrAdministrador, IsEstudianteOrProfesor, IsEstudianteOrAdministrador
+from cuenta.permissions import IsEstudiante, IsProfesor, IsAdministrador, IsProfesorOrAdministrador, IsEstudianteOrProfesor, IsEstudianteOrAdministrador, IsProfesorOrAdministradorOrMonitorAcademicoOrAdministrativo, IsMonitorAdministrativoOrAdministrador, IsEstudianteOrAdministradorOrMonitorAdministrativo
 from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 #Transacciones atomicas
 from django.db import transaction
@@ -35,6 +35,9 @@ from rest_framework.decorators import action
 import pandas as pd
 #filtros
 from django_filters.rest_framework import DjangoFilterBackend
+#Channels
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 def file_update(instance, data, field_name):
         """
@@ -75,16 +78,16 @@ class EstudianteViewSet(viewsets.ModelViewSet):
         """
         if self.action == 'list':
             # Profesores y administradores pueden listar
-            permission_classes = [IsProfesorOrAdministrador]
+            permission_classes = [IsProfesorOrAdministradorOrMonitorAcademicoOrAdministrativo]
         elif self.action in ['retrieve', 'update', 'partial_update']:
             # Estudiantes pueden ver/editar su perfil, administradores pueden todos
             # La restricción de que el estudiante solo vea su perfil se controla en retrieve
-            permission_classes = [IsEstudianteOrAdministrador]
+            permission_classes = [IsEstudianteOrAdministradorOrMonitorAdministrativo]
         elif self.action in ['create']:
             permission_classes = [AllowAny]
         elif self.action in ['destroy']:
             # Solo administradores pueden crear/eliminar
-            permission_classes = [IsAdministrador]
+            permission_classes = [IsMonitorAdministrativoOrAdministrador]
         else:
             # Para cualquier otra acción, usuario autenticado
             permission_classes = [IsAuthenticated]
@@ -203,6 +206,16 @@ class EstudianteViewSet(viewsets.ModelViewSet):
                     foto=request.FILES.get('foto'),
                 )
 
+            channel_layer = get_channel_layer()
+            data = EstudianteSerializer(Estudiante.objects.all(), many=True).data
+            async_to_sync(channel_layer.group_send)(
+                'estudiantes',
+                {
+                    'type': 'estudiantes_update',
+                    'data': data
+                }
+            )
+
             # Puedes retornar la información deseada
             return Response({'id': estudiante.id_estudiante}, status=status.HTTP_201_CREATED)
         except Exception as e:
@@ -253,6 +266,14 @@ class EstudianteViewSet(viewsets.ModelViewSet):
             data = request.data.copy() 
             instance = self.get_object()
             user = instance.user
+
+            pdf_fields = [
+                'documento_identidad',
+                'foto',
+            ]
+
+            numero_documento_actualizado = False
+            nuevo_numero_documento = None
             
             # Manejar la contraseña si está presente
             if 'contrasena' in data and data['contrasena']:
@@ -294,6 +315,39 @@ class EstudianteViewSet(viewsets.ModelViewSet):
                 user.save()
                 instance.email = email
                 instance.save()
+
+            if 'numero_documento' in data:
+                numero_documento = extract_single_value(data.pop('numero_documento'))
+                user.username = numero_documento
+                user.save()
+                instance.numero_documento = numero_documento
+                instance.save()
+                numero_documento_actualizado = True
+                nuevo_numero_documento = numero_documento
+
+            # Actualización de nombre de archivos PDF si numero_documento fue actualizado
+            if numero_documento_actualizado:
+                for field in pdf_fields:
+                    file_field = getattr(instance, field, None)
+                    if file_field and hasattr(file_field, 'name') and file_field.name:
+                        import os
+                        from django.core.files.base import ContentFile
+
+                        old_file_name = file_field.name  # Ruta completa en el bucket
+                        file_content = file_field.read()  # Lee el contenido antes de borrar
+
+                        # Elimina el archivo viejo del bucket
+                        storage = file_field.storage
+                        if storage.exists(old_file_name):
+                            storage.delete(old_file_name)
+
+                        # Construye el nuevo nombre
+                        new_filename = f"{nuevo_numero_documento}.pdf"
+                        file_dir = os.path.dirname(old_file_name)
+                        new_file_path = os.path.join(file_dir, new_filename)
+
+                        # Sube el archivo con el nuevo nombre
+                        getattr(instance, field).save(new_file_path, ContentFile(file_content), save=True)
             
             file_update(instance, data, 'documento_identidad')
             file_update(instance, data, 'foto')
@@ -389,70 +443,13 @@ class EstudianteViewSet(viewsets.ModelViewSet):
             return Response({"detail": "Credenciales de AWS no válidas"}, status=status.HTTP_400_BAD_REQUEST)
         except ClientError as e:
             return Response({"detail": f"Error al conectar con S3: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
-
-    @swagger_auto_schema(
-        method='post',
-        operation_summary="Eliminar estudiantes por lote",
-        operation_description="Elimina varios estudiantes y sus archivos de S3. Recibe una lista de IDs.",
-        request_body=LoteEliminarSerializer,
-        responses={200: 'Estudiantes eliminados correctamente', 400: 'Error en la solicitud'}
-    )
-    @action(detail=False, methods=['post'], permission_classes=[IsAdministrador])
-    def eliminar_lote(self, request):
-        serializer = LoteEliminarSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        ids = serializer.validated_data['ids']
-        
-        s3 = boto3.client(
-            's3',
-            aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID', ''),
-            aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY', ''),
-            region_name=os.getenv('AWS_S3_REGION_NAME', 'us-east-1'),
-        )
-        bucket_name = os.getenv('AWS_STORAGE_BUCKET_NAME', 'archivos-estudiantes')
-
-        eliminados = []
-        errores = []
-        for id_est in ids:
-            try:
-                estudiante = Estudiante.objects.get(pk=id_est)
-                archivos = [
-                    estudiante.documento_identidad,
-                    estudiante.foto,
-                ]
-                for archivo in archivos:
-                    if archivo and hasattr(archivo, 'name') and archivo.name:
-                        key = f"media/{archivo.name.lstrip('/')}"
-                        try:
-                            s3.delete_object(Bucket=bucket_name, Key=key)
-                        except Exception as e:
-                            print(f"Error eliminando archivo {key} de S3: {str(e)}")
-                user = getattr(estudiante, 'user', None)
-                estudiante.delete()
-                if user:
-                    try:
-                        from rest_framework.authtoken.models import Token
-                        Token.objects.filter(user=user).delete()
-                        user.delete()
-                    except Exception as e:
-                        print(f"Error eliminando usuario: {str(e)}")
-                eliminados.append(id_est)
-            except Estudiante.DoesNotExist:
-                errores.append(id_est)
-        
-        return Response({
-            "eliminados": eliminados,
-            "no_encontrados": errores,
-            "detail": "Proceso de eliminación por lote finalizado."
-        }, status=status.HTTP_200_OK)
         
     @swagger_auto_schema(
         operation_summary="Exporta a excel todos los estudiantes",
         operation_description="Exporta a excel todos los estudiantes"
     )
     @action(detail=False, methods=['get'], url_path='export-excel',
-            permission_classes=[IsAdministrador])
+            permission_classes=[IsMonitorAdministrativoOrAdministrador])
     def export_excel(self, request):
         estudiantes = Estudiante.objects.all().select_related('acudiente')
         data = []
@@ -507,7 +504,7 @@ class EstudianteViewSet(viewsets.ModelViewSet):
         operation_description="Filtra los estudiantes por género especificado en los parámetros de la solicitud"
     )
     @action(detail=False, methods=['get'], url_path='filtro-genero',
-            permission_classes=[IsAdministrador])
+            permission_classes=[IsMonitorAdministrativoOrAdministrador])
     def filtro_genero(self, request, *args, **kwargs):
         
         genero = request.query_params.get('genero', None)
@@ -522,7 +519,7 @@ class EstudianteViewSet(viewsets.ModelViewSet):
         operation_description="Filtra los estudiantes por estamento especificado en los parámetros de la solicitud"
     )
     @action(detail=False, methods=['get'], url_path='filtro-estamento',
-            permission_classes=[IsAdministrador])
+            permission_classes=[IsMonitorAdministrativoOrAdministrador])
     def filtro_estamento(self, request, *args, **kwargs):
         
         estamento = request.query_params.get('estamento', None)

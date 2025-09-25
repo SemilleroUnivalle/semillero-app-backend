@@ -6,8 +6,10 @@ class CustomUser(AbstractUser):
         ('estudiante', 'Estudiante'),
         ('profesor', 'Profesor'),
         ('administrador', 'Administrador'),
+        ('monitor_academico', 'Monitor_academico'),
+        ('monitor_administrativo', 'Monitor_administrativo'),
     )
-    user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES, default='estudiante')
+    user_type = models.CharField(max_length=30, choices=USER_TYPE_CHOICES, default='estudiante')
     
     class Meta:
         verbose_name = 'Usuario'
