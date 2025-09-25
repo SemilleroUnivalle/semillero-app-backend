@@ -88,9 +88,9 @@ class InscripcionViewSet(viewsets.ModelViewSet):
             )
 
         oferta_academica_true = modulo.id_oferta_categoria.filter(estado=True).first()
-        if oferta_academica_true:
-            data["id_oferta_categoria"] = modulo.id_oferta_categoria.first().id_oferta_categoria
-            return (Response({"detail": "La oferta academica no esta activa"}, status=status.HTTP_400_BAD_REQUEST))
+        if not oferta_academica_true:
+            return (Response({"detail": "La oferta académica no esta activa"}, status=status.HTTP_400_BAD_REQUEST))
+        data["id_oferta_categoria"] = oferta_academica_true.id_oferta_categoria
         
         #Crear el objeto usando el serializador
         serializer = self.get_serializer(data=data)
