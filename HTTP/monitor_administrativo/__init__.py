@@ -1,1 +1,1 @@
-default_app_config = 'monitor_administrativo.apps.TuAppConfig'
+default_app_config = 'monitor_administrativo.apps.MonitorAdministrativoConfig'
