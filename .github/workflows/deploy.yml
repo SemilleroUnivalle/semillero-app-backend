@@ -29,13 +29,10 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build and push Docker image
+      - name: Build and push Docker image (backend)
         run: |
           docker build -f HTTP/Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY-backend:$IMAGE_TAG HTTP
           docker push $ECR_REGISTRY/$ECR_REPOSITORY-backend:$IMAGE_TAG
-          docker build -f websocket/Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY-websocket:$IMAGE_TAG websocket
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY-websocket:$IMAGE_TAG
-
 
   deploy:
     name: Deploy to EC2
@@ -65,7 +62,7 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << EOF
             cd /home/${{ secrets.EC2_USER }}/mi-app
             aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $REGISTRY
-            docker-compose pull || true  # Si usas imágenes en ECR
+            docker-compose pull || true
             docker-compose down || true
             docker-compose up -d --build
           EOF
