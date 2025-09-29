@@ -31,6 +31,7 @@ class Usuario(models.Model):
     departamento_residencia = models.CharField(max_length=50) # Departamento de residencia del estudiante
     comuna_residencia = models.CharField(max_length=10) # Comuna de residencia del estudiante
     direccion_residencia = models.CharField(max_length=255) # Dirección de residencia del estudiante
+    estado = models.CharField(default='No revisado')
     documento_identidad_pdf = models.FileField(
         upload_to=documento_identidad_upload_to, null=True, blank=True,
     )

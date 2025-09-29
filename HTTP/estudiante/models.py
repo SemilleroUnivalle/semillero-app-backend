@@ -1,6 +1,8 @@
 from django.db import models
 from acudiente.models import Acudiente
 from django.conf import settings
+from auditlog.registry import auditlog
+from auditlog.models import LogEntry
 
 def documento_identidad_upload_to(instance, filename):
     ext = filename.split('.')[-1]
@@ -47,7 +49,38 @@ class Estudiante(models.Model):
     descripcion_discapacidad = models.TextField(max_length=100, default='Ninguna') #Descripción de la discapacidad del estudiante
     area_desempeño = models.CharField(max_length=100, blank=True, null=True) #En el caso de los profesores que van para formacion docente
     grado_escolaridad = models.CharField(max_length=100, blank=True, null=True) #En el caso de los profesores que van para formacion docente
+    #verificacion de documentos
+    verificacion_foto = models.BooleanField(default=False)
+    verificacion_documento_identidad = models.BooleanField(default=False)
+    verificacion_informacion = models.BooleanField(default=False)
+    estado = models.CharField(max_length=12,default='No revisado')
+    #id de la auditoria que corresponde a cada cambio solo en el caso de:
+        # - Foto
+        # - Documento de identidad
+        # - Informacion
+    audit_documento_identidad = models.ForeignKey(
+        LogEntry,
+        on_delete=models.CASCADE,
+        related_name="estudiante_documento_identidad",
+        null=True,
+        blank=True
+    )
+    audit_foto = models.ForeignKey(
+        LogEntry,
+        on_delete=models.CASCADE,
+        related_name="estudiante_foto",
+        null=True,
+        blank=True
+    )
+    audit_informacion = models.ForeignKey(
+        LogEntry,
+        on_delete=models.CASCADE,
+        related_name="estudiante_informacion",
+        null=True,
+        blank=True
+    )
 
+    
     documento_identidad = models.FileField(
         upload_to=documento_identidad_upload_to, null=True, blank=True,
         help_text="Sube un documento pdf del documento de identidad del estudiante"
@@ -77,3 +110,4 @@ class Estudiante(models.Model):
         verbose_name_plural = "Estudiantes"
         ordering = ['id_estudiante']
 
+auditlog.register(Estudiante)

@@ -37,6 +37,7 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     '0.0.0.0',
     '172.19.0.4',
+    '172.18.0.4',
 ]
 
 # Definición de aplicaciones
@@ -80,6 +81,7 @@ INSTALLED_APPS = [
     'recuperacion_contrasena',
     'storages',
     "channels",
+    "auditlog",
 ]
 
 REST_FRAMEWORK = {
@@ -112,15 +114,15 @@ SIMPLE_JWT = {
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', 
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'auditlog.middleware.AuditlogMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware',
 ]
 
 ROOT_URLCONF = 'semillero_backend.urls'
@@ -154,7 +156,7 @@ CHANNEL_LAYERS = {
 }
 # Base de datos
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-
+"""
 DATABASES = {
     # Configuración para usar SQLite
     'default': {
@@ -181,7 +183,7 @@ DATABASES = {
         'PORT': '5432',
     },
 }
-"""
+
 # Validación de contraseñas
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 

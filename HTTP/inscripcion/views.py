@@ -1,6 +1,10 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from modulo.models import Modulo
+from django.http import JsonResponse
+from auditlog.models import LogEntry
+from .serializers import LogEntrySerializer
+from auditlog.context import set_actor
 
 #Documentacion
 from drf_yasg.utils import swagger_auto_schema
@@ -140,37 +144,99 @@ class InscripcionViewSet(viewsets.ModelViewSet):
             )
 
     @swagger_auto_schema(
-        operation_summary="Actualizar parcialmente una inscripcion",
-        operation_description="Actualiza uno o más campos de una inscripcion, existente"
+    operation_summary="Actualizar parcialmente una inscripcion",
+    operation_description="Actualiza uno o más campos de una inscripcion, existente"
     )
     def partial_update(self, request, *args, **kwargs):
         try:
-            data = request.data.copy() 
+            data = request.data.copy()
             instance = self.get_object()
 
+            # Procesa archivos, pero puedes guardar el estado antes/después si lo deseas
             file_update(instance, data, 'recibos_pago')
             file_update(instance, data, 'constancia')
             file_update(instance, data, 'certificado')
 
-            partial = kwargs.pop('partial', False)
             serializer = self.get_serializer(instance, data=data, partial=True)
             serializer.is_valid(raise_exception=True)
-            self.perform_update(serializer)
+
+            # Compara datos originales con los nuevos
+            changed = False
+            for field, value in serializer.validated_data.items():
+                if getattr(instance, field, None) != value:
+                    changed = True
+                    break
+
+            # Si no hubo cambios, responde 204 o un mensaje personalizado
+            if not changed:
+                return Response(
+                    {"detail": "No hubo cambios en la actualización."},
+                    status=status.HTTP_204_NO_CONTENT  # O puedes usar 200 con mensaje
+                )
+
+            with set_actor(request.user): 
+                self.perform_update(serializer)
 
             return Response(serializer.data)
 
         except TypeError as e:
-            # Este error ocurre si intentas copiar archivos grandes
             return Response(
                 {"detail": "Error procesando archivos grandes.", "error": str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )
         except Exception as e:
-            # Cubre cualquier otro error inesperado
             return Response(
                 {"detail": "Ocurrió un error inesperado.", "error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            )    
+    
+    #Utilizo perform update para actualizar el estado de la inscripcion (No revisado, Revisado, Pendiente)
+    def perform_update(self, serializer):
+        instance = serializer.instance  # aún no ha guardado los cambios
+
+        # Guarda valores originales
+        recibo_pago_original = instance.verificacion_recibo_pago
+        constancia_original = instance.verificacion_constancia
+        #certificado = instance.verificacion_certificado
+
+        # Guarda cambios nuevos
+        instance = serializer.save()
+        recibo_pago_nuevo = instance.verificacion_recibo_pago
+        constancia_nuevo = instance.verificacion_constancia
+        #certificado_nuevo = instance.verificacion_certificado
+
+        # Asigna el estado correcto
+        if recibo_pago_nuevo and constancia_nuevo:
+            instance.estado = "Revisado"
+        elif recibo_pago_nuevo or constancia_nuevo:
+            instance.estado = "Pendiente"
+        else:
+            instance.estado = "No revisado"
+
+        instance.save(update_fields=['estado'])
+
+        # Busca el último logentry después de guardar
+        logentry = LogEntry.objects.filter(
+            object_id=instance.pk,
+            content_type__model='inscripcion'
+        ).order_by('-timestamp').first()
+
+        # Solo actualiza el campo de auditoría si el valor fue cambiado
+        if recibo_pago_original != recibo_pago_nuevo and logentry:
+            instance.audit_documento_recibo_pago = logentry
+        if constancia_original != constancia_nuevo and logentry:
+            instance.audit_constancia = logentry
+        
+        # Guarda solo los campos que hayan cambiado
+        campos_actualizados = []
+        if recibo_pago_original != recibo_pago_nuevo:
+            campos_actualizados.append('audit_documento_recibo_pago')
+        if constancia_original != constancia_nuevo:
+            campos_actualizados.append('audit_constancia')
+        
+
+        if campos_actualizados:
+            instance.save(update_fields=campos_actualizados)
     
     @swagger_auto_schema(
         operation_summary="Eliminar una inscripcion",
@@ -229,6 +295,13 @@ class InscripcionViewSet(viewsets.ModelViewSet):
         if grupo:
             queryset = queryset.filter(grupo=grupo)
         serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    
+    @action(detail=False, methods=['get'], url_path="auditoria-matricula")
+    def auditoria_inscripcion(self, request):
+        logs = LogEntry.objects.all().order_by('-timestamp')[:100]
+        serializer = LogEntrySerializer(logs, many=True)
         return Response(serializer.data)
 
     def asignar_grupos():

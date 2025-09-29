@@ -1,19 +1,37 @@
 from rest_framework import serializers
 from .models import Estudiante
 from acudiente.serializers import AcudienteSerializer
+from auditlog.models import LogEntry
+from .auditlog_serializer import LogEntrySerializerEstudiante
 
 class EstudianteSerializer(serializers.ModelSerializer):
     acudiente = AcudienteSerializer(read_only=True)
+    audit_foto = LogEntrySerializerEstudiante(read_only=True)
+    audit_documento_identidad = LogEntrySerializerEstudiante(read_only=True)
+    audit_informacion = LogEntrySerializerEstudiante(read_only=True)
 
     class Meta:
         model = Estudiante
         fields = '__all__'
-        
-class LoteEliminarSerializer(serializers.Serializer):
-    ids = serializers.ListField(
-        child=serializers.IntegerField(),
-        allow_empty=False,
-        help_text="Lista de IDs de estudiantes a eliminar"
-    )
+
+class EstudianteSerializerMatricula(serializers.ModelSerializer):
+    acudiente = AcudienteSerializer(read_only=True)
+    #audit_foto = LogEntrySerializerEstudiante(read_only=True)
+    #audit_documento_identidad = LogEntrySerializerEstudiante(read_only=True)
+    #audit_informacion = LogEntrySerializerEstudiante(read_only=True)
+
+    class Meta:
+        model = Estudiante
+        fields = '__all__'
+
+class LogEntrySerializer(serializers.ModelSerializer):
+    usuario = serializers.SerializerMethodField()
+
+    class Meta:
+        model = LogEntry
+        fields = '__all__'
+
+    def get_usuario(self, obj):
+        return obj.actor.username if obj.actor else None
        
 
