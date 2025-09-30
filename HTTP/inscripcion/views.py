@@ -190,7 +190,7 @@ class InscripcionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )    
     
-    #Utilizo perform update para actualizar el estado de la inscripcion (No revisado, Revisado, Pendiente)
+    #Utilizo perform update para actualizar el estado de la inscripción (No revisado, Revisado, Pendiente)
     def perform_update(self, serializer):
         instance = serializer.instance  # aún no ha guardado los cambios
 
