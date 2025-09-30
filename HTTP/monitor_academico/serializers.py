@@ -2,8 +2,16 @@ from rest_framework import serializers
 from .models import MonitorAcademico
 from modulo.models import Modulo
 from modulo.serializers import ModuloProfesorSerializer
+from auditlog.models import LogEntry
+from .auditlog_serializer import LogEntrySerializerMonitorAcademico
 
 class MonitorAcademicoSerializer(serializers.ModelSerializer):
+    audit_d10 = LogEntrySerializerMonitorAcademico(read_only=True)
+    audit_tabulado = LogEntrySerializerMonitorAcademico(read_only=True)
+    audit_estado_mat_financiera = LogEntrySerializerMonitorAcademico(read_only=True)
+    audit_documento_identidad = LogEntrySerializerMonitorAcademico(read_only=True)
+    audit_rut = LogEntrySerializerMonitorAcademico(read_only=True)
+    audit_certificado_bancario = LogEntrySerializerMonitorAcademico(read_only=True)
 
     class Meta:
         model = MonitorAcademico
@@ -11,6 +19,12 @@ class MonitorAcademicoSerializer(serializers.ModelSerializer):
 
 class MonitorAcademicoModuloSerializer(serializers.ModelSerializer):
     modulo = ModuloProfesorSerializer(read_only=True)
+    audit_d10 = LogEntrySerializerMonitorAcademico(read_only=True)
+    audit_tabulado = LogEntrySerializerMonitorAcademico(read_only=True)
+    audit_estado_mat_financiera = LogEntrySerializerMonitorAcademico(read_only=True)
+    audit_documento_identidad = LogEntrySerializerMonitorAcademico(read_only=True)
+    audit_rut = LogEntrySerializerMonitorAcademico(read_only=True)
+    audit_certificado_bancario = LogEntrySerializerMonitorAcademico(read_only=True)
 
     class Meta:
         model = MonitorAcademico
@@ -32,3 +46,13 @@ class AsignacionMonitorAcademicoSerializer(serializers.Serializer):
             raise serializers.ValidationError("Módulo no encontrado")
 
         return data
+
+class LogEntrySerializer(serializers.ModelSerializer):
+    usuario = serializers.SerializerMethodField()
+
+    class Meta:
+        model = LogEntry
+        fields = '__all__'
+
+    def get_usuario(self, obj):
+        return obj.actor.username if obj.actor else None

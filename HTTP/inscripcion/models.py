@@ -2,6 +2,8 @@ from django.db import models
 from estudiante.models import Estudiante
 from modulo.models import Modulo
 from oferta_categoria.models import OfertaCategoria
+from auditlog.registry import auditlog
+from auditlog.models import LogEntry
 
 def recibo_pago_upload_to(instance, filename):
     ext = filename.split('.')[-1]
@@ -23,7 +25,6 @@ class Inscripcion(models.Model):
     id_estudiante = models.ForeignKey(Estudiante, on_delete=models.CASCADE)
     id_modulo = models.ForeignKey(Modulo, on_delete=models.SET_NULL, null=True)
     id_oferta_categoria = models.ForeignKey(OfertaCategoria, on_delete=models.SET_NULL, null=True)
-    estado = models.BooleanField(default=True)
     grupo = models.CharField(max_length=255, default='Grupo 0')
     fecha_inscripcion = models.DateField(auto_now_add=True)
     tipo_vinculacion = models.CharField(max_length=255)
@@ -45,6 +46,38 @@ class Inscripcion(models.Model):
         help_text="Sube un documento pdf del certificado de funcionario"
     )
 
+    #verificacion de documentos
+    verificacion_recibo_pago = models.BooleanField(default=False)
+    verificacion_constancia = models.BooleanField(default=False)
+    verificacion_certificado = models.BooleanField(default=False)
+    estado = models.CharField(max_length=12,default='No revisado')
+    #id de la auditoria que corresponde a cada cambio solo en el caso de:
+        # - Foto
+        # - Documento de identidad
+        # - Informacion
+    audit_documento_recibo_pago = models.OneToOneField(
+        LogEntry,
+        on_delete=models.CASCADE,
+        related_name="inscripcion_recibo_pago",
+        null=True,
+        blank=True
+    )
+    audit_constancia = models.OneToOneField(
+        LogEntry,
+        on_delete=models.CASCADE,
+        related_name="inscripcion_constancia",
+        null=True,
+        blank=True
+    )
+    audit_certificado = models.OneToOneField(
+        LogEntry,
+        on_delete=models.CASCADE,
+        related_name="inscripcion_certificado",
+        null=True,
+        blank=True
+    )
+
+
     def __str__(self):
         return (
             f"ID: {self.id_inscripcion} | "
@@ -60,3 +93,5 @@ class Inscripcion(models.Model):
         verbose_name = 'Inscripción'
         verbose_name_plural = 'Inscripciones'
         ordering = ['fecha_inscripcion']
+
+auditlog.register(Inscripcion)

@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import Modulo
 from categoria.models import Categoria
 from oferta_categoria.serializers import OfertaCategoriaReadSerializer
+from area.serializers import AreaSerializer
 
 # Serializador para las categorías
 class CategoriaSerializer(serializers.ModelSerializer):
@@ -14,6 +15,7 @@ class CategoriaSerializer(serializers.ModelSerializer):
 class ModuloReadSerializer(serializers.ModelSerializer):
     # Incluimos la categoría relacionada (ahora como objeto único)
     id_categoria = CategoriaSerializer(read_only=True)
+    id_area = AreaSerializer(read_only=True)
     #id_oferta_categoria = OfertaCategoriaReadSerializer (many=True, read_only=True)
 
     class Meta:
