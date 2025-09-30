@@ -308,7 +308,7 @@ class MonitorAcademicoViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-    #Utilizo perform update para actualizar el estado del estudiante a (No revisado, Revisado, Pendiente)
+    #Utilizo perform update para actualizar el estado del monitor academico a (No revisado, Revisado, Pendiente)
     def perform_update(self, serializer):
         instance = serializer.instance  # aún no ha guardado los cambios
 
