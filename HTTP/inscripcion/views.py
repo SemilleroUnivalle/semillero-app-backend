@@ -16,7 +16,7 @@ from .serializers import InscripcionSerializer
 #Autenticacion
 from rest_framework.permissions import IsAuthenticated, AllowAny
 #Permisos
-from cuenta.permissions import IsAdministrador, IsEstudianteOrAdministrador
+from cuenta.permissions import IsAdministrador, IsEstudianteOrAdministrador, IsEstudianteOrAdministradorOrMonitorAdministrativo
 #Actions
 from rest_framework.decorators import action
 
@@ -52,6 +52,8 @@ class InscripcionViewSet(viewsets.ModelViewSet):
         """
         if self.action == 'create':
             permission_classes = [AllowAny]
+        elif self.action == 'retrieve':
+            permission_classes = [IsEstudianteOrAdministradorOrMonitorAdministrativo]
         else:
             permission_classes = [IsAdministrador]
         return [permission() for permission in permission_classes]
@@ -196,19 +198,19 @@ class InscripcionViewSet(viewsets.ModelViewSet):
 
         # Guarda valores originales
         recibo_pago_original = instance.verificacion_recibo_pago
-        constancia_original = instance.verificacion_constancia
+        certificado_original = instance.verificacion_certificado
         #certificado = instance.verificacion_certificado
 
         # Guarda cambios nuevos
         instance = serializer.save()
         recibo_pago_nuevo = instance.verificacion_recibo_pago
-        constancia_nuevo = instance.verificacion_constancia
+        certificado_nuevo = instance.verificacion_certificado
         #certificado_nuevo = instance.verificacion_certificado
 
         # Asigna el estado correcto
-        if recibo_pago_nuevo and constancia_nuevo:
+        if recibo_pago_nuevo and certificado_nuevo:
             instance.estado = "Revisado"
-        elif recibo_pago_nuevo or constancia_nuevo:
+        elif recibo_pago_nuevo or certificado_nuevo:
             instance.estado = "Pendiente"
         else:
             instance.estado = "No revisado"
@@ -224,15 +226,15 @@ class InscripcionViewSet(viewsets.ModelViewSet):
         # Solo actualiza el campo de auditoría si el valor fue cambiado
         if recibo_pago_original != recibo_pago_nuevo and logentry:
             instance.audit_documento_recibo_pago = logentry
-        if constancia_original != constancia_nuevo and logentry:
-            instance.audit_constancia = logentry
+        if certificado_original != certificado_nuevo and logentry:
+            instance.audit_certificado = logentry
         
         # Guarda solo los campos que hayan cambiado
         campos_actualizados = []
         if recibo_pago_original != recibo_pago_nuevo:
             campos_actualizados.append('audit_documento_recibo_pago')
         if constancia_original != constancia_nuevo:
-            campos_actualizados.append('audit_constancia')
+            campos_actualizados.append('audit_certificado')
         
 
         if campos_actualizados:

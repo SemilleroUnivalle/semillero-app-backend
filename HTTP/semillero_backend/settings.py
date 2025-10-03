@@ -156,7 +156,7 @@ CHANNEL_LAYERS = {
 }
 # Base de datos
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-
+"""
 DATABASES = {
     # Configuración para usar SQLite
     'default': {
@@ -183,7 +183,7 @@ DATABASES = {
         'PORT': '5432',
     },
 }
-"""
+
 # Validación de contraseñas
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
