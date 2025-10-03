@@ -17,6 +17,11 @@ from cuenta.permissions import IsAdministrador, IsSelfOrAdmin
 from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 #Transacciones atomicas
 from django.db import transaction
+#Auditoria
+from auditlog.models import LogEntry
+from .serializers import LogEntrySerializer
+from auditlog.context import set_actor
+from django.contrib.contenttypes.models import ContentType
 
 def file_update(instance, data, field_name):
         """
@@ -180,103 +185,175 @@ class MonitorAdministrativoViewSet(viewsets.ModelViewSet):
             numero_documento_actualizado = False
             nuevo_numero_documento = None
 
-            # Manejar la contraseña si está presente
-            if 'contrasena' in data and data['contrasena']:
-                new_password = extract_single_value(data.pop('contrasena'))
-                user.set_password(new_password)
-                user.save()
-                hashed_password = make_password(new_password)
-                instance.contrasena = hashed_password
-                instance.save()
+            with set_actor(request.user):
+                # Manejar la contraseña si está presente
+                if 'contrasena' in data and data['contrasena']:
+                    new_password = extract_single_value(data.pop('contrasena'))
+                    user.set_password(new_password)
+                    user.save()
+                    hashed_password = make_password(new_password)
+                    instance.contrasena = hashed_password
+                    instance.save()
 
-            # Manejar is_active
-            if 'is_active' in data:
-                is_active = extract_single_value(data.pop('is_active'))
-                user.is_active = is_active
-                user.save()
-                instance.is_active = is_active
-                instance.save()
+                # Manejar is_active
+                if 'is_active' in data:
+                    is_active = extract_single_value(data.pop('is_active'))
+                    user.is_active = is_active
+                    user.save()
+                    instance.is_active = is_active
+                    instance.save()
 
-            # Manejar el nombre de usuario
-            if 'nombre' in data:
-                nombre = extract_single_value(data.pop('nombre'))
-                user.first_name = nombre
-                user.save()
-                instance.nombre = nombre
-                instance.save()
+                # Manejar el nombre de usuario
+                if 'nombre' in data:
+                    nombre = extract_single_value(data.pop('nombre'))
+                    user.first_name = nombre
+                    user.save()
+                    instance.nombre = nombre
+                    instance.save()
 
-            # Manejar el apellido
-            if 'apellido' in data:
-                apellido = extract_single_value(data.pop('apellido'))
-                user.last_name = apellido
-                user.save()
-                instance.apellido = apellido
-                instance.save()
+                # Manejar el apellido
+                if 'apellido' in data:
+                    apellido = extract_single_value(data.pop('apellido'))
+                    user.last_name = apellido
+                    user.save()
+                    instance.apellido = apellido
+                    instance.save()
 
-            # Manejar el email
-            if 'email' in data:
-                email = extract_single_value(data.pop('email'))
-                user.email = email
-                user.save()
-                instance.email = email
-                instance.save()
+                # Manejar el email
+                if 'email' in data:
+                    email = extract_single_value(data.pop('email'))
+                    user.email = email
+                    user.save()
+                    instance.email = email
+                    instance.save()
 
-            # Manejar numero_documento
-            if 'numero_documento' in data:
-                numero_documento = extract_single_value(data.pop('numero_documento'))
-                user.username = numero_documento
-                user.save()
-                instance.numero_documento = numero_documento
-                instance.save()
-                numero_documento_actualizado = True
-                nuevo_numero_documento = numero_documento
+                # Manejar numero_documento
+                if 'numero_documento' in data:
+                    numero_documento = extract_single_value(data.pop('numero_documento'))
+                    user.username = numero_documento
+                    user.save()
+                    instance.numero_documento = numero_documento
+                    instance.save()
+                    numero_documento_actualizado = True
+                    nuevo_numero_documento = numero_documento
 
-            # Actualización de nombre de archivos PDF si numero_documento fue actualizado
-            if numero_documento_actualizado:
-                for field in pdf_fields:
-                    file_field = getattr(instance, field, None)
-                    if file_field and hasattr(file_field, 'name') and file_field.name:
-                        import os
-                        from django.core.files.base import ContentFile
+                # Actualización de nombre de archivos PDF si numero_documento fue actualizado
+                if numero_documento_actualizado:
+                    for field in pdf_fields:
+                        file_field = getattr(instance, field, None)
+                        if file_field and hasattr(file_field, 'name') and file_field.name:
+                            import os
+                            from django.core.files.base import ContentFile
 
-                        old_file_name = file_field.name  # Ruta completa en el bucket
-                        file_content = file_field.read()  # Lee el contenido antes de borrar
+                            old_file_name = file_field.name  # Ruta completa en el bucket
+                            file_content = file_field.read()  # Lee el contenido antes de borrar
 
-                        # Elimina el archivo viejo del bucket
-                        storage = file_field.storage
-                        if storage.exists(old_file_name):
-                            storage.delete(old_file_name)
+                            # Elimina el archivo viejo del bucket
+                            storage = file_field.storage
+                            if storage.exists(old_file_name):
+                                storage.delete(old_file_name)
 
-                        # Construye el nuevo nombre
-                        new_filename = f"{nuevo_numero_documento}.pdf"
-                        file_dir = os.path.dirname(old_file_name)
-                        new_file_path = os.path.join(file_dir, new_filename)
+                            # Construye el nuevo nombre
+                            new_filename = f"{nuevo_numero_documento}.pdf"
+                            file_dir = os.path.dirname(old_file_name)
+                            new_file_path = os.path.join(file_dir, new_filename)
 
-                        # Sube el archivo con el nuevo nombre
-                        getattr(instance, field).save(new_file_path, ContentFile(file_content), save=True)
+                            # Sube el archivo con el nuevo nombre
+                            getattr(instance, field).save(new_file_path, ContentFile(file_content), save=True)
 
-            # Actualización normal de archivos si no hay cambio de nombre
-            file_update(instance, data, 'documento_identidad_pdf')
-            file_update(instance, data, 'rut_pdf')
-            file_update(instance, data, 'certificado_bancario_pdf')
-            file_update(instance, data, 'd10_pdf')
-            file_update(instance, data, 'tabulado_pdf')
-            file_update(instance, data, 'estado_mat_financiera_pdf')
+                # Actualización normal de archivos si no hay cambio de nombre
+                file_update(instance, data, 'documento_identidad_pdf')
+                file_update(instance, data, 'rut_pdf')
+                file_update(instance, data, 'certificado_bancario_pdf')
+                file_update(instance, data, 'd10_pdf')
+                file_update(instance, data, 'tabulado_pdf')
+                file_update(instance, data, 'estado_mat_financiera_pdf')
 
-            if data:
-                serializer = self.get_serializer(instance, data=data, partial=True)
-                serializer.is_valid(raise_exception=True)
-                self.perform_update(serializer)
-                return Response(serializer.data)
-            else:
-                serializer = self.get_serializer(instance)
-                return Response(serializer.data)
+                if data:
+                    serializer = self.get_serializer(instance, data=data, partial=True)
+                    serializer.is_valid(raise_exception=True)
+                    self.perform_update(serializer)
+                    return Response(serializer.data)
+                else:
+                    serializer = self.get_serializer(instance)
+                    return Response(serializer.data)
 
         except Exception as e:
             return Response(
                 {"detail": "Ocurrió un error inesperado.", "error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+    #Utilizo perform_update para actualizar el estado del monitor administrativo a (No revisado, Revisado, Pendiente)
+    def perform_update(self, serializer):
+        instance = serializer.instance  # aún no ha guardado los cambios
+
+        # Guarda valores originales
+        d10_original = instance.verificacion_d10
+        tabulado_original = instance.verificacion_tabulado
+        estado_mat_financiera_original = instance.verificacion_estado_mat_financiera
+        documento_identidad_original = instance.verificacion_documento_identidad
+        rut_original = instance.verificacion_rut
+        certificado_bancario_original = instance.verificacion_certificado_bancario
+
+        # Guarda cambios nuevos
+        instance = serializer.save()
+        d10_nuevo = instance.verificacion_d10
+        tabulado_nuevo = instance.verificacion_tabulado
+        estado_mat_financiera_nuevo = instance.verificacion_estado_mat_financiera
+        documento_identidad_nuevo = instance.verificacion_documento_identidad
+        rut_nuevo = instance.verificacion_rut
+        certificado_bancario_nuevo = instance.verificacion_certificado_bancario
+
+        # Asigna el estado correcto
+        if d10_nuevo and tabulado_nuevo and estado_mat_financiera_nuevo and documento_identidad_nuevo and rut_nuevo and certificado_bancario_nuevo:
+            instance.estado = "Revisado"
+        elif d10_nuevo or tabulado_nuevo or estado_mat_financiera_nuevo or documento_identidad_nuevo or rut_nuevo or certificado_bancario_nuevo:
+            instance.estado = "Pendiente"
+        else:
+            instance.estado = "No revisado"
+
+        instance.save(update_fields=['estado'])
+
+        # Busca el último logentry después de guardar
+        content_type = ContentType.objects.get_for_model(instance)
+        logentry = LogEntry.objects.filter(
+            object_id=instance.pk,
+            content_type=content_type
+        ).order_by('-timestamp').first()
+
+
+        # Solo actualiza el campo de auditoría si el valor fue cambiado
+        if d10_original != d10_nuevo and logentry:
+            instance.audit_d10 = logentry
+        if tabulado_original != tabulado_nuevo and logentry:
+            instance.audit_tabulado = logentry
+        if estado_mat_financiera_original != estado_mat_financiera_nuevo and logentry:
+            instance.audit_estado_mat_financiera = logentry
+        if documento_identidad_original != documento_identidad_nuevo and logentry:
+            instance.audit_documento_identidad = logentry
+        if rut_original != rut_nuevo and logentry:
+            instance.audit_rut = logentry
+        if certificado_bancario_original != certificado_bancario_nuevo and logentry:
+            instance.audit_certificado_bancario = logentry
+
+        # Guarda solo los campos que hayan cambiado
+        campos_actualizados = []
+        if d10_original != d10_nuevo:
+            campos_actualizados.append('audit_d10')
+        if tabulado_original != tabulado_nuevo:
+            campos_actualizados.append('audit_tabulado')
+        if estado_mat_financiera_original != estado_mat_financiera_nuevo:
+            campos_actualizados.append('audit_estado_mat_financiera')
+        if documento_identidad_original != documento_identidad_nuevo:
+            campos_actualizados.append('audit_documento_identidad')
+        if rut_original != rut_nuevo:
+            campos_actualizados.append('audit_rut')
+        if certificado_bancario_original != certificado_bancario_nuevo:
+            campos_actualizados.append('audit_certificado_bancario')
+
+        if campos_actualizados:
+            instance.save(update_fields=campos_actualizados)
     
     @swagger_auto_schema(
         operation_summary="Eliminar un Monitor administrativo",

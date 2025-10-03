@@ -19,6 +19,11 @@ from django.db import transaction
 #Serializador
 from .serializers import ProfesorSerializer, AsignacionProfesorSerializer, ProfesorModuloSerializer
 from modulo.serializers import ModuloProfesorSerializer
+#Auditoria
+from auditlog.models import LogEntry
+from .serializers import LogEntrySerializer
+from auditlog.context import set_actor
+from django.contrib.contenttypes.models import ContentType
 
 def file_update(instance, data, field_name):
         """
@@ -203,96 +208,97 @@ class ProfesorViewSet(viewsets.ModelViewSet):
             numero_documento_actualizado = False
             nuevo_numero_documento = None
             
-            # Manejar la contraseña si está presente
-            if 'contrasena' in data and data['contrasena']:
-                new_password = extract_single_value(data.pop('contrasena'))
-                user.set_password(new_password)
-                user.save()
-                hashed_password = make_password(new_password)
-                instance.contrasena = hashed_password
-                instance.save()
+            with set_actor(request.user):
+                # Manejar la contraseña si está presente
+                if 'contrasena' in data and data['contrasena']:
+                    new_password = extract_single_value(data.pop('contrasena'))
+                    user.set_password(new_password)
+                    user.save()
+                    hashed_password = make_password(new_password)
+                    instance.contrasena = hashed_password
+                    instance.save()
+                    
+                #Manejar is_active
+                if 'is_active' in data:
+                    is_active = extract_single_value(data.pop('is_active'))
+                    user.is_active = is_active
+                    user.save()
+                    instance.is_active = is_active
+                    instance.save()
                 
-            #Manejar is_active
-            if 'is_active' in data:
-                is_active = extract_single_value(data.pop('is_active'))
-                user.is_active = is_active
-                user.save()
-                instance.is_active = is_active
-                instance.save()
-            
-            #Manejar el nombre de usuario
-            if 'nombre' in data:
-                nombre = extract_single_value(data.pop('nombre'))
-                user.first_name = nombre
-                user.save()
-                instance.nombre = nombre
-                instance.save()
+                #Manejar el nombre de usuario
+                if 'nombre' in data:
+                    nombre = extract_single_value(data.pop('nombre'))
+                    user.first_name = nombre
+                    user.save()
+                    instance.nombre = nombre
+                    instance.save()
+                    
+                #Manejar el apellido
+                if 'apellido' in data:
+                    apellido = extract_single_value(data.pop('apellido'))
+                    user.last_name = apellido
+                    user.save()
+                    instance.apellido = apellido
+                    instance.save()
                 
-            #Manejar el apellido
-            if 'apellido' in data:
-                apellido = extract_single_value(data.pop('apellido'))
-                user.last_name = apellido
-                user.save()
-                instance.apellido = apellido
-                instance.save()
-            
-            #Manejar el email
-            if 'email' in data:
-                email = extract_single_value(data.pop('email'))
-                user.email = email
-                user.save()
-                instance.email = email
-                instance.save()
+                #Manejar el email
+                if 'email' in data:
+                    email = extract_single_value(data.pop('email'))
+                    user.email = email
+                    user.save()
+                    instance.email = email
+                    instance.save()
 
-            if 'numero_documento' in data:
-                numero_documento = extract_single_value(data.pop('numero_documento'))
-                user.username = numero_documento
-                user.save()
-                instance.numero_documento = numero_documento
-                instance.save()
-                numero_documento_actualizado = True
-                nuevo_numero_documento = numero_documento
+                if 'numero_documento' in data:
+                    numero_documento = extract_single_value(data.pop('numero_documento'))
+                    user.username = numero_documento
+                    user.save()
+                    instance.numero_documento = numero_documento
+                    instance.save()
+                    numero_documento_actualizado = True
+                    nuevo_numero_documento = numero_documento
 
-            # Actualización de nombre de archivos PDF si numero_documento fue actualizado
-            if numero_documento_actualizado:
-                for field in pdf_fields:
-                    file_field = getattr(instance, field, None)
-                    if file_field and hasattr(file_field, 'name') and file_field.name:
-                        import os
-                        from django.core.files.base import ContentFile
+                # Actualización de nombre de archivos PDF si numero_documento fue actualizado
+                if numero_documento_actualizado:
+                    for field in pdf_fields:
+                        file_field = getattr(instance, field, None)
+                        if file_field and hasattr(file_field, 'name') and file_field.name:
+                            import os
+                            from django.core.files.base import ContentFile
 
-                        old_file_name = file_field.name  # Ruta completa en el bucket
-                        file_content = file_field.read()  # Lee el contenido antes de borrar
+                            old_file_name = file_field.name  # Ruta completa en el bucket
+                            file_content = file_field.read()  # Lee el contenido antes de borrar
 
-                        # Elimina el archivo viejo del bucket
-                        storage = file_field.storage
-                        if storage.exists(old_file_name):
-                            storage.delete(old_file_name)
+                            # Elimina el archivo viejo del bucket
+                            storage = file_field.storage
+                            if storage.exists(old_file_name):
+                                storage.delete(old_file_name)
 
-                        # Construye el nuevo nombre
-                        new_filename = f"{nuevo_numero_documento}.pdf"
-                        file_dir = os.path.dirname(old_file_name)
-                        new_file_path = os.path.join(file_dir, new_filename)
+                            # Construye el nuevo nombre
+                            new_filename = f"{nuevo_numero_documento}.pdf"
+                            file_dir = os.path.dirname(old_file_name)
+                            new_file_path = os.path.join(file_dir, new_filename)
 
-                        # Sube el archivo con el nuevo nombre
-                        getattr(instance, field).save(new_file_path, ContentFile(file_content), save=True)
-            
-            file_update(instance, data, 'documento_identidad_pdf')
-            file_update(instance, data, 'rut_pdf')
-            file_update(instance, data, 'certificado_bancario_pdf')
-            file_update(instance, data, 'hoja_vida_pdf')
-            file_update(instance, data, 'certificado_laboral_pdf')
-            file_update(instance, data, 'certificado_academico_pdf')
+                            # Sube el archivo con el nuevo nombre
+                            getattr(instance, field).save(new_file_path, ContentFile(file_content), save=True)
+                
+                file_update(instance, data, 'documento_identidad_pdf')
+                file_update(instance, data, 'rut_pdf')
+                file_update(instance, data, 'certificado_bancario_pdf')
+                file_update(instance, data, 'hoja_vida_pdf')
+                file_update(instance, data, 'certificado_laboral_pdf')
+                file_update(instance, data, 'certificado_academico_pdf')
 
-            if data:
-                serializer = self.get_serializer(instance, data=data, partial=True)
-                serializer.is_valid(raise_exception=True)
-                self.perform_update(serializer)
-                return Response(serializer.data)
-            else:
-                # Si solo se cambió la contraseña y no hay otros campos, devolvemos los datos actualizados
-                serializer = self.get_serializer(instance)
-                return Response(serializer.data)
+                if data:
+                    serializer = self.get_serializer(instance, data=data, partial=True)
+                    serializer.is_valid(raise_exception=True)
+                    self.perform_update(serializer)
+                    return Response(serializer.data)
+                else:
+                    # Si solo se cambió la contraseña y no hay otros campos, devolvemos los datos actualizados
+                    serializer = self.get_serializer(instance)
+                    return Response(serializer.data)
 
         except TypeError as e:
             # Este error ocurre si intentas copiar archivos grandes
@@ -306,6 +312,77 @@ class ProfesorViewSet(viewsets.ModelViewSet):
                 {"detail": "Ocurrió un error inesperado.", "error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+    #Utilizo perform update para actualizar el estado del profesor a (No revisado, Revisado, Pendiente)
+    def perform_update(self, serializer):
+        instance = serializer.instance  # aún no ha guardado los cambios
+
+        # Guarda valores originales
+        hoja_vida_original = instance.verificacion_hoja_vida
+        certificado_laboral_original = instance.verificacion_certificado_laboral
+        certificado_academico_original = instance.verificacion_certificado_academico
+        documento_identidad_original = instance.verificacion_documento_identidad
+        rut_original = instance.verificacion_rut
+        certificado_bancario_original = instance.verificacion_certificado_bancario
+
+        # Guarda cambios nuevos
+        instance = serializer.save()
+        hoja_vida_nuevo = instance.verificacion_hoja_vida
+        certificado_laboral_nuevo = instance.verificacion_certificado_laboral
+        certificado_academico_nuevo = instance.verificacion_certificado_academico
+        documento_identidad_nuevo = instance.verificacion_documento_identidad
+        rut_nuevo = instance.verificacion_rut
+        certificado_bancario_nuevo = instance.verificacion_certificado_bancario
+
+        # Asigna el estado correcto
+        if hoja_vida_nuevo and certificado_laboral_nuevo and certificado_academico_nuevo and documento_identidad_nuevo and rut_nuevo and certificado_bancario_nuevo:
+            instance.estado = "Revisado"
+        elif hoja_vida_nuevo or certificado_laboral_nuevo or certificado_academico_nuevo or documento_identidad_nuevo or rut_nuevo or certificado_bancario_nuevo:
+            instance.estado = "Pendiente"
+        else:
+            instance.estado = "No revisado"
+
+        instance.save(update_fields=['estado'])
+
+        # Busca el último logentry después de guardar
+        content_type = ContentType.objects.get_for_model(instance)
+        logentry = LogEntry.objects.filter(
+            object_id=instance.pk,
+            content_type=content_type
+        ).order_by('-timestamp').first()
+
+
+        # Solo actualiza el campo de auditoría si el valor fue cambiado
+        if hoja_vida_original != hoja_vida_nuevo and logentry:
+            instance.audit_hoja_vida = logentry
+        if certificado_laboral_original != certificado_laboral_nuevo and logentry:
+            instance.audit_certificado_laboral = logentry
+        if certificado_academico_original != certificado_academico_nuevo and logentry:
+            instance.audit_certificado_academico = logentry
+        if documento_identidad_original != documento_identidad_nuevo and logentry:
+            instance.audit_documento_identidad = logentry
+        if rut_original != rut_nuevo and logentry:
+            instance.audit_rut = logentry
+        if certificado_bancario_original != certificado_bancario_nuevo and logentry:
+            instance.audit_certificado_bancario = logentry
+
+        # Guarda solo los campos que hayan cambiado
+        campos_actualizados = []
+        if hoja_vida_original != hoja_vida_nuevo:
+            campos_actualizados.append('audit_hoja_vida')
+        if certificado_laboral_original != certificado_laboral_nuevo:
+            campos_actualizados.append('audit_certificado_laboral')
+        if certificado_academico_original != certificado_academico_nuevo:
+            campos_actualizados.append('audit_certificado_academico')
+        if documento_identidad_original != documento_identidad_nuevo:
+            campos_actualizados.append('audit_documento_identidad')
+        if rut_original != rut_nuevo:
+            campos_actualizados.append('audit_rut')
+        if certificado_bancario_original != certificado_bancario_nuevo:
+            campos_actualizados.append('audit_certificado_bancario')
+
+        if campos_actualizados:
+            instance.save(update_fields=campos_actualizados)
     
     @swagger_auto_schema(
         operation_summary="Eliminar un profesor",

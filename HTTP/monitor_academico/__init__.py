@@ -1,1 +1,1 @@
-default_app_config = 'monitor_academico.apps.ProfesorConfig'
+default_app_config = 'monitor_academico.apps.MonitorAcademicoConfig'
