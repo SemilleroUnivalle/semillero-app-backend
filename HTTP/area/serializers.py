@@ -5,6 +5,3 @@ class AreaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Area
         fields = '__all__'
-        read_only_fields = [
-            'id_area'
-        ]

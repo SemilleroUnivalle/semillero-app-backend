@@ -154,6 +154,7 @@ class ProfesorViewSet(viewsets.ModelViewSet):
                     hoja_vida_pdf=request.FILES.get('hoja_vida_pdf'),
                     certificado_laboral_pdf=request.FILES.get('certificado_laboral_pdf'),
                     certificado_academico_pdf=request.FILES.get('certificado_academico_pdf'),
+                    foto=request.FILES.get('foto'),
                     modulo=modulo_instancia,
                     
                 )
@@ -203,6 +204,7 @@ class ProfesorViewSet(viewsets.ModelViewSet):
                 'hoja_vida_pdf',
                 'certificado_laboral_pdf',
                 'certificado_academico_pdf',
+                'foto'
             ]
 
             numero_documento_actualizado = False
@@ -289,6 +291,7 @@ class ProfesorViewSet(viewsets.ModelViewSet):
                 file_update(instance, data, 'hoja_vida_pdf')
                 file_update(instance, data, 'certificado_laboral_pdf')
                 file_update(instance, data, 'certificado_academico_pdf')
+                file_update(instance, data, 'foto')
 
                 if data:
                     serializer = self.get_serializer(instance, data=data, partial=True)

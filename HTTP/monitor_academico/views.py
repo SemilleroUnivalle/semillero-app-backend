@@ -152,6 +152,7 @@ class MonitorAcademicoViewSet(viewsets.ModelViewSet):
                     d10_pdf=request.FILES.get('d10_pdf'),
                     tabulado_pdf=request.FILES.get('tabulado_pdf'),
                     estado_mat_financiera_pdf=request.FILES.get('estado_mat_financiera_pdf'),
+                    foto=request.FILES.get('foto'),
                     modulo=modulo_instancia,
                 )
                 # Puedes retornar la información deseada
@@ -199,6 +200,7 @@ class MonitorAcademicoViewSet(viewsets.ModelViewSet):
                 'd10_pdf',
                 'tabulado_pdf',
                 'estado_mat_financiera_pdf',
+                'foto'
             ]
 
             numero_documento_actualizado = False
@@ -284,6 +286,7 @@ class MonitorAcademicoViewSet(viewsets.ModelViewSet):
                 file_update(instance, data, 'd10_pdf')
                 file_update(instance, data, 'tabulado_pdf')
                 file_update(instance, data, 'estado_mat_financiera_pdf')
+                file_update(instance, data, 'foto')
 
                 if data:
                     serializer = self.get_serializer(instance, data=data, partial=True)
