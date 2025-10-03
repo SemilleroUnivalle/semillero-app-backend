@@ -324,6 +324,9 @@ class ProfesorViewSet(viewsets.ModelViewSet):
         documento_identidad_original = instance.verificacion_documento_identidad
         rut_original = instance.verificacion_rut
         certificado_bancario_original = instance.verificacion_certificado_bancario
+        foto_original = instance.verificacion_foto
+        informacion_original = instance.verificacion_informacion
+        
 
         # Guarda cambios nuevos
         instance = serializer.save()
@@ -333,11 +336,13 @@ class ProfesorViewSet(viewsets.ModelViewSet):
         documento_identidad_nuevo = instance.verificacion_documento_identidad
         rut_nuevo = instance.verificacion_rut
         certificado_bancario_nuevo = instance.verificacion_certificado_bancario
+        foto_nuevo = instance.verificacion_foto
+        informacion_nuevo = instance.verificacion_informacion
 
         # Asigna el estado correcto
-        if hoja_vida_nuevo and certificado_laboral_nuevo and certificado_academico_nuevo and documento_identidad_nuevo and rut_nuevo and certificado_bancario_nuevo:
+        if hoja_vida_nuevo and certificado_laboral_nuevo and certificado_academico_nuevo and documento_identidad_nuevo and rut_nuevo and certificado_bancario_nuevo and foto_nuevo and informacion_nuevo:
             instance.estado = "Revisado"
-        elif hoja_vida_nuevo or certificado_laboral_nuevo or certificado_academico_nuevo or documento_identidad_nuevo or rut_nuevo or certificado_bancario_nuevo:
+        elif hoja_vida_nuevo or certificado_laboral_nuevo or certificado_academico_nuevo or documento_identidad_nuevo or rut_nuevo or certificado_bancario_nuevo or foto_nuevo or informacion_nuevo:
             instance.estado = "Pendiente"
         else:
             instance.estado = "No revisado"
@@ -365,6 +370,10 @@ class ProfesorViewSet(viewsets.ModelViewSet):
             instance.audit_rut = logentry
         if certificado_bancario_original != certificado_bancario_nuevo and logentry:
             instance.audit_certificado_bancario = logentry
+        if foto_original != foto_nuevo and logentry:
+            instance.audit_foto = logentry
+        if informacion_original != informacion_nuevo and logentry:
+            instance.audit_informacion = logentry
 
         # Guarda solo los campos que hayan cambiado
         campos_actualizados = []
@@ -380,6 +389,10 @@ class ProfesorViewSet(viewsets.ModelViewSet):
             campos_actualizados.append('audit_rut')
         if certificado_bancario_original != certificado_bancario_nuevo:
             campos_actualizados.append('audit_certificado_bancario')
+        if foto_original != foto_nuevo:
+            campos_actualizados.append('audit_foto')
+        if informacion_original != informacion_nuevo:
+            campos_actualizados.append('audit_informacion')
 
         if campos_actualizados:
             instance.save(update_fields=campos_actualizados)

@@ -36,6 +36,8 @@ class Profesor(Usuario):
     verificacion_documento_identidad = models.BooleanField(default=False)
     verificacion_rut = models.BooleanField(default=False)
     verificacion_certificado_bancario = models.BooleanField(default=False)
+    verificacion_foto = models.BooleanField(default=False)
+    verificacion_informacion = models.BooleanField(default=False)
 
     audit_hoja_vida = models.ForeignKey(
         LogEntry,
@@ -76,6 +78,20 @@ class Profesor(Usuario):
         LogEntry,
         on_delete=models.CASCADE,
         related_name="profesor_certificado_bancario",
+        null=True,
+        blank=True
+    )
+    audit_foto = models.ForeignKey(
+        LogEntry,
+        on_delete=models.CASCADE,
+        related_name="profesor_foto",
+        null=True,
+        blank=True
+    )
+    audit_informacion = models.ForeignKey(
+        LogEntry,
+        on_delete=models.CASCADE,
+        related_name="profesor_informacion",
         null=True,
         blank=True
     )
