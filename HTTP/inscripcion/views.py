@@ -298,6 +298,21 @@ class InscripcionViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(grupo=grupo)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+    
+    @swagger_auto_schema(
+        operation_summary="Filtrar inscripcion por estudiante",
+        operation_description="Filtra la inscripcion por el estudiante especificado en los parámetros de la solicitud"
+    )
+    @action (detail=False, methods=['get'], url_path='filtro-estudiante',
+            permission_classes=[IsAdministrador])
+    def filtro_estudiante(self, request, *args, **kwargs):
+        estudiante = request.query_params.get('id_estudiante', None)
+        queryset = self.get_queryset()
+
+        if estudiante:
+            queryset = queryset.filter(id_estudiante=estudiante)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
     
     @action(detail=False, methods=['get'], url_path="auditoria-matricula")
