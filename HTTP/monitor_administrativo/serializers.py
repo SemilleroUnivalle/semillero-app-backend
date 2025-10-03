@@ -10,6 +10,8 @@ class MonitorAdministrativoSerializer(serializers.ModelSerializer):
     audit_documento_identidad = LogEntrySerializerMonitorAdministrativo(read_only=True)
     audit_rut = LogEntrySerializerMonitorAdministrativo(read_only=True)
     audit_certificado_bancario = LogEntrySerializerMonitorAdministrativo(read_only=True)
+    audit_foto = LogEntrySerializerMonitorAdministrativo(read_only=True)
+    audit_informacion = LogEntrySerializerMonitorAdministrativo(read_only=True)
     class Meta:
         model = MonitorAdministrativo
         fields = '__all__' 

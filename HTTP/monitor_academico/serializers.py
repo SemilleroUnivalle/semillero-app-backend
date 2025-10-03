@@ -12,6 +12,8 @@ class MonitorAcademicoSerializer(serializers.ModelSerializer):
     audit_documento_identidad = LogEntrySerializerMonitorAcademico(read_only=True)
     audit_rut = LogEntrySerializerMonitorAcademico(read_only=True)
     audit_certificado_bancario = LogEntrySerializerMonitorAcademico(read_only=True)
+    audit_foto = LogEntrySerializerMonitorAcademico(read_only=True)
+    audit_informacion = LogEntrySerializerMonitorAcademico(read_only=True)
 
     class Meta:
         model = MonitorAcademico
@@ -25,6 +27,8 @@ class MonitorAcademicoModuloSerializer(serializers.ModelSerializer):
     audit_documento_identidad = LogEntrySerializerMonitorAcademico(read_only=True)
     audit_rut = LogEntrySerializerMonitorAcademico(read_only=True)
     audit_certificado_bancario = LogEntrySerializerMonitorAcademico(read_only=True)
+    audit_foto = LogEntrySerializerMonitorAcademico(read_only=True)
+    audit_informacion = LogEntrySerializerMonitorAcademico(read_only=True)
 
     class Meta:
         model = MonitorAcademico

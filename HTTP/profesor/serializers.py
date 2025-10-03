@@ -12,6 +12,8 @@ class ProfesorSerializer(serializers.ModelSerializer):
     audit_documento_identidad = LogEntrySerializerProfesor(read_only=True)
     audit_rut = LogEntrySerializerProfesor(read_only=True)
     audit_certificado_bancario = LogEntrySerializerProfesor(read_only=True)
+    audit_foto = LogEntrySerializerProfesor(read_only=True)
+    audit_informacion = LogEntrySerializerProfesor(read_only=True)
 
     class Meta:
         model = Profesor
@@ -25,6 +27,8 @@ class ProfesorModuloSerializer(serializers.ModelSerializer):
     audit_documento_identidad = LogEntrySerializerProfesor(read_only=True)
     audit_rut = LogEntrySerializerProfesor(read_only=True)
     audit_certificado_bancario = LogEntrySerializerProfesor(read_only=True)
+    audit_foto = LogEntrySerializerProfesor(read_only=True)
+    audit_informacion = LogEntrySerializerProfesor(read_only=True)
 
     class Meta:
         model = Profesor
