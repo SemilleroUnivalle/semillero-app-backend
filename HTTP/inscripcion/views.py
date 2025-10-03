@@ -233,7 +233,7 @@ class InscripcionViewSet(viewsets.ModelViewSet):
         campos_actualizados = []
         if recibo_pago_original != recibo_pago_nuevo:
             campos_actualizados.append('audit_documento_recibo_pago')
-        if constancia_original != constancia_nuevo:
+        if certificado_original != certificado_nuevo:
             campos_actualizados.append('audit_certificado')
         
 
