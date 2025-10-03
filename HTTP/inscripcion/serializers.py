@@ -24,7 +24,7 @@ class InscripcionSerializer(serializers.ModelSerializer):
     oferta_categoria = OfertaCategoriaInscripcionReadSerializer(source='id_oferta_categoria', read_only=True)
 
     audit_documento_recibo_pago = LogEntrySerializerEstudiante(read_only=True)
-    audit_constancia = LogEntrySerializerEstudiante(read_only=True)
+    audit_certificado = LogEntrySerializerEstudiante(read_only=True)
 
     class Meta:
         model = Inscripcion
