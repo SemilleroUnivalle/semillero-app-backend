@@ -314,12 +314,27 @@ class InscripcionViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
+    @action(detail=False, methods=['get'], url_path="filtro-modulo",
+            permission_classes=[IsAdministrador])
+    def filtro_modulo(self, request):
+        modulo = request.query_params.get('id_modulo', None)
+        queryset = self.get_queryset()
+
+        if modulo:
+            queryset = queryset.filter(id_modulo=modulo)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
     
-    @action(detail=False, methods=['get'], url_path="auditoria-matricula")
+    @action(detail=False, methods=['get'], url_path="auditoria-matricula",
+            permission_classes=[IsAdministrador])
     def auditoria_inscripcion(self, request):
         logs = LogEntry.objects.all().order_by('-timestamp')[:100]
         serializer = LogEntrySerializer(logs, many=True)
         return Response(serializer.data)
+
+    
+
 
     def asignar_grupos():
         pass

@@ -195,6 +195,7 @@ class EstudianteViewSet(viewsets.ModelViewSet):
                     ciudad_residencia=data.get('ciudad_residencia'),
                     eps=data.get('eps'),
                     grado=data.get('grado'),
+                    colegio=data.get('grado'),
                     tipo_documento=data.get('tipo_documento'),
                     genero=data.get('genero'),
                     fecha_nacimiento=data.get('fecha_nacimiento'),
@@ -451,17 +452,21 @@ class EstudianteViewSet(viewsets.ModelViewSet):
         try:
             user = instance.user
         except Exception:
-            pass
+            user = None
 
-        self.perform_destroy(instance)
-        if user:
-            try:
-                from rest_framework.authtoken.models import Token
-                Token.objects.filter(user=user).delete()
-                user.delete()
-            except Exception as e:
-                print(f"Error eliminando usuario: {str(e)}")
-        # Retorna respuesta exitosa sin llamar a super().destroy()
+        try:
+            with transaction.atomic():
+                # Primero elimina tokens y usuario si existe
+                if user:
+                    from rest_framework.authtoken.models import Token
+                    Token.objects.filter(user=user).delete()
+                    user.delete()
+                # Luego elimina el estudiante
+                self.perform_destroy(instance)
+        except Exception as e:
+            print(f"Error en la eliminación: {str(e)}")
+            return Response({"detail": f"Error eliminando estudiante: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+
         return Response({"detail": "Estudiante y archivos eliminados correctamente."}, status=status.HTTP_204_NO_CONTENT)
     
     @swagger_auto_schema(

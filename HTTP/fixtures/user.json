@@ -6,9 +6,9 @@
       "username": "100",
       "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
       "user_type": "estudiante",
-      "first_name": "Sofia",
-      "last_name": "Suarez",
-      "email": "sofia.suarez1@email.com",
+      "first_name": "Laura",
+      "last_name": "Torres",
+      "email": "laura.torres1@email.com",
       "is_superuser": false,
       "is_staff": false,
       "is_active": true
@@ -21,9 +21,9 @@
       "username": "101",
       "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
       "user_type": "estudiante",
-      "first_name": "Carlos",
-      "last_name": "Gomez",
-      "email": "carlos.gomez2@email.com",
+      "first_name": "Maria",
+      "last_name": "Perez",
+      "email": "maria.perez2@email.com",
       "is_superuser": false,
       "is_staff": false,
       "is_active": true
@@ -36,9 +36,9 @@
       "username": "102",
       "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
       "user_type": "estudiante",
-      "first_name": "Maria",
-      "last_name": "Romero",
-      "email": "maria.romero3@email.com",
+      "first_name": "Camila",
+      "last_name": "Navarro",
+      "email": "camila.navarro3@email.com",
       "is_superuser": false,
       "is_staff": false,
       "is_active": true
@@ -51,9 +51,9 @@
       "username": "103",
       "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
       "user_type": "estudiante",
-      "first_name": "Santiago",
+      "first_name": "Andrea",
       "last_name": "Cardenas",
-      "email": "santiago.cardenas4@email.com",
+      "email": "andrea.cardenas4@email.com",
       "is_superuser": false,
       "is_staff": false,
       "is_active": true
@@ -67,8 +67,8 @@
       "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
       "user_type": "estudiante",
       "first_name": "Andrea",
-      "last_name": "Romero",
-      "email": "andrea.romero5@email.com",
+      "last_name": "Torres",
+      "email": "andrea.torres5@email.com",
       "is_superuser": false,
       "is_staff": false,
       "is_active": true
@@ -81,9 +81,9 @@
       "username": "105",
       "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
       "user_type": "estudiante",
-      "first_name": "Laura",
-      "last_name": "López",
-      "email": "laura.lópez6@email.com",
+      "first_name": "Valeria",
+      "last_name": "Castaño",
+      "email": "valeria.castaño6@email.com",
       "is_superuser": false,
       "is_staff": false,
       "is_active": true
@@ -97,8 +97,8 @@
       "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
       "user_type": "estudiante",
       "first_name": "Ana",
-      "last_name": "Martinez",
-      "email": "ana.martinez7@email.com",
+      "last_name": "Perez",
+      "email": "ana.perez7@email.com",
       "is_superuser": false,
       "is_staff": false,
       "is_active": true
@@ -111,9 +111,9 @@
       "username": "107",
       "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
       "user_type": "estudiante",
-      "first_name": "Juliana",
-      "last_name": "López",
-      "email": "juliana.lópez8@email.com",
+      "first_name": "Valeria",
+      "last_name": "Ramirez",
+      "email": "valeria.ramirez8@email.com",
       "is_superuser": false,
       "is_staff": false,
       "is_active": true
@@ -126,9 +126,9 @@
       "username": "108",
       "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
       "user_type": "estudiante",
-      "first_name": "Maria",
-      "last_name": "Muñoz",
-      "email": "maria.muñoz9@email.com",
+      "first_name": "Santiago",
+      "last_name": "Perez",
+      "email": "santiago.perez9@email.com",
       "is_superuser": false,
       "is_staff": false,
       "is_active": true
@@ -141,609 +141,9 @@
       "username": "109",
       "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
       "user_type": "estudiante",
-      "first_name": "Ana",
+      "first_name": "Luisa",
       "last_name": "Gomez",
-      "email": "ana.gomez10@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 11,
-    "fields": {
-      "username": "110",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Carlos",
-      "last_name": "López",
-      "email": "carlos.lópez11@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 12,
-    "fields": {
-      "username": "111",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Juan",
-      "last_name": "Suarez",
-      "email": "juan.suarez12@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 13,
-    "fields": {
-      "username": "112",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Camila",
-      "last_name": "Martinez",
-      "email": "camila.martinez13@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 14,
-    "fields": {
-      "username": "113",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Carlos",
-      "last_name": "Torres",
-      "email": "carlos.torres14@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 15,
-    "fields": {
-      "username": "114",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Laura",
-      "last_name": "Navarro",
-      "email": "laura.navarro15@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 16,
-    "fields": {
-      "username": "115",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Sofia",
-      "last_name": "Torres",
-      "email": "sofia.torres16@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 17,
-    "fields": {
-      "username": "116",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Ana",
-      "last_name": "Gomez",
-      "email": "ana.gomez17@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 18,
-    "fields": {
-      "username": "117",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Sofia",
-      "last_name": "Rodriguez",
-      "email": "sofia.rodriguez18@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 19,
-    "fields": {
-      "username": "118",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Juan",
-      "last_name": "Suarez",
-      "email": "juan.suarez19@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 20,
-    "fields": {
-      "username": "119",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Valeria",
-      "last_name": "Suarez",
-      "email": "valeria.suarez20@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 21,
-    "fields": {
-      "username": "120",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Mateo",
-      "last_name": "Torres",
-      "email": "mateo.torres21@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 22,
-    "fields": {
-      "username": "121",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Ana",
-      "last_name": "Cardenas",
-      "email": "ana.cardenas22@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 23,
-    "fields": {
-      "username": "122",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Ana",
-      "last_name": "Jimenez",
-      "email": "ana.jimenez23@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 24,
-    "fields": {
-      "username": "123",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Maria",
-      "last_name": "Castaño",
-      "email": "maria.castaño24@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 25,
-    "fields": {
-      "username": "124",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Carlos",
-      "last_name": "Vargas",
-      "email": "carlos.vargas25@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 26,
-    "fields": {
-      "username": "125",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Andrea",
-      "last_name": "Perez",
-      "email": "andrea.perez26@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 27,
-    "fields": {
-      "username": "126",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Esteban",
-      "last_name": "Muñoz",
-      "email": "esteban.muñoz27@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 28,
-    "fields": {
-      "username": "127",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Valeria",
-      "last_name": "Muñoz",
-      "email": "valeria.muñoz28@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 29,
-    "fields": {
-      "username": "128",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Carlos",
-      "last_name": "Ramirez",
-      "email": "carlos.ramirez29@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 30,
-    "fields": {
-      "username": "129",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Santiago",
-      "last_name": "Martinez",
-      "email": "santiago.martinez30@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 31,
-    "fields": {
-      "username": "130",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Carlos",
-      "last_name": "Muñoz",
-      "email": "carlos.muñoz31@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 32,
-    "fields": {
-      "username": "131",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Camila",
-      "last_name": "Vargas",
-      "email": "camila.vargas32@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 33,
-    "fields": {
-      "username": "132",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Juliana",
-      "last_name": "Muñoz",
-      "email": "juliana.muñoz33@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 34,
-    "fields": {
-      "username": "133",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Carlos",
-      "last_name": "Romero",
-      "email": "carlos.romero34@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 35,
-    "fields": {
-      "username": "134",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Sofia",
-      "last_name": "Ramirez",
-      "email": "sofia.ramirez35@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 36,
-    "fields": {
-      "username": "135",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Andrea",
-      "last_name": "Navarro",
-      "email": "andrea.navarro36@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 37,
-    "fields": {
-      "username": "136",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Santiago",
-      "last_name": "Gomez",
-      "email": "santiago.gomez37@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 38,
-    "fields": {
-      "username": "137",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Esteban",
-      "last_name": "Gomez",
-      "email": "esteban.gomez38@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 39,
-    "fields": {
-      "username": "138",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Mateo",
-      "last_name": "Ramirez",
-      "email": "mateo.ramirez39@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 40,
-    "fields": {
-      "username": "139",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Maria",
-      "last_name": "Navarro",
-      "email": "maria.navarro40@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 41,
-    "fields": {
-      "username": "140",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Maria",
-      "last_name": "Perez",
-      "email": "maria.perez41@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 42,
-    "fields": {
-      "username": "141",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Felipe",
-      "last_name": "Torres",
-      "email": "felipe.torres42@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 43,
-    "fields": {
-      "username": "142",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Sofia",
-      "last_name": "Vargas",
-      "email": "sofia.vargas43@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 44,
-    "fields": {
-      "username": "143",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Maria",
-      "last_name": "Cardenas",
-      "email": "maria.cardenas44@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 45,
-    "fields": {
-      "username": "144",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Camila",
-      "last_name": "Castaño",
-      "email": "camila.castaño45@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 46,
-    "fields": {
-      "username": "145",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Camila",
-      "last_name": "Moreno",
-      "email": "camila.moreno46@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 47,
-    "fields": {
-      "username": "146",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Esteban",
-      "last_name": "Torres",
-      "email": "esteban.torres47@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 48,
-    "fields": {
-      "username": "147",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Esteban",
-      "last_name": "Rodriguez",
-      "email": "esteban.rodriguez48@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 49,
-    "fields": {
-      "username": "148",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Ana",
-      "last_name": "Gomez",
-      "email": "ana.gomez49@email.com",
-      "is_superuser": false,
-      "is_staff": false,
-      "is_active": true
-    }
-  },
-  {
-    "model": "cuenta.customuser",
-    "pk": 50,
-    "fields": {
-      "username": "149",
-      "password": "pbkdf2_sha256$720000$7x2oLNwzmTt8$6E8Vg0K+6F3kq9vP0gE3AqzUu8LqQJwQvG+m9Fq4n4Q=",
-      "user_type": "estudiante",
-      "first_name": "Santiago",
-      "last_name": "Suarez",
-      "email": "santiago.suarez50@email.com",
+      "email": "luisa.gomez10@email.com",
       "is_superuser": false,
       "is_staff": false,
       "is_active": true

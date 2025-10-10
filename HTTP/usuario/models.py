@@ -3,19 +3,15 @@ from django.conf import settings
 
 def documento_identidad_upload_to(instance, filename):
     ext = filename.split('.')[-1]
-    return f'documentos_identidad_usuario/{instance.numero_documento}.{ext}'
+    return f'funcionario/documentos_identidad/{instance.numero_documento}.{ext}'
 
 def rut_upload_to(instance, filename):
     ext = filename.split('.')[-1]
-    return f'rut_usuario/{instance.numero_documento}.{ext}'
+    return f'funcionario/rut/{instance.numero_documento}.{ext}'
 
 def certificado_bancario_upload_to(instance, filename):
     ext = filename.split('.')[-1]
-    return f'certificado_bancario_usuario/{instance.numero_documento}.{ext}'
-
-def foto_upload_to(instance, filename):
-    ext = filename.split('.')[-1]
-    return f'foto_usuario/{instance.numero_documento}.{ext}'
+    return f'funcionario/certificado_bancario/{instance.numero_documento}.{ext}'
 
 class Usuario(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE) # Para definir el tipo de usuario
@@ -36,9 +32,7 @@ class Usuario(models.Model):
     comuna_residencia = models.CharField(max_length=10) # Comuna de residencia del estudiante
     direccion_residencia = models.CharField(max_length=255) # Dirección de residencia del estudiante
     estado = models.CharField(max_length=20, default='No revisado')
-    foto = models.FileField(
-        upload_to=foto_upload_to, null=True, blank=True,
-    )
+    foto = models.ImageField(upload_to='funcionario/foto/', null=True, blank=True)
     documento_identidad_pdf = models.FileField(
         upload_to=documento_identidad_upload_to, null=True, blank=True,
     )

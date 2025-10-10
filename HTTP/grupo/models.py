@@ -1,12 +1,12 @@
 from django.db import models
+from profesor.models import Profesor
+from monitor_academico.models import MonitorAcademico
 
 class Grupo(models.Model):
-    id_grupo = models.AutoField(primary_key=True)
-    nombre_grupo = models.CharField(max_length=100)
+    nombre = models.CharField(max_length=100)
+    profesor = models.ForeignKey(Profesor, on_delete=models.SET_NULL, null=True)
+    monitor_academico = models.ForeignKey(MonitorAcademico, on_delete=models.SET_NULL, null=True)
 
-    def __str__(self):
-        return f'ID: {self.id_grupo} | Grupo: {self.nombre_grupo} | Oferta Módulo: {self.id_oferta_modulo}'
     class Meta:
         verbose_name = "Grupo"
         verbose_name_plural = "Grupos"
-        ordering = ['id_grupo']

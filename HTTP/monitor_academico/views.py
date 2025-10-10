@@ -26,6 +26,7 @@ from .serializers import LogEntrySerializer
 from auditlog.context import set_actor
 from django.contrib.contenttypes.models import ContentType
 
+from rest_framework.authtoken.models import Token
 
 def file_update(instance, data, field_name):
         """
@@ -400,7 +401,39 @@ class MonitorAcademicoViewSet(viewsets.ModelViewSet):
         operation_description="Elimina permanentemente un monitor academico del sistema"
     )
     def destroy(self, request, *args, **kwargs):
-        return super().destroy(request, *args, **kwargs)
+        instance = self.get_object()
+        user = getattr(instance, "user", None)
+        pdf_fields = [
+            'documento_identidad_pdf',
+            'rut_pdf',
+            'certificado_bancario_pdf',
+            'd10_pdf',
+            'tabulado_pdf',
+            'estado_mat_financiera_pdf',
+            'foto'
+        ]
+
+        # Elimina archivos PDF de S3 si existen
+        for field in pdf_fields:
+            pdf_file = getattr(instance, field, None)
+            if pdf_file:
+                try:
+                    pdf_file.delete(save=False)
+                except Exception:
+                    pass
+
+        try:
+            with transaction.atomic():
+                # Elimina tokens y usuario primero
+                if user:
+                    Token.objects.filter(user=user).delete()
+                    user.delete()
+                # Luego elimina el MonitorAcademico
+                instance.delete()
+        except Exception as e:
+            return Response({"detail": f"Error eliminando monitor: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({"detail": "Monitor y archivos eliminados correctamente."}, status=status.HTTP_204_NO_CONTENT)
     
     @swagger_auto_schema(
         operation_summary="Asignar un módulo a un monitor academico",
