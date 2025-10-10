@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
 """
-Script para crear 20 Inscripcion (matrículas) usando estudiantes id 1..20 y módulos id 1..20.
+Script para crear inscripciones usando estudiantes id 1..20 y módulos id 1..20,
+con asignación de módulos de forma aleatoria.
 
 Uso:
     Desde la raíz del proyecto Django:
         python manage.py shell < crear_inscripciones.py
 
 Ajustes en CONFIGURACIÓN abajo:
-- base_dir: carpeta donde poner archivos de ejemplo (recibo.pdf, certificado.pdf)
+- BASE_DIR: carpeta donde poner archivos de ejemplo (recibo.pdf, certificado.pdf)
 - CREATE_GROUP_ZERO: si True, el script intentará crear un Grupo con pk=0 si no existe.
+- UNIQUE_MODULO_ASSIGNMENT: si True, cada estudiante recibirá un módulo distinto (si hay suficientes módulos).
+  Si no hay suficientes módulos para asignación única, automáticamente se hace sampling con reemplazo.
 - Si tus modelos están en apps con nombres distintos, ajusta los imports.
 """
 import os
@@ -31,7 +34,6 @@ RECURSOS = {
     "certificado": "certificado.pdf",
 }
 # Si quieres que el script cree un Grupo con pk=0 en caso de no existir, pon True.
-# Nota: crear manualmente un registro con pk=0 puede funcionar, pero depende de tu DB/schema.
 CREATE_GROUP_ZERO = False
 
 # Rango de ids a usar (estudiantes y módulos)
@@ -39,6 +41,10 @@ ESTUDIANTE_START = 1
 ESTUDIANTE_END = 20
 MODULO_START = 1
 MODULO_END = 20
+
+# Si True, intentamos asignar módulos únicos (sin repeticiones) cuando sea posible.
+# Si no hay suficientes módulos, el script hará sampling con reemplazo para completar.
+UNIQUE_MODULO_ASSIGNMENT = False
 
 # Valores aleatorios posibles
 TIPOS_VINCULACION = ["Regular", "Cultural", "Extraescolar", "Semillero"]
@@ -91,16 +97,39 @@ def main():
 
     grupo_instancia = obtener_grupo_cero()
 
-    # Iteradores: asumiendo que quieres crear N=20 inscripciones emparejando id_estudiante i con id_modulo i
-    estudiantes_ids = range(ESTUDIANTE_START, ESTUDIANTE_end := ESTUDIANTE_END + 1)  # Python trick to keep END name
-    modulos_ids = range(MODULO_START, MODULO_end := MODULO_END + 1)
+    # Construir listas de ids
+    estudiantes_ids = list(range(ESTUDIANTE_START, ESTUDIANTE_END + 1))
+    modulos_ids = list(range(MODULO_START, MODULO_END + 1))
 
-    # Tomamos min longitud para emparejar 1 a 1
-    longitud = min(len(list(estudiantes_ids)), len(list(modulos_ids)))
-    estudiantes_ids = range(ESTUDIANTE_START, ESTUDIANTE_START + longitud)
-    modulos_ids = range(MODULO_START, MODULO_START + longitud)
+    if not estudiantes_ids:
+        print("No hay estudiantes en el rango configurado. Abortando.")
+        return
 
-    for est_id, mod_id in zip(estudiantes_ids, modulos_ids):
+    if not modulos_ids:
+        print("No hay módulos en el rango configurado. Abortando.")
+        return
+
+    # Preparar asignación aleatoria de módulos:
+    # - Si UNIQUE_MODULO_ASSIGNMENT True y hay suficientes módulos, usamos random.sample para asignar sin repeticiones.
+    # - Si no hay suficientes módulos o UNIQUE_MODULO_ASSIGNMENT False, permitimos repeticiones (random.choices o random.choice).
+    num_estudiantes = len(estudiantes_ids)
+    asignacion_modulos = []
+
+    if UNIQUE_MODULO_ASSIGNMENT:
+        if len(modulos_ids) >= num_estudiantes:
+            asignacion_modulos = random.sample(modulos_ids, k=num_estudiantes)
+            print("Asignación aleatoria única de módulos (sin repeticiones) creada.")
+        else:
+            # No hay suficientes módulos para asignación única; fallback a sampling con reemplazo
+            asignacion_modulos = random.choices(modulos_ids, k=num_estudiantes)
+            print("AVISO: No hay suficientes módulos para asignación única. Se hará sampling con reemplazo (podrán repetirse módulos).")
+    else:
+        # Permitir repeticiones
+        asignacion_modulos = [random.choice(modulos_ids) for _ in range(num_estudiantes)]
+        print("Asignación aleatoria de módulos (con posibles repeticiones) creada.")
+
+    # Ahora iteramos por cada estudiante y su módulo asignado
+    for est_id, mod_id in zip(estudiantes_ids, asignacion_modulos):
         try:
             estudiante = Estudiante.objects.get(pk=est_id)
         except Estudiante.DoesNotExist:
@@ -111,7 +140,7 @@ def main():
         try:
             modulo = Modulo.objects.get(pk=mod_id)
         except Modulo.DoesNotExist:
-            print(f"SKIP: Modulo con pk={mod_id} no encontrado.")
+            print(f"SKIP: Modulo con pk={mod_id} no encontrado (asignado a estudiante {est_id}).")
             errors += 1
             continue
 

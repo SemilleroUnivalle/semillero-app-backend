@@ -19,6 +19,8 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from cuenta.permissions import IsAdministrador, IsEstudianteOrAdministrador, IsEstudianteOrAdministradorOrMonitorAdministrativo
 #Actions
 from rest_framework.decorators import action
+from django.db.models import Count, Value
+from django.db.models.functions import Coalesce
 
 def file_update(instance, data, field_name):
         """
@@ -333,8 +335,104 @@ class InscripcionViewSet(viewsets.ModelViewSet):
         serializer = LogEntrySerializer(logs, many=True)
         return Response(serializer.data)
 
-    
+    @action(detail=False, methods=['get'], url_path="dashboard",
+        permission_classes=[IsAdministrador])
+    def dashboard(self, request):
+        # totales
+        total_enrollments = Inscripcion.objects.count()
+        active_modules = Modulo.objects.filter(estado=True).count()
 
+        # inscripciones por módulo
+        enrollments_by_module_qs = (
+            Inscripcion.objects
+            .filter(id_modulo__isnull=False)
+            .values('id_modulo__nombre_modulo', 'id_modulo__id_area__nombre_area')
+            .annotate(enrollments=Count('pk'))
+            .order_by('-enrollments')
+        )
+        enrollments_by_module = [
+            {
+                "name": item['id_modulo__nombre_modulo'],
+                "enrollments": item['enrollments'],
+                "area": item['id_modulo__id_area__nombre_area'],
+            }
+            for item in enrollments_by_module_qs
+        ]
+
+        # inscripciones por estamento con porcentaje
+        estamento_qs = (
+            Inscripcion.objects
+            .values(estamento=Coalesce('id_estudiante__estamento', Value('Desconocido')))
+            .annotate(count=Count('pk'))
+            .order_by('-count')
+        )
+        enrollments_by_estamento = []
+        for item in estamento_qs:
+            count = item['count']
+            percentage = round((count / total_enrollments) * 100) if total_enrollments else 0
+            estamento = item['estamento'] or 'Desconocido'
+            enrollments_by_estamento.append({
+                "estamento": estamento.capitalize(),
+                "count": count,
+                "percentage": int(percentage),
+            })
+
+        # inscripciones por grado
+        grade_qs = (
+            Inscripcion.objects
+            .values(grade=Coalesce('id_estudiante__grado', Value('Desconocido')))
+            .annotate(count=Count('pk'))
+            .order_by('-count')
+        )
+        enrollments_by_grade = [
+            {"grade": item['grade'], "count": item['count']}
+            for item in grade_qs
+        ]
+
+        # inscripciones recientes (últimas 10)
+        recent_qs = (
+            Inscripcion.objects
+            .select_related('id_estudiante', 'id_modulo')
+            .order_by('-fecha_inscripcion')[:10]
+        )
+        recent_enrollments = []
+        for ins in recent_qs:
+            estudiante = ins.id_estudiante
+            modulo = ins.id_modulo
+            student_name = " ".join(filter(None, [getattr(estudiante, 'nombre', ''), getattr(estudiante, 'apellido', '')])).strip() if estudiante else ""
+            module_name = getattr(modulo, 'nombre_modulo', None) if modulo else None
+            status = getattr(ins, 'estado', None) or (getattr(estudiante, 'estado', None) if estudiante else 'No revisado')
+            recent_enrollments.append({
+                "id": ins.id_inscripcion,
+                "studentName": student_name,
+                "module": module_name,
+                "date": ins.fecha_inscripcion.isoformat() if ins.fecha_inscripcion else None,
+                "status": status,
+            })
+
+        # distribución por género
+        gender_qs = (
+            Inscripcion.objects
+            .values(gender=Coalesce('id_estudiante__genero', Value('Desconocido')))
+            .annotate(count=Count('pk'))
+            .order_by('-count')
+        )
+        gender_distribution = [
+            {"gender": item['gender'], "count": item['count']}
+            for item in gender_qs
+        ]
+
+        payload = {
+            "totalEnrollments": total_enrollments,
+            "activeModules": active_modules,
+            "enrollmentsByModule": enrollments_by_module,
+            "enrollmentsByEstamento": enrollments_by_estamento,
+            "enrollmentsByGrade": enrollments_by_grade,
+            "recentEnrollments": recent_enrollments,
+            "genderDistribution": gender_distribution,
+        }
+
+        return Response(payload)
 
     def asignar_grupos():
         pass
