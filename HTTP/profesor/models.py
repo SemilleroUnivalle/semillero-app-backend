@@ -8,13 +8,13 @@ from auditlog.models import LogEntry
 
 def hoja_vida_upload_to(instance, filename):
     ext = filename.split('.')[-1]
-    return f'hoja_vida_profesor/{instance.numero_documento}.{ext}'
+    return f'funcionario/hoja_vida/{instance.numero_documento}.{ext}'
 def certificado_laboral_upload_to(instance, filename):
     ext = filename.split('.')[-1]
-    return f'certificado_laboral_profesor/{instance.numero_documento}.{ext}'
+    return f'funcionario/certificado_laboral/{instance.numero_documento}.{ext}'
 def certificado_academico_upload_to(instance, filename):
     ext = filename.split('.')[-1]
-    return f'certificado_academico_profesor/{instance.numero_documento}.{ext}'
+    return f'funcionario/certificado_academico/{instance.numero_documento}.{ext}'
 
 class Profesor(Usuario):
     area_desempeño = models.CharField(max_length=50)

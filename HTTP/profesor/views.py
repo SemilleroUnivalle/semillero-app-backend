@@ -13,17 +13,19 @@ from modulo.models import Modulo
 #Autenticacion
 from rest_framework.permissions import IsAuthenticated, AllowAny
 #Permisos
-from cuenta.permissions import IsAdministrador, IsProfesorOrAdministrador, IsSelfOrAdmin
+from cuenta.permissions import IsAdministrador, IsProfesorOrAdministrador, IsSelfOrAdmin, IsProfesor
 #Transacciones atomicas
 from django.db import transaction
 #Serializador
-from .serializers import ProfesorSerializer, AsignacionProfesorSerializer, ProfesorModuloSerializer
+from .serializers import ProfesorSerializer, AsignacionProfesorSerializer, ProfesorModuloSerializer, ProfesorMeSerializer
 from modulo.serializers import ModuloProfesorSerializer
 #Auditoria
 from auditlog.models import LogEntry
 from .serializers import LogEntrySerializer
 from auditlog.context import set_actor
 from django.contrib.contenttypes.models import ContentType
+
+from rest_framework.authtoken.models import Token
 
 def file_update(instance, data, field_name):
         """
@@ -62,8 +64,10 @@ class ProfesorViewSet(viewsets.ModelViewSet):
             permission_classes = [AllowAny]
         elif self.action in ['update', 'partial_update', 'retrive']:
             permission_classes = [IsSelfOrAdmin]
+        elif self.action in ['list']:
+            permission_classes = [IsSelfOrAdmin]
         else: 
-            permission_classes = [IsAdministrador]
+            permission_classes = [IsAuthenticated]
         return [permission() for permission in permission_classes]
     
     @swagger_auto_schema(
@@ -77,6 +81,16 @@ class ProfesorViewSet(viewsets.ModelViewSet):
             return Response(status=status.HTTP_204_NO_CONTENT)
         
         serializer = ProfesorModuloSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    # Acción "me"
+    @action(detail=False, methods=['get'], url_path='me', permission_classes=[IsProfesor])
+    def me(self, request):
+        try:
+            profesor = Profesor.objects.get(user=request.user.id)
+        except Profesor.DoesNotExist:
+            return Response({'detail': 'El usuario autenticado no es profesor'}, status=status.HTTP_403_FORBIDDEN)
+        serializer = ProfesorMeSerializer(profesor)
         return Response(serializer.data)
     
     @swagger_auto_schema(
@@ -220,7 +234,7 @@ class ProfesorViewSet(viewsets.ModelViewSet):
                     instance.contrasena = hashed_password
                     instance.save()
                     
-                #Manejar is_active
+                # Manejar is_active
                 if 'is_active' in data:
                     is_active = extract_single_value(data.pop('is_active'))
                     user.is_active = is_active
@@ -228,7 +242,7 @@ class ProfesorViewSet(viewsets.ModelViewSet):
                     instance.is_active = is_active
                     instance.save()
                 
-                #Manejar el nombre de usuario
+                # Manejar el nombre de usuario
                 if 'nombre' in data:
                     nombre = extract_single_value(data.pop('nombre'))
                     user.first_name = nombre
@@ -236,7 +250,7 @@ class ProfesorViewSet(viewsets.ModelViewSet):
                     instance.nombre = nombre
                     instance.save()
                     
-                #Manejar el apellido
+                # Manejar el apellido
                 if 'apellido' in data:
                     apellido = extract_single_value(data.pop('apellido'))
                     user.last_name = apellido
@@ -244,7 +258,7 @@ class ProfesorViewSet(viewsets.ModelViewSet):
                     instance.apellido = apellido
                     instance.save()
                 
-                #Manejar el email
+                # Manejar el email
                 if 'email' in data:
                     email = extract_single_value(data.pop('email'))
                     user.email = email
@@ -285,13 +299,17 @@ class ProfesorViewSet(viewsets.ModelViewSet):
                             # Sube el archivo con el nuevo nombre
                             getattr(instance, field).save(new_file_path, ContentFile(file_content), save=True)
                 
-                file_update(instance, data, 'documento_identidad_pdf')
-                file_update(instance, data, 'rut_pdf')
-                file_update(instance, data, 'certificado_bancario_pdf')
-                file_update(instance, data, 'hoja_vida_pdf')
-                file_update(instance, data, 'certificado_laboral_pdf')
-                file_update(instance, data, 'certificado_academico_pdf')
-                file_update(instance, data, 'foto')
+                # --- CAMBIO: eliminar 'foto' si está vacía ---
+                if 'foto' in data:
+                    foto = data['foto']
+                    if not foto or (hasattr(foto, 'name') and foto.name == ''):
+                        # Si está vacía o es un archivo vacío, no la actualices
+                        data.pop('foto')
+
+                # Solo actualizar archivos si hay cambios para ese campo (incluyendo foto solo si no está vacía)
+                for pdf_field in pdf_fields:
+                    if pdf_field in data and data[pdf_field]:
+                        file_update(instance, data, pdf_field)
 
                 if data:
                     serializer = self.get_serializer(instance, data=data, partial=True)
@@ -315,6 +333,7 @@ class ProfesorViewSet(viewsets.ModelViewSet):
                 {"detail": "Ocurrió un error inesperado.", "error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+                
 
     #Utilizo perform update para actualizar el estado del profesor a (No revisado, Revisado, Pendiente)
     def perform_update(self, serializer):
@@ -405,7 +424,39 @@ class ProfesorViewSet(viewsets.ModelViewSet):
         operation_description="Elimina permanentemente un profesor del sistema"
     )
     def destroy(self, request, *args, **kwargs):
-        return super().destroy(request, *args, **kwargs)
+        instance = self.get_object()
+        user = getattr(instance, "user", None)
+        pdf_fields = [
+            'documento_identidad_pdf',
+            'rut_pdf',
+            'certificado_bancario_pdf',
+            'hoja_vida_pdf',
+            'certificado_laboral_pdf',
+            'certificado_academico_pdf',
+            'foto'
+        ]
+
+        # Elimina archivos PDF de S3 si existen
+        for field in pdf_fields:
+            pdf_file = getattr(instance, field, None)
+            if pdf_file:
+                try:
+                    pdf_file.delete(save=False)
+                except Exception:
+                    pass
+
+        try:
+            with transaction.atomic():
+                # Elimina tokens y usuario primero
+                if user:
+                    Token.objects.filter(user=user).delete()
+                    user.delete()
+                # Luego elimina el MonitorAcademico
+                instance.delete()
+        except Exception as e:
+            return Response({"detail": f"Error eliminando monitor: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({"detail": "Monitor y archivos eliminados correctamente."}, status=status.HTTP_204_NO_CONTENT)
     
     @swagger_auto_schema(
         operation_summary="Asignar un módulo a un profesor",
@@ -437,11 +488,11 @@ class ProfesorViewSet(viewsets.ModelViewSet):
         serializer = AsignacionProfesorSerializer(data=request.data)
         
         if serializer.is_valid():
-            profesor_id = serializer.validated_data['id_profesor']
+            profesor_id = serializer.validated_data['id']
             modulo_id = serializer.validated_data['id_modulo']
             
             try:
-                profesor = Profesor.objects.get(id_profesor=profesor_id)
+                profesor = Profesor.objects.get(id=profesor_id)
                 serializer_profesor = ProfesorSerializer(profesor)
                 modulo = Modulo.objects.get(id_modulo=modulo_id)
                 serializer_modulo = ModuloProfesorSerializer(modulo)
