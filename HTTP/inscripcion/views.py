@@ -348,6 +348,7 @@ class InscripcionViewSet(viewsets.ModelViewSet):
             if gid not in groups:
                 groups[gid] = {
                     'grupo_id': gid,
+                    'nombre': str(ins.grupo.nombre),
                     'matriculas': []
                 }
             # serializamos cada inscripcion individualmente para incluir los campos calculados por el serializer
