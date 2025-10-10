@@ -21,6 +21,7 @@ from cuenta.permissions import IsAdministrador, IsEstudianteOrAdministrador, IsE
 from rest_framework.decorators import action
 from django.db.models import Count, Value
 from django.db.models.functions import Coalesce
+from collections import OrderedDict
 
 def file_update(instance, data, field_name):
         """
@@ -334,6 +335,33 @@ class InscripcionViewSet(viewsets.ModelViewSet):
         logs = LogEntry.objects.all().order_by('-timestamp')[:100]
         serializer = LogEntrySerializer(logs, many=True)
         return Response(serializer.data)
+
+
+    @action(detail=False, methods=['get'], url_path="matricula-grupo",
+            permission_classes=[IsAdministrador])
+    def matricula_grupo(self, request):
+        qs = Inscripcion.objects.select_related('grupo', 'id_estudiante', 'id_modulo', 'id_oferta_categoria').all().order_by('grupo_id', 'id_inscripcion')
+
+        groups = OrderedDict()
+        for ins in qs:
+            gid = ins.grupo_id  # puede ser None
+            if gid not in groups:
+                groups[gid] = {
+                    'grupo_id': gid,
+                    'matriculas': []
+                }
+            # serializamos cada inscripcion individualmente para incluir los campos calculados por el serializer
+            groups[gid]['matriculas'].append(InscripcionSerializer(ins).data)
+
+        # convertir a lista y añadir conteo
+        result = []
+        for g in groups.values():
+            g['cantidad'] = len(g['matriculas'])
+            result.append(g)
+
+        return Response(result, status=status.HTTP_200_OK)
+
+
 
     @action(detail=False, methods=['get'], url_path="dashboard",
         permission_classes=[IsAdministrador])
