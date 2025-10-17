@@ -2,6 +2,7 @@ from django.db import models
 from estudiante.models import Estudiante
 from modulo.models import Modulo
 from oferta_categoria.models import OfertaCategoria
+from oferta_academica.models import OfertaAcademica
 from grupo.models import Grupo
 from auditlog.registry import auditlog
 from auditlog.models import LogEntry
@@ -26,6 +27,7 @@ class Inscripcion(models.Model):
     id_estudiante = models.ForeignKey(Estudiante, on_delete=models.CASCADE)
     id_modulo = models.ForeignKey(Modulo, on_delete=models.SET_NULL, null=True)
     id_oferta_categoria = models.ForeignKey(OfertaCategoria, on_delete=models.SET_NULL, null=True)
+    oferta_academica = models.ForeignKey(OfertaAcademica, on_delete=models.SET_NULL, null=True)
     grupo = models.ForeignKey(Grupo, on_delete=models.SET_NULL, null=True)
     fecha_inscripcion = models.DateField(auto_now_add=True)
     tipo_vinculacion = models.CharField(max_length=255)

@@ -11,6 +11,7 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 #Modelo
 from .models import Inscripcion
+from estudiante.models import Estudiante
 #Serializadores
 from .serializers import InscripcionSerializer
 #Autenticacion
@@ -19,6 +20,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from cuenta.permissions import IsAdministrador, IsEstudianteOrAdministrador, IsEstudianteOrAdministradorOrMonitorAdministrativo
 #Actions
 from rest_framework.decorators import action
+#Dashboard
 from django.db.models import Count, Value
 from django.db.models.functions import Coalesce
 from collections import OrderedDict
@@ -96,10 +98,16 @@ class InscripcionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        oferta_academica_true = modulo.id_oferta_categoria.filter(estado=True).first()
-        if not oferta_academica_true:
-            return (Response({"detail": "La oferta academica no esta activa"}, status=status.HTTP_400_BAD_REQUEST))
-        data["id_oferta_categoria"] = oferta_academica_true.id_oferta_categoria
+        import sys
+        #Tener el estado de oferta categoria y oferta academica
+        oferta_categoria = modulo.id_oferta_categoria.get()
+        oferta_academica = oferta_categoria.id_oferta_academica
+
+        if oferta_categoria.estado or oferta_academica.estado:
+            data["id_oferta_categoria"] = oferta_categoria.id_oferta_categoria
+            data["oferta_academica"] = oferta_academica.id_oferta_academica
+        else:
+            return (Response({"detail": "La oferta categoria o academica no esta activa"}, status=status.HTTP_400_BAD_REQUEST))
         
         #Crear el objeto usando el serializador
         serializer = self.get_serializer(data=data)
@@ -369,6 +377,7 @@ class InscripcionViewSet(viewsets.ModelViewSet):
     def dashboard(self, request):
         # totales
         total_enrollments = Inscripcion.objects.count()
+        total_register = Estudiante.objects.count()
         active_modules = Modulo.objects.filter(estado=True).count()
 
         # inscripciones por módulo
@@ -451,14 +460,20 @@ class InscripcionViewSet(viewsets.ModelViewSet):
             for item in gender_qs
         ]
 
+        inscritosMatriculados = (total_enrollments / total_register) * 100
+        inscritosNoMatriculados = abs((total_enrollments / total_register) - 1) * 100
+
         payload = {
             "totalEnrollments": total_enrollments,
+            "totalRegister": total_register,
             "activeModules": active_modules,
             "enrollmentsByModule": enrollments_by_module,
             "enrollmentsByEstamento": enrollments_by_estamento,
             "enrollmentsByGrade": enrollments_by_grade,
             "recentEnrollments": recent_enrollments,
             "genderDistribution": gender_distribution,
+            "inscritosMatriculados": inscritosMatriculados,
+            "inscritosNoMatriculados":inscritosNoMatriculados,
         }
 
         return Response(payload)
