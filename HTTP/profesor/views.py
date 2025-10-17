@@ -10,6 +10,7 @@ from drf_yasg import openapi
 from .models import Profesor
 from cuenta.models import CustomUser
 from modulo.models import Modulo
+from grupo.models import Grupo
 #Autenticacion
 from rest_framework.permissions import IsAuthenticated, AllowAny
 #Permisos
@@ -19,6 +20,7 @@ from django.db import transaction
 #Serializador
 from .serializers import ProfesorSerializer, AsignacionProfesorSerializer, ProfesorModuloSerializer, ProfesorMeSerializer
 from modulo.serializers import ModuloProfesorSerializer
+from grupo.serializers import GrupoSerializer, GrupoListaSerializer 
 #Auditoria
 from auditlog.models import LogEntry
 from .serializers import LogEntrySerializer
@@ -517,3 +519,32 @@ class ProfesorViewSet(viewsets.ModelViewSet):
                 return Response({"error": "Módulo no encontrado"}, status=status.HTTP_404_NOT_FOUND)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    #Obtener grupos del profesor
+    import sys
+    @action(detail=False, methods=['get'], url_path='mi-grupos')
+    def mi_grupos(self, request):
+        """
+        Devuelve los grupos asociados al profesor autenticado.
+        Endpoint: GET /api/profesores/mi-grupos/
+        """
+        # Obtener el objeto Profesor asociado al usuario autenticado de forma segura
+        profesor = None
+        if isinstance(request.user, Profesor):
+            profesor = request.user
+        else:
+            profesor = getattr(request.user, 'profesor', None)
+            if profesor is None:
+                try:
+                    profesor = Profesor.objects.get(user=request.user)
+                except Profesor.DoesNotExist:
+                    return Response({'detail': 'Profesor no asociado al usuario.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Obtener los grupos relacionados con sus estudiantes
+        qs = profesor.grupos.all().select_related('monitor_academico').prefetch_related(
+            'matricula__id_estudiante' 
+        )
+
+        serializer = GrupoListaSerializer(qs, many=True, context={'request': request})
+        return Response(serializer.data)
+

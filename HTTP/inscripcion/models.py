@@ -28,7 +28,7 @@ class Inscripcion(models.Model):
     id_modulo = models.ForeignKey(Modulo, on_delete=models.SET_NULL, null=True)
     id_oferta_categoria = models.ForeignKey(OfertaCategoria, on_delete=models.SET_NULL, null=True)
     oferta_academica = models.ForeignKey(OfertaAcademica, on_delete=models.SET_NULL, null=True)
-    grupo = models.ForeignKey(Grupo, on_delete=models.SET_NULL, null=True)
+    grupo = models.ForeignKey(Grupo, on_delete=models.SET_NULL, null=True, related_name="matricula")
     fecha_inscripcion = models.DateField(auto_now_add=True)
     tipo_vinculacion = models.CharField(max_length=255)
     terminos = models.BooleanField(default=True)
