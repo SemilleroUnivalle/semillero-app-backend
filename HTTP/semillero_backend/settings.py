@@ -37,7 +37,7 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     '0.0.0.0',
     '172.19.0.4',
-    '172.18.0.4',
+    '172.18.0.3',
 ]
 
 # Definición de aplicaciones
@@ -156,7 +156,7 @@ CHANNEL_LAYERS = {
 }
 # Base de datos
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-"""
+
 DATABASES = {
     # Configuración para usar SQLite
     'default': {
@@ -183,7 +183,7 @@ DATABASES = {
         'PORT': '5432',
     },
 }
-
+"""
 # Validación de contraseñas
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
