@@ -20,7 +20,7 @@ from django.db import transaction
 #Serializador
 from .serializers import ProfesorSerializer, AsignacionProfesorSerializer, ProfesorModuloSerializer, ProfesorMeSerializer
 from modulo.serializers import ModuloProfesorSerializer
-from grupo.serializers import GrupoSerializer, GrupoListaSerializer 
+from grupo.serializers import GrupoListaSerializer 
 #Auditoria
 from auditlog.models import LogEntry
 from .serializers import LogEntrySerializer

@@ -9,8 +9,6 @@ from monitor_academico.serializers import MonitorAcademicoMeSerializer
 from monitor_academico.models import MonitorAcademico
 
 class GrupoSerializer(serializers.ModelSerializer):
-    estudiantes = serializers.SerializerMethodField()
-    total_estudiantes = serializers.SerializerMethodField()
 
     class Meta:
         model = Grupo
