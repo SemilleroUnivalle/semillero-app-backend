@@ -51,6 +51,15 @@ class AsignacionMonitorAcademicoSerializer(serializers.Serializer):
 
         return data
 
+class MonitorAcademicoMeSerializer(serializers.Serializer):
+    modulo = ModuloProfesorSerializer(read_only=True)
+
+    class Meta:
+        model = MonitorAcademico
+        fields = ['id','nombre', 'apellido', 'numero_documento', 'email', 'ciudad_residencia', 'eps', 'tipo_documento', 'genero', 'fecha_nacimiento', 'telefono_fijo',
+        'celular', 'departamento_residencia', 'comuna_residencia', 'direccion_residencia', 'foto', 'documento_identidad_pdf', 'rut_pdf', 'area_desempeño', 'semestre',
+        'modulo', 'estado_mat_financiera_pdf', 'd10_pdf', 'tabulado_pdf']
+
 class LogEntrySerializer(serializers.ModelSerializer):
     usuario = serializers.SerializerMethodField()
 

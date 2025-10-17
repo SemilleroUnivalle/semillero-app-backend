@@ -4,7 +4,7 @@ from monitor_academico.models import MonitorAcademico
 
 class Grupo(models.Model):
     nombre = models.CharField(max_length=100)
-    profesor = models.ForeignKey(Profesor, on_delete=models.SET_NULL, null=True)
+    profesor = models.ForeignKey(Profesor, on_delete=models.SET_NULL, null=True, related_name='grupos')
     monitor_academico = models.ForeignKey(MonitorAcademico, on_delete=models.SET_NULL, null=True)
 
     class Meta:

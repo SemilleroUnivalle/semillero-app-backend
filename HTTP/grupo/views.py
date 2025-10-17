@@ -12,7 +12,8 @@ from .serializers import GrupoSerializer
 from rest_framework.permissions import IsAuthenticated
 #Permisos
 from cuenta.permissions import IsEstudiante, IsProfesor, IsAdministrador, IsProfesorOrAdministrador
-
+#action
+from rest_framework.decorators import action
 
 class GrupoViewSet(viewsets.ModelViewSet):
     """
@@ -100,3 +101,15 @@ class GrupoViewSet(viewsets.ModelViewSet):
     )
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
+
+    #Grupos por profesor
+    @action(detail=False, methods=['get'], url_path="grupo-profesor",
+            permission_classes=[IsAdministrador])
+    def filtro_modulo(self, request):
+        profesor = request.query_params.get('profesor', None)
+        queryset = self.get_queryset()
+
+        if profesor:
+            queryset = queryset.filter(profesor=profesor)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)

@@ -28,7 +28,8 @@ class InscripcionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Inscripcion
-        fields = '__all__'
+        fields = ['id_inscripcion', 'id_estudiante','estudiante', 'id_modulo','modulo', 'id_oferta_categoria','oferta_categoria', 'grupo', 'fecha_inscripcion', 'tipo_vinculacion', 
+        'terminos', 'observaciones', 'audit_certificado', 'audit_documento_recibo_pago']
         read_only_fields = ('id_inscripcion',)
         
 

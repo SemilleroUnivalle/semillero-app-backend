@@ -19,10 +19,10 @@ from django.contrib.auth import get_user_model
 from estudiante.models import Estudiante
 
 # Configuración: ajustar según necesidad
-N = 10  # Cantidad de estudiantes a crear
+N = 80  # Cantidad de estudiantes a crear
 pk_inicio = 1
 user_inicio = 1
-numero_documento_inicio = 110
+numero_documento_inicio = 120
 
 # Archivos base (deben existir en base_dir)
 base_dir = "/app/fixtures/documentos"
