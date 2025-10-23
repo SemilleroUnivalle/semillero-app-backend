@@ -13,7 +13,7 @@ from drf_yasg import openapi
 from .models import Inscripcion
 from estudiante.models import Estudiante
 #Serializadores
-from .serializers import InscripcionSerializer
+from .serializers import InscripcionSerializer, InscripcionInfProfeSerializer
 #Autenticacion
 from rest_framework.permissions import IsAuthenticated, AllowAny
 #Permisos
@@ -304,10 +304,24 @@ class InscripcionViewSet(viewsets.ModelViewSet):
             permission_classes=[IsAdministrador])
     def filtro_grupo(self, request, *args, **kwargs):
         grupo = request.query_params.get('grupo', None)
-        queryset = self.get_queryset()
+        
+        # Obtener queryset base y optimizar la consulta para Grupo y Profesor
+        queryset = self.get_queryset().select_related('grupo', 'grupo__profesor') 
+
         if grupo:
-            queryset = queryset.filter(grupo=grupo)
-        serializer = self.get_serializer(queryset, many=True)
+            # Caso 1: Filtrar por grupos nulos
+            if grupo.lower() in ['null', 'none']:
+                # Aplica el filtro para registros donde el campo 'grupo' es NULL
+                queryset = queryset.filter(grupo__isnull=True)
+            
+            # Caso 2: Filtrar por un ID de grupo específico
+            else:
+                # Filtra por el ID/valor del grupo
+                # Usamos 'grupo__pk' para asegurar que filtramos por la clave foránea
+                queryset = queryset.filter(grupo__pk=grupo)
+            
+        # El serializador InscripcionInfProfeSerializer mostrará el profesor
+        serializer = InscripcionInfProfeSerializer(queryset, many=True)
         return Response(serializer.data)
     
     @swagger_auto_schema(
