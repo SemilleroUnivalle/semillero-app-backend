@@ -60,6 +60,13 @@ class ProfesorMeSerializer(serializers.ModelSerializer):
         'celular', 'departamento_residencia', 'comuna_residencia', 'direccion_residencia', 'foto', 'documento_identidad_pdf', 'rut_pdf', 'certificado_laboral_pdf',
         'certificado_bancario_pdf', 'area_desempeño', 'grado_escolaridad', 'hoja_vida_pdf', 'certificado_academico_pdf', 'modulo']
 
+class ProfesorSimpleSerializer(serializers.ModelSerializer):
+    modulo = ModuloProfesorSerializer(read_only=True)
+
+    class Meta:
+        model = Profesor
+        fields = ['id','nombre', 'apellido', 'numero_documento', 'email', 'celular', 'foto', 'area_desempeño', 'grado_escolaridad', 'modulo']
+
 class LogEntrySerializer(serializers.ModelSerializer):
     usuario = serializers.SerializerMethodField()
 

@@ -13,7 +13,7 @@ class GrupoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Grupo
         fields = '__all__'
-        depth = 1
+        #depth = 1
 
 class GrupoListaSerializer(serializers.ModelSerializer):
     estudiantes = serializers.SerializerMethodField()

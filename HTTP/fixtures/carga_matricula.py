@@ -1,19 +1,3 @@
-#!/usr/bin/env python3
-"""
-Script para crear inscripciones usando estudiantes id 1..20 y módulos id 1..20,
-con asignación de módulos de forma aleatoria.
-
-Uso:
-    Desde la raíz del proyecto Django:
-        python manage.py shell < crear_inscripciones.py
-
-Ajustes en CONFIGURACIÓN abajo:
-- BASE_DIR: carpeta donde poner archivos de ejemplo (recibo.pdf, certificado.pdf)
-- CREATE_GROUP_ZERO: si True, el script intentará crear un Grupo con pk=0 si no existe.
-- UNIQUE_MODULO_ASSIGNMENT: si True, cada estudiante recibirá un módulo distinto (si hay suficientes módulos).
-  Si no hay suficientes módulos para asignación única, automáticamente se hace sampling con reemplazo.
-- Si tus modelos están en apps con nombres distintos, ajusta los imports.
-"""
 import os
 import random
 from django.core.files import File
@@ -38,9 +22,9 @@ CREATE_GROUP_ZERO = False
 
 # Rango de ids a usar (estudiantes y módulos)
 ESTUDIANTE_START = 1
-ESTUDIANTE_END = 20
+ESTUDIANTE_END = 1
 MODULO_START = 1
-MODULO_END = 20
+MODULO_END = 1
 
 # Si True, intentamos asignar módulos únicos (sin repeticiones) cuando sea posible.
 # Si no hay suficientes módulos, el script hará sampling con reemplazo para completar.
@@ -144,6 +128,16 @@ def main():
             errors += 1
             continue
 
+        try:
+            # Asume que modulo.id_oferta_categoria es un campo de relación OneToOne o ForeignKey
+            # y que .get() funciona para obtener la OfertaCategoria
+            oferta_categoria = modulo.id_oferta_categoria.get()
+            oferta_academica = oferta_categoria.id_oferta_academica
+        except Exception as e:
+            print(f"SKIP: No se pudo obtener Oferta Categoria/Academica para modulo={mod_id}: {e}")
+            errors += 1
+            continue # Saltar esta inscripción si no se encuentran las ofertas
+
         tipo_vinc = random.choice(TIPOS_VINCULACION)
         observ = random.choice(OBSERVACIONES_EJEMPLO)
         terminos = True  # por defecto
@@ -156,7 +150,9 @@ def main():
                     grupo=grupo_instancia,  # puede ser None si no existe pk=0
                     tipo_vinculacion=tipo_vinc,
                     terminos=terminos,
-                    observaciones=observ
+                    observaciones=observ,
+                    id_oferta_categoria=oferta_categoria,
+                    oferta_academica=oferta_academica
                 )
 
                 # Adjuntar archivos si existen (usar save=False y luego save())
