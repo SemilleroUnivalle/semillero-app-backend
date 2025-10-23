@@ -362,17 +362,51 @@ class InscripcionViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], url_path="matricula-grupo",
             permission_classes=[IsAdministrador])
     def matricula_grupo(self, request):
-        qs = Inscripcion.objects.select_related('grupo', 'id_estudiante', 'id_modulo', 'id_oferta_categoria').all().order_by('grupo_id', 'id_inscripcion')
+        qs = Inscripcion.objects.select_related(
+            'grupo', 
+            'grupo__profesor',
+            'grupo__monitor_academico',
+            'id_estudiante', 
+            'id_modulo', 
+            'id_oferta_categoria'
+        ).all().order_by('grupo_id', 'id_inscripcion')
 
         groups = OrderedDict()
         for ins in qs:
             gid = ins.grupo_id  # puede ser None
+            
             if gid not in groups:
+                
+                if ins.grupo:
+                    nombre_grupo = str(ins.grupo.nombre)
+            
+                    if ins.grupo.profesor:
+                        profesor_data = {
+                            'id': ins.grupo.profesor.id,
+                            'nombre': str(ins.grupo.profesor.nombre) + " " + str(ins.grupo.profesor.apellido),
+                        }
+                        if ins.grupo.monitor_academico:
+                            monitor_academico_data = {
+                            'id' : ins.grupo.monitor_academico.id,
+                            'nombre' : str(ins.grupo.monitor_academico.nombre) + " " + str(ins.grupo.monitor_academico.apellido),
+                            }
+                        else:
+                            monitor_academico = None
+                    else:
+                        profesor_data = None 
+                else:
+                    # El grupo no existe (gid es None)
+                    nombre_grupo = "NO ASIGNADO"
+                    profesor_data = None # El profesor es nulo si no hay grupo
+
                 groups[gid] = {
                     'grupo_id': gid,
-                    'nombre': str(ins.grupo.nombre),
+                    'nombre': nombre_grupo,
+                    'profesor': profesor_data,
+                    'monitor': monitor_academico_data,
                     'matriculas': []
                 }
+                
             # serializamos cada inscripcion individualmente para incluir los campos calculados por el serializer
             groups[gid]['matriculas'].append(InscripcionSerializer(ins).data)
 
