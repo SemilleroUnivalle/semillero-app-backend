@@ -1,6 +1,8 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from modulo.models import Modulo
+from profesor.models import Profesor
+from monitor_academico.models import MonitorAcademico
 from django.http import JsonResponse
 from auditlog.models import LogEntry
 from .serializers import LogEntrySerializer
@@ -22,8 +24,11 @@ from cuenta.permissions import IsAdministrador, IsEstudianteOrAdministrador, IsE
 from rest_framework.decorators import action
 #Dashboard
 from django.db.models import Count, Value
-from django.db.models.functions import Coalesce
+from django.db.models.functions import Coalesce, Lower
 from collections import OrderedDict
+#Geocodificacion
+from geopy.geocoders import Nominatim
+from geopy.exc import GeocoderTimedOut, GeocoderServiceError
 
 def file_update(instance, data, field_name):
         """
@@ -427,6 +432,8 @@ class InscripcionViewSet(viewsets.ModelViewSet):
         total_enrollments = Inscripcion.objects.count()
         total_register = Estudiante.objects.count()
         active_modules = Modulo.objects.filter(estado=True).count()
+        total_profesores = Profesor.objects.count()
+        total_monitores = MonitorAcademico.objects.count()
 
         # inscripciones por módulo
         enrollments_by_module_qs = (
@@ -444,6 +451,45 @@ class InscripcionViewSet(viewsets.ModelViewSet):
             }
             for item in enrollments_by_module_qs
         ]
+
+        enrollments_gender_qs = (
+            Inscripcion.objects
+            .filter(id_modulo__isnull=False)
+            .values(
+                'id_modulo__nombre_modulo',
+                gender=Coalesce(Lower('id_estudiante__genero'), Value('desconocido'))
+            )
+            .annotate(count=Count('pk'))
+            .order_by('id_modulo__nombre_modulo', 'gender')
+        )
+
+        enrollments_by_module_and_gender = []
+        current_module = None
+        gender_breakdown = {}
+
+        for item in enrollments_gender_qs:
+            module_name = item['id_modulo__nombre_modulo']
+            # Usamos .capitalize() para estandarizar 'Femenino', 'Masculino', etc.
+            gender = item['gender'].capitalize() 
+            count = item['count']
+
+            if module_name != current_module:
+                if current_module is not None:
+                    enrollments_by_module_and_gender.append({
+                        "moduleName": current_module,
+                        "genderBreakdown": gender_breakdown
+                    })
+                
+                current_module = module_name
+                gender_breakdown = {}
+
+            gender_breakdown[gender] = count
+
+        if current_module is not None:
+            enrollments_by_module_and_gender.append({
+                "moduleName": current_module,
+                "genderBreakdown": gender_breakdown
+            })
 
         # inscripciones por estamento con porcentaje
         estamento_qs = (
@@ -515,6 +561,9 @@ class InscripcionViewSet(viewsets.ModelViewSet):
             "totalEnrollments": total_enrollments,
             "totalRegister": total_register,
             "activeModules": active_modules,
+            "totalProfessors": total_profesores,
+            "totalMonitors": total_monitores,
+            "enrollmentsByModuleAndGender": enrollments_by_module_and_gender, 
             "enrollmentsByModule": enrollments_by_module,
             "enrollmentsByEstamento": enrollments_by_estamento,
             "enrollmentsByGrade": enrollments_by_grade,
@@ -525,7 +574,91 @@ class InscripcionViewSet(viewsets.ModelViewSet):
         }
 
         return Response(payload)
+    import sys
+    @action(detail=False, methods=['get'], url_path="geocodificacion",
+            permission_classes=[IsAdministrador])
+    def geocodificacion(self, request):
+        """
+        Geocodifica la dirección de residencia de todos los estudiantes
+        y retorna las coordenadas (Latitud, Longitud).
+        """
+        
+        # 1. Inicializa el geocodificador (solo una vez)
+        try:
+            # Es crucial especificar un user_agent único y descriptivo
+            geolocator = Nominatim(user_agent="semillero_estudiantes_v1")
+        except GeocoderServiceError as e:
+            return Response(
+                {"error": f"Error al inicializar el geocodificador: {e}"},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
 
-    def asignar_grupos():
-        pass
+        # 2. Obtener los datos con Carga Ansiosa (Eager Loading)
+        # ❗ Corrección: Usar select_related() para evitar N+1 consultas a la BD
+        # Asume que 'id_estudiante' es el nombre de la relación ForeignKey
+        try:
+            inscripciones = self.get_queryset().select_related('id_estudiante')
+        except Exception as e:
+            return Response(
+                {"error": f"Error al obtener las inscripciones: {e}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        resultados = []
+        
+        # El print para debug ahora usa el queryset precargado
+        if inscripciones.exists(): # Verifica que haya elementos antes de intentar acceder al índice
+            print(inscripciones[0].id_estudiante.direccion_residencia, flush=True)
+
+        # 3. Iterar y Geocodificar
+        for inscripcion in inscripciones:
+            # Acceso directo y eficiente al estudiante precargado
+            estudiante = inscripcion.id_estudiante
+            
+            # Validar si el estudiante existe (aunque con select_related() ya debería estar precargado)
+            if not estudiante:
+                print(f"Advertencia: Inscripción con ID {inscripcion.pk} no tiene estudiante asociado.")
+                continue
+                
+            # Construir la dirección completa para la geocodificación
+            direccion_completa = (
+                f"{estudiante.direccion_residencia}, "
+                f"{estudiante.comuna_residencia}, "
+                f"{estudiante.ciudad_residencia}, "
+                f"{estudiante.departamento_residencia}"
+            )
+
+            latitud = None
+            longitud = None
+            location = None
+            
+            try:
+                # Servicio de geocodificación. Usar timeout para evitar esperas largas.
+                location = geolocator.geocode(direccion_completa, timeout=10)
+
+                # Procesar el resultado
+                if location:
+                    latitud = location.latitude
+                    longitud = location.longitude
+                    
+            except (GeocoderTimedOut, GeocoderServiceError) as e:
+                # Manejo de errores de red o del servicio de geocodificación
+                print(f"Error geocodificando '{direccion_completa}': {e}")
+                
+            except Exception as e:
+                # Otro error inesperado
+                print(f"Error inesperado procesando '{direccion_completa}': {e}")
+                
+            # 4. Agregar el resultado a la lista de respuesta
+            resultados.append({
+                "id": estudiante.id_estudiante,
+                "nombre_completo": f"{estudiante.nombre} {estudiante.apellido}", # Asumiendo campos
+                "direccion_texto": direccion_completa,
+                "latitud": latitud,
+                "longitud": longitud,
+                "encontrado": bool(location)
+            })
+
+        # 5. Retornar JSON al frontend
+        return Response(resultados, status=status.HTTP_200_OK)
 
