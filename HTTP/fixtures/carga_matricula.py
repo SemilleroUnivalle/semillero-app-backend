@@ -21,10 +21,10 @@ RECURSOS = {
 CREATE_GROUP_ZERO = False
 
 # Rango de ids a usar (estudiantes y módulos)
-ESTUDIANTE_START = 1
-ESTUDIANTE_END = 1
+ESTUDIANTE_START = 101
+ESTUDIANTE_END = 201
 MODULO_START = 1
-MODULO_END = 1
+MODULO_END = 20
 
 # Si True, intentamos asignar módulos únicos (sin repeticiones) cuando sea posible.
 # Si no hay suficientes módulos, el script hará sampling con reemplazo para completar.
