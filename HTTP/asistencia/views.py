@@ -58,13 +58,19 @@ class AsistenciaViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         data = request.data
 
-        #Crear el objeto usando el serializador
-        serializer = self.get_serializer(data=data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
+        #Verificar si los datos son una lista para crear múltiples
+        if isinstance(data, list):
+            many = True
+        else:
+            many = False
 
-        #Responder con los datos de la nueva asistencia
+        serializer = self.get_serializer(data=data, many=many) 
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer) 
+
+        # Responder con los datos de las nuevas asistencias
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
     @swagger_auto_schema(
         operation_summary="Obtener una asistencia específica",
         operation_description="Retorna los detalles de una asistencia específica por su ID"

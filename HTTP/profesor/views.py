@@ -522,7 +522,7 @@ class ProfesorViewSet(viewsets.ModelViewSet):
 
     #Obtener grupos del profesor
     import sys
-    @action(detail=False, methods=['get'], url_path='mi-grupos')
+    @action(detail=False, methods=['get'], url_path='mi-grupo')
     def mi_grupos(self, request):
         """
         Devuelve los grupos asociados al profesor autenticado.

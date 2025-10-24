@@ -22,7 +22,7 @@ class GrupoListaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Grupo
         fields = '__all__'
-        depth = 1
+        #depth = 1
 
     def get_estudiantes(self, obj):
         try:
@@ -32,6 +32,7 @@ class GrupoListaSerializer(serializers.ModelSerializer):
             for inscripcion in inscripciones:
                 estudiante = inscripcion.id_estudiante
                 estudiante_data = {
+                    'id_inscripcion': inscripcion.id_inscripcion,
                     'id_estudiante': estudiante.id_estudiante,
                     'nombre': estudiante.nombre,
                     'apellido': estudiante.apellido,
