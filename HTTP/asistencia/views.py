@@ -30,7 +30,7 @@ class AsistenciaViewSet(viewsets.ModelViewSet):
         - create: Estudiantes y administradores pueden crear
         - list, retrieve, update, partial_update, destroy: Solo administradores
         """
-        if self.action == 'create':
+        if self.action == ['create', 'list'] :
             # Estudiantes y administradores pueden crear acudientes
             permission_classes = [IsProfesorOrAdministrador]
         else:
@@ -47,6 +47,8 @@ class AsistenciaViewSet(viewsets.ModelViewSet):
         if not queryset.exists():
             return Response(status=status.HTTP_204_NO_CONTENT)
         return super().list(request, *args, **kwargs)
+
+        
     @swagger_auto_schema(
         operation_summary="Crear una asistencia",
         operation_description="Crea un nuevo registro de asistencia",
