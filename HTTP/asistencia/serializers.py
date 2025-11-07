@@ -1,10 +1,11 @@
 from rest_framework import serializers
 from .models import Asistencia
+from inscripcion.serializers import InscripcionEstudianteSoloSerializer
 
 class AsistenciaSerializer(serializers.ModelSerializer):
-    """
-    Serializador para el modelo Asistencia.
-    """
+    
+    id_inscripcion = InscripcionEstudianteSoloSerializer(read_only=True)
+
     class Meta:
         model = Asistencia
         fields = '__all__'

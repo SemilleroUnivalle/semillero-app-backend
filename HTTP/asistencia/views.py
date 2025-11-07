@@ -30,11 +30,10 @@ class AsistenciaViewSet(viewsets.ModelViewSet):
         - create: Estudiantes y administradores pueden crear
         - list, retrieve, update, partial_update, destroy: Solo administradores
         """
-        if self.action == ['create', 'list'] :
-            # Estudiantes y administradores pueden crear acudientes
+        if self.action in ['create', 'list'] :
             permission_classes = [IsProfesorOrAdministrador]
         else:
-            # Solo administradores pueden listar, ver detalles, actualizar y eliminar
+            # Solo administradores pueden ver detalles, actualizar y eliminar
             permission_classes = [IsAdministrador]
         return [permission() for permission in permission_classes]
     
