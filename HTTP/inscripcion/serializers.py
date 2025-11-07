@@ -15,6 +15,13 @@ from .auditlog_serializer import LogEntrySerializerEstudiante
 
 from profesor.serializers import ProfesorSimpleSerializer
 
+class InscripcionEstudianteSoloSerializer(serializers.ModelSerializer):
+    id_estudiante = EstudianteSerializerMatricula(read_only=True) 
+
+    class Meta:
+        model = Inscripcion
+        fields = ['id_estudiante']
+
 class InscripcionSerializer(serializers.ModelSerializer):
     id_modulo = serializers.PrimaryKeyRelatedField(queryset=Modulo.objects.all(), write_only=True)
     modulo = ModuloReadSerializer(source='id_modulo', read_only=True)
