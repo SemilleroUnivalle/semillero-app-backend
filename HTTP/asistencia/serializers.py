@@ -1,7 +1,11 @@
 from rest_framework import serializers
 from .models import Asistencia
+
 from inscripcion.models import Inscripcion
 from inscripcion.serializers import InscripcionEstudianteSoloSerializer
+
+from modulo.serializers import ModuloReadSerializer
+from modulo.models import Modulo
 
 class AsistenciaSerializer(serializers.ModelSerializer):
     
