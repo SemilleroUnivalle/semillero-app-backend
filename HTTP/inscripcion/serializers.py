@@ -4,6 +4,12 @@ from .models import Inscripcion
 from modulo.serializers import ModuloReadSerializer
 from modulo.models import Modulo
 
+from grupo.serializers import GrupoSerializer
+from grupo.models import Grupo
+
+from oferta_academica.serializers import OfertaAcademicaSerializer
+from oferta_academica.models import OfertaAcademica
+
 from estudiante.serializers import EstudianteSerializerMatricula, EstudianteLista
 from estudiante.models import Estudiante
 
@@ -18,9 +24,18 @@ from profesor.serializers import ProfesorSimpleSerializer
 class InscripcionEstudianteSoloSerializer(serializers.ModelSerializer):
     id_estudiante = EstudianteLista(read_only=True) 
 
+    id_modulo = serializers.PrimaryKeyRelatedField(queryset=Modulo.objects.all(), write_only=True)
+    modulo = ModuloReadSerializer(source='id_modulo', read_only=True)
+
+    grupo = serializers.PrimaryKeyRelatedField(queryset=Grupo.objects.all(), write_only=True)
+    grupo_view = GrupoSerializer(source='grupo', read_only=True)
+
+    oferta_academica = serializers.PrimaryKeyRelatedField(queryset=OfertaAcademica.objects.all(), write_only=True)
+    periodo = OfertaAcademicaSerializer(source='oferta_academica', read_only=True)
+
     class Meta:
         model = Inscripcion
-        fields = ['id_estudiante']
+        fields = ['id_estudiante','grupo','grupo_view','id_modulo','modulo','oferta_academica', 'periodo']
 
 class InscripcionSerializer(serializers.ModelSerializer):
     id_modulo = serializers.PrimaryKeyRelatedField(queryset=Modulo.objects.all(), write_only=True)
