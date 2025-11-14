@@ -4,7 +4,7 @@ from .models import Inscripcion
 from modulo.serializers import ModuloReadSerializer
 from modulo.models import Modulo
 
-from estudiante.serializers import EstudianteSerializerMatricula
+from estudiante.serializers import EstudianteSerializerMatricula, EstudianteLista
 from estudiante.models import Estudiante
 
 from oferta_categoria.serializers import OfertaCategoriaInscripcionReadSerializer
@@ -16,7 +16,7 @@ from .auditlog_serializer import LogEntrySerializerEstudiante
 from profesor.serializers import ProfesorSimpleSerializer
 
 class InscripcionEstudianteSoloSerializer(serializers.ModelSerializer):
-    id_estudiante = EstudianteSerializerMatricula(read_only=True) 
+    id_estudiante = EstudianteLista(read_only=True) 
 
     class Meta:
         model = Inscripcion

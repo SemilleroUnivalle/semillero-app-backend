@@ -9,7 +9,7 @@ class Asistencia(models.Model):
     fecha_asistencia = models.DateField()
     estado_asistencia = models.CharField(max_length=20)
     comentarios = models.TextField(max_length=500, default='Ninguno', blank=True)
-    sesion = models.CharField(blank=True)
+    sesion = models.CharField(blank=True, null=True)
     
     class Meta:
         verbose_name = 'Asistencia'
