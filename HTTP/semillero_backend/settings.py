@@ -82,6 +82,7 @@ INSTALLED_APPS = [
     'storages',
     "channels",
     "auditlog",
+    'prueba_diagnostica',
 ]
 
 REST_FRAMEWORK = {
