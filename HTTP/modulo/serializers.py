@@ -21,6 +21,13 @@ class ModuloReadSerializer(serializers.ModelSerializer):
     class Meta:
         model = Modulo
         fields = '__all__'
+
+# Serializador para devolver solo el id y el nombre del modulo
+class ModuloReadIdNombreSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Modulo
+        fields = ['id_modulo', 'nombre_modulo']
+
 #Serializador para mostrar el modulo que tiene el profesor osea que excluimos la información de la categoria
 class ModuloProfesorSerializer(serializers.ModelSerializer):
     class Meta:
