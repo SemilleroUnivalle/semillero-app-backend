@@ -7,12 +7,9 @@ class Asistencia(models.Model):
     id_asistencia = models.AutoField(primary_key=True)
     id_inscripcion = models.ForeignKey(Inscripcion, on_delete=models.CASCADE)
     fecha_asistencia = models.DateField()
-    estado_asistencia = models.CharField(max_length=20, choices=[
-        ('P', 'Presente'),
-        ('A', 'Ausente'),
-        ('T', 'Tarde'),
-    ], default='P')
-    comentarios = models.TextField(max_length=500, default='Ninguno')
+    estado_asistencia = models.CharField(max_length=20)
+    comentarios = models.TextField(max_length=500, default='Ninguno', blank=True)
+    sesion = models.CharField(blank=True, null=True)
     
     class Meta:
         verbose_name = 'Asistencia'

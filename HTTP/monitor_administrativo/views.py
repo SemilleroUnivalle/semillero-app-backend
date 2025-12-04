@@ -23,6 +23,8 @@ from .serializers import LogEntrySerializer
 from auditlog.context import set_actor
 from django.contrib.contenttypes.models import ContentType
 
+from rest_framework.authtoken.models import Token
+
 def file_update(instance, data, field_name):
         """
         Elimina el archivo anterior y asigna el nuevo si se envía uno.
@@ -134,6 +136,7 @@ class MonitorAdministrativoViewSet(viewsets.ModelViewSet):
                     d10_pdf=request.FILES.get('d10_pdf'),
                     tabulado_pdf=request.FILES.get('tabulado_pdf'),
                     estado_mat_financiera_pdf=request.FILES.get('estado_mat_financiera_pdf'),
+                    foto=request.FILES.get('foto'),
                 )
                 # Puedes retornar la información deseada
             return Response({'id': monitor_administrativo.id}, status=status.HTTP_201_CREATED)
@@ -180,6 +183,7 @@ class MonitorAdministrativoViewSet(viewsets.ModelViewSet):
                 'd10_pdf',
                 'tabulado_pdf',
                 'estado_mat_financiera_pdf',
+                'foto'
             ]
 
             numero_documento_actualizado = False
@@ -268,6 +272,7 @@ class MonitorAdministrativoViewSet(viewsets.ModelViewSet):
                 file_update(instance, data, 'd10_pdf')
                 file_update(instance, data, 'tabulado_pdf')
                 file_update(instance, data, 'estado_mat_financiera_pdf')
+                file_update(instance, data, 'foto')
 
                 if data:
                     serializer = self.get_serializer(instance, data=data, partial=True)
@@ -295,6 +300,8 @@ class MonitorAdministrativoViewSet(viewsets.ModelViewSet):
         documento_identidad_original = instance.verificacion_documento_identidad
         rut_original = instance.verificacion_rut
         certificado_bancario_original = instance.verificacion_certificado_bancario
+        foto_original = instance.verificacion_foto
+        informacion_original = instance.verificacion_informacion
 
         # Guarda cambios nuevos
         instance = serializer.save()
@@ -304,11 +311,13 @@ class MonitorAdministrativoViewSet(viewsets.ModelViewSet):
         documento_identidad_nuevo = instance.verificacion_documento_identidad
         rut_nuevo = instance.verificacion_rut
         certificado_bancario_nuevo = instance.verificacion_certificado_bancario
+        foto_nuevo = instance.verificacion_foto
+        informacion_nuevo = instance.verificacion_informacion
 
         # Asigna el estado correcto
-        if d10_nuevo and tabulado_nuevo and estado_mat_financiera_nuevo and documento_identidad_nuevo and rut_nuevo and certificado_bancario_nuevo:
+        if d10_nuevo and tabulado_nuevo and estado_mat_financiera_nuevo and documento_identidad_nuevo and rut_nuevo and certificado_bancario_nuevoand and foto_nuevo and informacion_nuevo:
             instance.estado = "Revisado"
-        elif d10_nuevo or tabulado_nuevo or estado_mat_financiera_nuevo or documento_identidad_nuevo or rut_nuevo or certificado_bancario_nuevo:
+        elif d10_nuevo or tabulado_nuevo or estado_mat_financiera_nuevo or documento_identidad_nuevo or rut_nuevo or certificado_bancario_nuevo or foto_nuevo or informacion_nuevo:
             instance.estado = "Pendiente"
         else:
             instance.estado = "No revisado"
@@ -336,6 +345,10 @@ class MonitorAdministrativoViewSet(viewsets.ModelViewSet):
             instance.audit_rut = logentry
         if certificado_bancario_original != certificado_bancario_nuevo and logentry:
             instance.audit_certificado_bancario = logentry
+        if foto_original != foto_nuevo and logentry:
+            instance.audit_foto = logentry
+        if informacion_original != informacion_nuevo and logentry:
+            instance.audit_informacion = logentry
 
         # Guarda solo los campos que hayan cambiado
         campos_actualizados = []
@@ -351,6 +364,10 @@ class MonitorAdministrativoViewSet(viewsets.ModelViewSet):
             campos_actualizados.append('audit_rut')
         if certificado_bancario_original != certificado_bancario_nuevo:
             campos_actualizados.append('audit_certificado_bancario')
+        if foto_original != foto_nuevo:
+            campos_actualizados.append('audit_foto')
+        if informacion_original != informacion_nuevo:
+            campos_actualizados.append('audit_informacion')
 
         if campos_actualizados:
             instance.save(update_fields=campos_actualizados)
@@ -360,4 +377,36 @@ class MonitorAdministrativoViewSet(viewsets.ModelViewSet):
         operation_description="Elimina permanentemente un Monitor administrativo del sistema"
     )
     def destroy(self, request, *args, **kwargs):
-        return super().destroy(request, *args, **kwargs)
+        instance = self.get_object()
+        user = getattr(instance, "user", None)
+        pdf_fields = [
+            'documento_identidad_pdf',
+            'rut_pdf',
+            'certificado_bancario_pdf',
+            'd10_pdf',
+            'tabulado_pdf',
+            'estado_mat_financiera_pdf',
+            'foto'
+        ]
+
+        # Elimina archivos PDF de S3 si existen
+        for field in pdf_fields:
+            pdf_file = getattr(instance, field, None)
+            if pdf_file:
+                try:
+                    pdf_file.delete(save=False)
+                except Exception:
+                    pass
+
+        try:
+            with transaction.atomic():
+                # Elimina tokens y usuario primero
+                if user:
+                    Token.objects.filter(user=user).delete()
+                    user.delete()
+                # Luego elimina el MonitorAcademico
+                instance.delete()
+        except Exception as e:
+            return Response({"detail": f"Error eliminando monitor: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({"detail": "Monitor y archivos eliminados correctamente."}, status=status.HTTP_204_NO_CONTENT)

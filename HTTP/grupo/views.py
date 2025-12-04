@@ -8,11 +8,13 @@ from drf_yasg import openapi
 from .models import Grupo
 #Serializadores
 from .serializers import GrupoSerializer
+from grupo.serializers import GrupoListaSerializer 
 #Autenticacion
 from rest_framework.permissions import IsAuthenticated
 #Permisos
 from cuenta.permissions import IsEstudiante, IsProfesor, IsAdministrador, IsProfesorOrAdministrador
-
+#action
+from rest_framework.decorators import action
 
 class GrupoViewSet(viewsets.ModelViewSet):
     """
@@ -100,3 +102,31 @@ class GrupoViewSet(viewsets.ModelViewSet):
     )
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
+
+    #Grupos por profesor
+    @action(detail=False, methods=['get'], url_path="grupo-profesor",
+            permission_classes=[IsAdministrador])
+    def grupo_profesor(self, request):
+        """
+        Obtiene los detalles de un grupo específico incluyendo estudiantes.
+        Parámetros: grupo_id (requerido)
+        """
+        grupo_id = request.query_params.get('grupo', None)
+        
+        if not grupo_id:
+            return Response({'detail': 'El parámetro grupo_id es requerido.'}, 
+                           status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            # Obtener el grupo específico con optimización de consultas
+            grupo = Grupo.objects.select_related('monitor_academico').prefetch_related(
+                'matricula__id_estudiante'
+            ).get(id=grupo_id)
+            
+        except Grupo.DoesNotExist:
+            return Response({'detail': 'Grupo no encontrado.'}, 
+                           status=status.HTTP_404_NOT_FOUND)
+        
+        # Usar GrupoListaSerializer para un solo objeto (sin many=True)
+        serializer = GrupoListaSerializer(grupo, context={'request': request})
+        return Response(serializer.data)

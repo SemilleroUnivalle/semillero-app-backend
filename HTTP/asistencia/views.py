@@ -30,11 +30,10 @@ class AsistenciaViewSet(viewsets.ModelViewSet):
         - create: Estudiantes y administradores pueden crear
         - list, retrieve, update, partial_update, destroy: Solo administradores
         """
-        if self.action == 'create':
-            # Estudiantes y administradores pueden crear acudientes
+        if self.action in ['create', 'list', 'partial_update', 'destroy', 'retrieve'] :
             permission_classes = [IsProfesorOrAdministrador]
         else:
-            # Solo administradores pueden listar, ver detalles, actualizar y eliminar
+            # Solo administradores pueden ver detalles, actualizar y eliminar
             permission_classes = [IsAdministrador]
         return [permission() for permission in permission_classes]
     
@@ -47,6 +46,8 @@ class AsistenciaViewSet(viewsets.ModelViewSet):
         if not queryset.exists():
             return Response(status=status.HTTP_204_NO_CONTENT)
         return super().list(request, *args, **kwargs)
+
+        
     @swagger_auto_schema(
         operation_summary="Crear una asistencia",
         operation_description="Crea un nuevo registro de asistencia",
@@ -58,13 +59,19 @@ class AsistenciaViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         data = request.data
 
-        #Crear el objeto usando el serializador
-        serializer = self.get_serializer(data=data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
+        #Verificar si los datos son una lista para crear múltiples
+        if isinstance(data, list):
+            many = True
+        else:
+            many = False
 
-        #Responder con los datos de la nueva asistencia
+        serializer = self.get_serializer(data=data, many=many) 
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer) 
+
+        # Responder con los datos de las nuevas asistencias
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
     @swagger_auto_schema(
         operation_summary="Obtener una asistencia específica",
         operation_description="Retorna los detalles de una asistencia específica por su ID"

@@ -16,13 +16,19 @@ class EstudianteSerializer(serializers.ModelSerializer):
 
 class EstudianteSerializerMatricula(serializers.ModelSerializer):
     acudiente = AcudienteSerializer(read_only=True)
-    #audit_foto = LogEntrySerializerEstudiante(read_only=True)
-    #audit_documento_identidad = LogEntrySerializerEstudiante(read_only=True)
-    #audit_informacion = LogEntrySerializerEstudiante(read_only=True)
+    audit_foto = LogEntrySerializerEstudiante(read_only=True)
+    audit_documento_identidad = LogEntrySerializerEstudiante(read_only=True)
+    audit_informacion = LogEntrySerializerEstudiante(read_only=True)
 
     class Meta:
         model = Estudiante
         fields = '__all__'
+
+class EstudianteLista(serializers.ModelSerializer):
+
+    class Meta:
+        model = Estudiante
+        fields = ['id_estudiante', 'nombre', 'apellido', 'numero_documento', 'email', 'colegio']
 
 class LogEntrySerializer(serializers.ModelSerializer):
     usuario = serializers.SerializerMethodField()

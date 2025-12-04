@@ -10,7 +10,7 @@ from drf_yasg import openapi
 #Modelo
 from .models import Modulo
 #Serializadores
-from .serializers import ModuloReadSerializer, ModuloWriteSerializer
+from .serializers import ModuloReadSerializer, ModuloWriteSerializer, ModuloReadIdNombreSerializer
 #Autenticacion
 from rest_framework.permissions import IsAuthenticated
 #Permisos
@@ -201,3 +201,26 @@ class ModuloViewSet(viewsets.ModelViewSet):
             return Response(status=status.HTTP_204_NO_CONTENT)
         
         return Response(resultado, status=status.HTTP_200_OK)
+
+    
+    @swagger_auto_schema(
+        operation_summary="Listar módulo solo con id y nombre",
+        operation_description="Retorna los módulos agrupados por categoría con solo el id y el nombre",
+        responses={
+            status.HTTP_200_OK: "Módulos agrupados por categoría con solo el id y el nombre",
+            status.HTTP_404_NOT_FOUND: "No se encontraron módulos"
+        })
+    @action(detail=False, methods=['get'], url_path='por-categoria-id-nombre')
+    def list_modulos(self, request):
+        activos = request.query_params.get('activos', 'true').lower() == 'true'
+
+        if not activos:
+            queryset = Modulo.objects.all()
+        else:
+            queryset = Modulo.objects.filter(estado=True)
+
+        serializer = ModuloReadIdNombreSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+        
+        

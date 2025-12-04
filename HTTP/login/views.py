@@ -65,7 +65,7 @@ class LoginView(APIView):
             try:
                 from profesor.models import Profesor
                 profesor = Profesor.objects.get(numero_documento=numero_documento)
-                user_id = profesor.id
+                user_id = profesor.user.id
             except Exception as e:
                 print(f"Error al buscar profesor: {str(e)}")
         elif tipo_usuario == 'estudiante':

@@ -12,6 +12,8 @@ class ProfesorSerializer(serializers.ModelSerializer):
     audit_documento_identidad = LogEntrySerializerProfesor(read_only=True)
     audit_rut = LogEntrySerializerProfesor(read_only=True)
     audit_certificado_bancario = LogEntrySerializerProfesor(read_only=True)
+    audit_foto = LogEntrySerializerProfesor(read_only=True)
+    audit_informacion = LogEntrySerializerProfesor(read_only=True)
 
     class Meta:
         model = Profesor
@@ -25,18 +27,20 @@ class ProfesorModuloSerializer(serializers.ModelSerializer):
     audit_documento_identidad = LogEntrySerializerProfesor(read_only=True)
     audit_rut = LogEntrySerializerProfesor(read_only=True)
     audit_certificado_bancario = LogEntrySerializerProfesor(read_only=True)
+    audit_foto = LogEntrySerializerProfesor(read_only=True)
+    audit_informacion = LogEntrySerializerProfesor(read_only=True)
 
     class Meta:
         model = Profesor
         fields = '__all__' 
 
 class AsignacionProfesorSerializer(serializers.Serializer):
-    id_profesor = serializers.IntegerField()
+    id = serializers.IntegerField()
     id_modulo = serializers.IntegerField()
 
     def validate(self, data):
         try:
-            profesor = Profesor.objects.get(id_profesor=data['id_profesor'])
+            profesor = Profesor.objects.get(id=data['id'])
         except Profesor.DoesNotExist:
             raise serializers.ValidationError("Profesor no encontrado")
 
@@ -46,6 +50,22 @@ class AsignacionProfesorSerializer(serializers.Serializer):
             raise serializers.ValidationError("Módulo no encontrado")
 
         return data
+
+class ProfesorMeSerializer(serializers.ModelSerializer):
+    modulo = ModuloProfesorSerializer(read_only=True)
+
+    class Meta:
+        model = Profesor
+        fields = ['id','nombre', 'apellido', 'numero_documento', 'email', 'ciudad_residencia', 'eps', 'tipo_documento', 'genero', 'fecha_nacimiento', 'telefono_fijo',
+        'celular', 'departamento_residencia', 'comuna_residencia', 'direccion_residencia', 'foto', 'documento_identidad_pdf', 'rut_pdf', 'certificado_laboral_pdf',
+        'certificado_bancario_pdf', 'area_desempeño', 'grado_escolaridad', 'hoja_vida_pdf', 'certificado_academico_pdf', 'modulo']
+
+class ProfesorSimpleSerializer(serializers.ModelSerializer):
+    modulo = ModuloProfesorSerializer(read_only=True)
+
+    class Meta:
+        model = Profesor
+        fields = ['id','nombre', 'apellido', 'numero_documento', 'email', 'celular', 'foto', 'area_desempeño', 'grado_escolaridad', 'modulo']
 
 class LogEntrySerializer(serializers.ModelSerializer):
     usuario = serializers.SerializerMethodField()

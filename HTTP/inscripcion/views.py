@@ -1,6 +1,8 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from modulo.models import Modulo
+from profesor.models import Profesor
+from monitor_academico.models import MonitorAcademico
 from django.http import JsonResponse
 from auditlog.models import LogEntry
 from .serializers import LogEntrySerializer
@@ -11,14 +13,22 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 #Modelo
 from .models import Inscripcion
+from estudiante.models import Estudiante
 #Serializadores
-from .serializers import InscripcionSerializer
+from .serializers import InscripcionSerializer, InscripcionInfProfeSerializer
 #Autenticacion
 from rest_framework.permissions import IsAuthenticated, AllowAny
 #Permisos
-from cuenta.permissions import IsAdministrador, IsEstudianteOrAdministrador
+from cuenta.permissions import IsAdministrador, IsEstudianteOrAdministrador, IsEstudianteOrAdministradorOrMonitorAdministrativo
 #Actions
 from rest_framework.decorators import action
+#Dashboard
+from django.db.models import Count, Value
+from django.db.models.functions import Coalesce, Lower
+from collections import OrderedDict
+#Geocodificacion
+from geopy.geocoders import Nominatim
+from geopy.exc import GeocoderTimedOut, GeocoderServiceError
 
 def file_update(instance, data, field_name):
         """
@@ -52,6 +62,8 @@ class InscripcionViewSet(viewsets.ModelViewSet):
         """
         if self.action == 'create':
             permission_classes = [AllowAny]
+        elif self.action == 'retrieve':
+            permission_classes = [IsEstudianteOrAdministradorOrMonitorAdministrativo]
         else:
             permission_classes = [IsAdministrador]
         return [permission() for permission in permission_classes]
@@ -91,10 +103,16 @@ class InscripcionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        oferta_academica_true = modulo.id_oferta_categoria.filter(estado=True).first()
-        if not oferta_academica_true:
-            return (Response({"detail": "La oferta académica no esta activa"}, status=status.HTTP_400_BAD_REQUEST))
-        data["id_oferta_categoria"] = oferta_academica_true.id_oferta_categoria
+        import sys
+        #Tener el estado de oferta categoria y oferta academica
+        oferta_categoria = modulo.id_oferta_categoria.get()
+        oferta_academica = oferta_categoria.id_oferta_academica
+
+        if oferta_categoria.estado or oferta_academica.estado:
+            data["id_oferta_categoria"] = oferta_categoria.id_oferta_categoria
+            data["oferta_academica"] = oferta_academica.id_oferta_academica
+        else:
+            return (Response({"detail": "La oferta categoria o academica no esta activa"}, status=status.HTTP_400_BAD_REQUEST))
         
         #Crear el objeto usando el serializador
         serializer = self.get_serializer(data=data)
@@ -196,19 +214,19 @@ class InscripcionViewSet(viewsets.ModelViewSet):
 
         # Guarda valores originales
         recibo_pago_original = instance.verificacion_recibo_pago
-        constancia_original = instance.verificacion_constancia
+        certificado_original = instance.verificacion_certificado
         #certificado = instance.verificacion_certificado
 
         # Guarda cambios nuevos
         instance = serializer.save()
         recibo_pago_nuevo = instance.verificacion_recibo_pago
-        constancia_nuevo = instance.verificacion_constancia
+        certificado_nuevo = instance.verificacion_certificado
         #certificado_nuevo = instance.verificacion_certificado
 
         # Asigna el estado correcto
-        if recibo_pago_nuevo and constancia_nuevo:
+        if recibo_pago_nuevo and certificado_nuevo:
             instance.estado = "Revisado"
-        elif recibo_pago_nuevo or constancia_nuevo:
+        elif recibo_pago_nuevo or certificado_nuevo:
             instance.estado = "Pendiente"
         else:
             instance.estado = "No revisado"
@@ -224,15 +242,15 @@ class InscripcionViewSet(viewsets.ModelViewSet):
         # Solo actualiza el campo de auditoría si el valor fue cambiado
         if recibo_pago_original != recibo_pago_nuevo and logentry:
             instance.audit_documento_recibo_pago = logentry
-        if constancia_original != constancia_nuevo and logentry:
-            instance.audit_constancia = logentry
+        if certificado_original != certificado_nuevo and logentry:
+            instance.audit_certificado = logentry
         
         # Guarda solo los campos que hayan cambiado
         campos_actualizados = []
         if recibo_pago_original != recibo_pago_nuevo:
             campos_actualizados.append('audit_documento_recibo_pago')
-        if constancia_original != constancia_nuevo:
-            campos_actualizados.append('audit_constancia')
+        if certificado_original != certificado_nuevo:
+            campos_actualizados.append('audit_certificado')
         
 
         if campos_actualizados:
@@ -291,19 +309,356 @@ class InscripcionViewSet(viewsets.ModelViewSet):
             permission_classes=[IsAdministrador])
     def filtro_grupo(self, request, *args, **kwargs):
         grupo = request.query_params.get('grupo', None)
-        queryset = self.get_queryset()
+        
+        # Obtener queryset base y optimizar la consulta para Grupo y Profesor
+        queryset = self.get_queryset().select_related('grupo', 'grupo__profesor') 
+
         if grupo:
-            queryset = queryset.filter(grupo=grupo)
+            # Caso 1: Filtrar por grupos nulos
+            if grupo.lower() in ['null', 'none']:
+                # Aplica el filtro para registros donde el campo 'grupo' es NULL
+                queryset = queryset.filter(grupo__isnull=True)
+            
+            # Caso 2: Filtrar por un ID de grupo específico
+            else:
+                # Filtra por el ID/valor del grupo
+                # Usamos 'grupo__pk' para asegurar que filtramos por la clave foránea
+                queryset = queryset.filter(grupo__pk=grupo)
+            
+        # El serializador InscripcionInfProfeSerializer mostrará el profesor
+        serializer = InscripcionInfProfeSerializer(queryset, many=True)
+        return Response(serializer.data)
+    
+    @swagger_auto_schema(
+        operation_summary="Filtrar inscripcion por estudiante",
+        operation_description="Filtra la inscripcion por el estudiante especificado en los parámetros de la solicitud"
+    )
+    @action (detail=False, methods=['get'], url_path='filtro-estudiante',
+            permission_classes=[IsAdministrador])
+    def filtro_estudiante(self, request, *args, **kwargs):
+        estudiante = request.query_params.get('id_estudiante', None)
+        queryset = self.get_queryset()
+
+        if estudiante:
+            queryset = queryset.filter(id_estudiante=estudiante)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_path="filtro-modulo",
+            permission_classes=[IsAdministrador])
+    def filtro_modulo(self, request):
+        modulo = request.query_params.get('id_modulo', None)
+        queryset = self.get_queryset()
+
+        if modulo:
+            queryset = queryset.filter(id_modulo=modulo)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
     
-    @action(detail=False, methods=['get'], url_path="auditoria-matricula")
+    @action(detail=False, methods=['get'], url_path="auditoria-matricula",
+            permission_classes=[IsAdministrador])
     def auditoria_inscripcion(self, request):
         logs = LogEntry.objects.all().order_by('-timestamp')[:100]
         serializer = LogEntrySerializer(logs, many=True)
         return Response(serializer.data)
 
-    def asignar_grupos():
-        pass
+
+    @action(detail=False, methods=['get'], url_path="matricula-grupo",
+            permission_classes=[IsAdministrador])
+    def matricula_grupo(self, request):
+        qs = Inscripcion.objects.select_related(
+            'grupo', 
+            'grupo__profesor',
+            'grupo__monitor_academico',
+            'id_estudiante', 
+            'id_modulo', 
+            'id_oferta_categoria'
+        ).all().order_by('grupo_id', 'id_inscripcion')
+
+        groups = OrderedDict()
+        for ins in qs:
+            gid = ins.grupo_id  # puede ser None
+            
+            if gid not in groups:
+                
+                if ins.grupo:
+                    nombre_grupo = str(ins.grupo.nombre)
+            
+                    if ins.grupo.profesor:
+                        profesor_data = {
+                            'id': ins.grupo.profesor.id,
+                            'nombre': str(ins.grupo.profesor.nombre) + " " + str(ins.grupo.profesor.apellido),
+                        }
+                        if ins.grupo.monitor_academico:
+                            monitor_academico_data = {
+                            'id' : ins.grupo.monitor_academico.id,
+                            'nombre' : str(ins.grupo.monitor_academico.nombre) + " " + str(ins.grupo.monitor_academico.apellido),
+                            }
+                        else:
+                            monitor_academico = None
+                    else:
+                        profesor_data = None 
+                else:
+                    # El grupo no existe (gid es None)
+                    nombre_grupo = "NO ASIGNADO"
+                    profesor_data = None # El profesor es nulo si no hay grupo
+
+                groups[gid] = {
+                    'grupo_id': gid,
+                    'nombre': nombre_grupo,
+                    'profesor': profesor_data,
+                    'monitor': monitor_academico_data,
+                    'matriculas': []
+                }
+                
+            # serializamos cada inscripcion individualmente para incluir los campos calculados por el serializer
+            groups[gid]['matriculas'].append(InscripcionSerializer(ins).data)
+
+        # convertir a lista y añadir conteo
+        result = []
+        for g in groups.values():
+            g['cantidad'] = len(g['matriculas'])
+            result.append(g)
+
+        return Response(result, status=status.HTTP_200_OK)
+
+
+
+    @action(detail=False, methods=['get'], url_path="dashboard",
+        permission_classes=[IsAdministrador])
+    def dashboard(self, request):
+        # totales
+        total_enrollments = Inscripcion.objects.count()
+        total_register = Estudiante.objects.count()
+        active_modules = Modulo.objects.filter(estado=True).count()
+        total_profesores = Profesor.objects.count()
+        total_monitores = MonitorAcademico.objects.count()
+
+        # inscripciones por módulo
+        enrollments_by_module_qs = (
+            Inscripcion.objects
+            .filter(id_modulo__isnull=False)
+            .values('id_modulo__nombre_modulo', 'id_modulo__id_area__nombre_area')
+            .annotate(enrollments=Count('pk'))
+            .order_by('-enrollments')
+        )
+        enrollments_by_module = [
+            {
+                "name": item['id_modulo__nombre_modulo'],
+                "enrollments": item['enrollments'],
+                "area": item['id_modulo__id_area__nombre_area'],
+            }
+            for item in enrollments_by_module_qs
+        ]
+
+        enrollments_gender_qs = (
+            Inscripcion.objects
+            .filter(id_modulo__isnull=False)
+            .values(
+                'id_modulo__nombre_modulo',
+                gender=Coalesce(Lower('id_estudiante__genero'), Value('desconocido'))
+            )
+            .annotate(count=Count('pk'))
+            .order_by('id_modulo__nombre_modulo', 'gender')
+        )
+
+        enrollments_by_module_and_gender = []
+        current_module = None
+        gender_breakdown = {}
+
+        for item in enrollments_gender_qs:
+            module_name = item['id_modulo__nombre_modulo']
+            # Usamos .capitalize() para estandarizar 'Femenino', 'Masculino', etc.
+            gender = item['gender'].capitalize() 
+            count = item['count']
+
+            if module_name != current_module:
+                if current_module is not None:
+                    enrollments_by_module_and_gender.append({
+                        "moduleName": current_module,
+                        "genderBreakdown": gender_breakdown
+                    })
+                
+                current_module = module_name
+                gender_breakdown = {}
+
+            gender_breakdown[gender] = count
+
+        if current_module is not None:
+            enrollments_by_module_and_gender.append({
+                "moduleName": current_module,
+                "genderBreakdown": gender_breakdown
+            })
+
+        # inscripciones por estamento con porcentaje
+        estamento_qs = (
+            Inscripcion.objects
+            .values(estamento=Coalesce('id_estudiante__estamento', Value('Desconocido')))
+            .annotate(count=Count('pk'))
+            .order_by('-count')
+        )
+        enrollments_by_estamento = []
+        for item in estamento_qs:
+            count = item['count']
+            percentage = round((count / total_enrollments) * 100) if total_enrollments else 0
+            estamento = item['estamento'] or 'Desconocido'
+            enrollments_by_estamento.append({
+                "estamento": estamento.capitalize(),
+                "count": count,
+                "percentage": int(percentage),
+            })
+
+        # inscripciones por grado
+        grade_qs = (
+            Inscripcion.objects
+            .values(grade=Coalesce('id_estudiante__grado', Value('Desconocido')))
+            .annotate(count=Count('pk'))
+            .order_by('-count')
+        )
+        enrollments_by_grade = [
+            {"grade": item['grade'], "count": item['count']}
+            for item in grade_qs
+        ]
+
+        # inscripciones recientes (últimas 10)
+        recent_qs = (
+            Inscripcion.objects
+            .select_related('id_estudiante', 'id_modulo')
+            .order_by('-fecha_inscripcion')[:10]
+        )
+        recent_enrollments = []
+        for ins in recent_qs:
+            estudiante = ins.id_estudiante
+            modulo = ins.id_modulo
+            student_name = " ".join(filter(None, [getattr(estudiante, 'nombre', ''), getattr(estudiante, 'apellido', '')])).strip() if estudiante else ""
+            module_name = getattr(modulo, 'nombre_modulo', None) if modulo else None
+            status = getattr(ins, 'estado', None) or (getattr(estudiante, 'estado', None) if estudiante else 'No revisado')
+            recent_enrollments.append({
+                "id": ins.id_inscripcion,
+                "studentName": student_name,
+                "module": module_name,
+                "date": ins.fecha_inscripcion.isoformat() if ins.fecha_inscripcion else None,
+                "status": status,
+            })
+
+        # distribución por género
+        gender_qs = (
+            Inscripcion.objects
+            .values(gender=Coalesce('id_estudiante__genero', Value('Desconocido')))
+            .annotate(count=Count('pk'))
+            .order_by('-count')
+        )
+        gender_distribution = [
+            {"gender": item['gender'], "count": item['count']}
+            for item in gender_qs
+        ]
+
+        inscritosMatriculados = (total_enrollments / total_register) * 100
+        inscritosNoMatriculados = abs((total_enrollments / total_register) - 1) * 100
+
+        payload = {
+            "totalEnrollments": total_enrollments,
+            "totalRegister": total_register,
+            "activeModules": active_modules,
+            "totalProfessors": total_profesores,
+            "totalMonitors": total_monitores,
+            "enrollmentsByModuleAndGender": enrollments_by_module_and_gender, 
+            "enrollmentsByModule": enrollments_by_module,
+            "enrollmentsByEstamento": enrollments_by_estamento,
+            "enrollmentsByGrade": enrollments_by_grade,
+            "recentEnrollments": recent_enrollments,
+            "genderDistribution": gender_distribution,
+            "inscritosMatriculados": inscritosMatriculados,
+            "inscritosNoMatriculados":inscritosNoMatriculados,
+        }
+
+        return Response(payload)
+    import sys
+    @action(detail=False, methods=['get'], url_path="geocodificacion",
+            permission_classes=[IsAdministrador])
+    def geocodificacion(self, request):
+        """
+        Geocodifica la dirección de residencia de todos los estudiantes
+        y retorna las coordenadas (Latitud, Longitud).
+        """
+        
+        # 1. Inicializa el geocodificador (solo una vez)
+        try:
+            # Es crucial especificar un user_agent único y descriptivo
+            geolocator = Nominatim(user_agent="semillero_estudiantes_v1")
+        except GeocoderServiceError as e:
+            return Response(
+                {"error": f"Error al inicializar el geocodificador: {e}"},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
+
+        # 2. Obtener los datos con Carga Ansiosa (Eager Loading)
+        # ❗ Corrección: Usar select_related() para evitar N+1 consultas a la BD
+        # Asume que 'id_estudiante' es el nombre de la relación ForeignKey
+        try:
+            inscripciones = self.get_queryset().select_related('id_estudiante')
+        except Exception as e:
+            return Response(
+                {"error": f"Error al obtener las inscripciones: {e}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        resultados = []
+        
+        # El print para debug ahora usa el queryset precargado
+        if inscripciones.exists(): # Verifica que haya elementos antes de intentar acceder al índice
+            print(inscripciones[0].id_estudiante.direccion_residencia, flush=True)
+
+        # 3. Iterar y Geocodificar
+        for inscripcion in inscripciones:
+            # Acceso directo y eficiente al estudiante precargado
+            estudiante = inscripcion.id_estudiante
+            
+            # Validar si el estudiante existe (aunque con select_related() ya debería estar precargado)
+            if not estudiante:
+                print(f"Advertencia: Inscripción con ID {inscripcion.pk} no tiene estudiante asociado.")
+                continue
+                
+            # Construir la dirección completa para la geocodificación
+            direccion_completa = (
+                f"{estudiante.direccion_residencia}, "
+                f"{estudiante.comuna_residencia}, "
+                f"{estudiante.ciudad_residencia}, "
+                f"{estudiante.departamento_residencia}"
+            )
+
+            latitud = None
+            longitud = None
+            location = None
+            
+            try:
+                # Servicio de geocodificación. Usar timeout para evitar esperas largas.
+                location = geolocator.geocode(direccion_completa, timeout=10)
+
+                # Procesar el resultado
+                if location:
+                    latitud = location.latitude
+                    longitud = location.longitude
+                    
+            except (GeocoderTimedOut, GeocoderServiceError) as e:
+                # Manejo de errores de red o del servicio de geocodificación
+                print(f"Error geocodificando '{direccion_completa}': {e}")
+                
+            except Exception as e:
+                # Otro error inesperado
+                print(f"Error inesperado procesando '{direccion_completa}': {e}")
+                
+            # 4. Agregar el resultado a la lista de respuesta
+            resultados.append({
+                "id": estudiante.id_estudiante,
+                "nombre_completo": f"{estudiante.nombre} {estudiante.apellido}", # Asumiendo campos
+                "direccion_texto": direccion_completa,
+                "latitud": latitud,
+                "longitud": longitud,
+                "encontrado": bool(location)
+            })
+
+        # 5. Retornar JSON al frontend
+        return Response(resultados, status=status.HTTP_200_OK)
 
