@@ -13,7 +13,7 @@ services:
       - db_semillero
     environment:
       - DEBUG=0
-      - DATABASE_URL=postgres://postgres:postgres@db:5432/postgres
+      - DATABASE_URL=postgres://postgres:postgres@db_semillero:5432/semillero_db
       - SECRET_KEY=dev_secret_key_change_in_production
     networks:
       - semillero-net
@@ -32,7 +32,7 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=postgres
+      - POSTGRES_DB=semillero_db
     ports:
       - "5432:5432"
     volumes:

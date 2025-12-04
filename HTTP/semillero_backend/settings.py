@@ -156,34 +156,12 @@ CHANNEL_LAYERS = {
     },
 }
 # Base de datos
+DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///db.sqlite3')
+DATABASES = {
+    'default': dj_database_url.parse(DATABASE_URL)
+}
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-"""
-DATABASES = {
-    # Configuración para usar SQLite
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    },
-    'postgres': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'semillero',
-        'USER': 'semillero',
-        'PASSWORD': 'adminsemillero',
-        'HOST': 'database-semillero.cktk40yw6g7t.us-east-1.rds.amazonaws.com',
-        'PORT': '5432',
-    },
-}
-"""
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'db_semillero',
-        'USER': 'postgres',
-        'PASSWORD': 'postgres',
-        'HOST': 'db_semillero',
-        'PORT': '5432',
-    },
-}
+
 
 # Validación de contraseñas
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
