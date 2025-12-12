@@ -10,6 +10,8 @@ services:
       - "8080:8080"
     depends_on:
       - redis
+    env_file:
+      - .env
     environment:
       - DEBUG=0
       - DATABASE_URL=postgres://postgres:postgres@db:5432/postgres

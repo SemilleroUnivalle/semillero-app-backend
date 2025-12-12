@@ -73,7 +73,10 @@ Write-Host ""
 # 9. Estudiantes (depende de usuarios y acudientes)
 Ejecutar-Carga "carga_estudiante.py" "estudiantes"
 
-# 10. Matrículas (depende de estudiantes, módulos y ofertas)
+# 10. Banco de Preguntas (opcional - preguntas reutilizables sin prueba asociada)
+Ejecutar-Carga "carga_banco_preguntas.py" "banco_preguntas"
+
+# 11. Matrículas (depende de estudiantes, módulos y ofertas)
 Ejecutar-Carga "carga_matricula.py" "matriculas"
 
 Write-Host "======================================" -ForegroundColor Cyan

@@ -28,15 +28,20 @@ class PreguntaDiagnosticaReadSerializer(serializers.ModelSerializer):
     Serializer para leer preguntas con sus respuestas.
     """
     respuestas = RespuestaDiagnosticaSerializer(many=True, read_only=True)
+    en_banco = serializers.SerializerMethodField()
     
     class Meta:
         model = PreguntaDiagnostica
         fields = [
-            'id_pregunta', 'texto_pregunta', 'tipo_pregunta', 
+            'id_pregunta', 'id_prueba', 'texto_pregunta', 'tipo_pregunta', 
             'puntaje', 'imagen', 'explicacion', 
-            'estado', 'fecha_creacion', 'respuestas'
+            'estado', 'fecha_creacion', 'respuestas', 'en_banco'
         ]
         read_only_fields = ['id_pregunta', 'fecha_creacion']
+    
+    def get_en_banco(self, obj):
+        """Indica si la pregunta está en el banco (sin prueba asignada)."""
+        return obj.id_prueba is None
 
 
 class PreguntaDiagnosticaWriteSerializer(serializers.ModelSerializer):
