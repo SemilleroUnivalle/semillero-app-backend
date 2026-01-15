@@ -98,7 +98,7 @@ class PreguntaConRespuestasSerializer(serializers.ModelSerializer):
     """
     Serializer para crear una pregunta junto con sus respuestas en una sola operación.
     """
-    respuestas = RespuestaDiagnosticaWriteSerializer(many=True)
+    respuestas = RespuestaDiagnosticaSerializer(many=True)
     
     class Meta:
         model = PreguntaDiagnostica
