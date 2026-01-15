@@ -53,16 +53,13 @@ jobs:
           rsync -avz -e "ssh -o StrictHostKeyChecking=no -i private_key.pem" ./ ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER }}/mi-app
 
       - name: Deploy on EC2 via SSH
-        env:
-          REGISTRY: ${{ env.ECR_REGISTRY }}
-          REPO: ${{ env.ECR_REPOSITORY }}
-          TAG: ${{ env.IMAGE_TAG }}
-          AWS_REGION: ${{ env.AWS_REGION }}
         run: |
           ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << EOF
             cd /home/${{ secrets.EC2_USER }}/mi-app
+            # Crear el archivo .env desde el secreto de GitHub
+            echo "${{ secrets.ENV_FILE }}" > .env
+            
             aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $REGISTRY
-            docker-compose pull || true
-            docker-compose down || true
+            docker-compose pull
             docker-compose up -d --build
           EOF
