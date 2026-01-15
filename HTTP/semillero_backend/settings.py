@@ -82,6 +82,7 @@ INSTALLED_APPS = [
     'storages',
     "channels",
     "auditlog",
+    'prueba_diagnostica',
 ]
 
 REST_FRAMEWORK = {
@@ -272,26 +273,48 @@ EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', '')
 
-# AWS S3 Configuration
-AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID', '')
-AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY', '')
-AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME', 'archivos-estudiantes')
-AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', 'us-east-1')
-AWS_DEFAULT_ACL = 'private'
-AWS_S3_FILE_OVERWRITE = False
-AWS_S3_SIGNATURE_VERSION = 's3v4'
-AWS_S3_ADDRESSING_STYLE = 'virtual'
+# AWS S3 Configuration (condicional)
+USE_S3 = os.getenv('USE_S3', 'False') == 'True'
 
-FILE_UPLOAD_MAX_MEMORY_SIZE = 2621440  # 2.5 MB en bytes
+if USE_S3:
+    # Configuración para S3 (Producción)
+    AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID', '')
+    AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY', '')
+    AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME', 'archivos-estudiantes')
+    AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', 'us-east-1')
+    AWS_DEFAULT_ACL = 'private'
+    AWS_S3_FILE_OVERWRITE = False
+    AWS_S3_SIGNATURE_VERSION = 's3v4'
+    AWS_S3_ADDRESSING_STYLE = 'virtual'
+    
+    FILE_UPLOAD_MAX_MEMORY_SIZE = 2621440  # 2.5 MB en bytes
+    
+    STORAGES = {
+        "default": {
+            "BACKEND": "semillero_backend.storage_backends.MediaStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+    
+    MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/media/'
+    print("✅ Usando almacenamiento S3")
+else:
+    # Configuración para almacenamiento local (Desarrollo)
+    FILE_UPLOAD_MAX_MEMORY_SIZE = 2621440  # 2.5 MB en bytes
+    
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+    
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = BASE_DIR / 'media'
+    print("✅ Usando almacenamiento local (desarrollo)")
 
-STORAGES = {
-    "default": {
-        "BACKEND": "semillero_backend.storage_backends.MediaStorage",
-    },
-    "staticfiles": {
-        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
-    },
-}
-
-MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/media/'
 
