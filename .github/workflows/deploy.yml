@@ -55,11 +55,22 @@ jobs:
       - name: Deploy on EC2 via SSH
         run: |
           ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << EOF
+            # 1. Asegurar que el plugin de compose esté (Solo si no lo has instalado manualmente)
+            if ! docker compose version > /dev/null 2>&1; then
+              echo "Instalando docker-compose-plugin..."
+              sudo apt-get update && sudo apt-get install -y docker-compose-plugin
+            fi
+
+            # 2. Ir al directorio
             cd /home/${{ secrets.EC2_USER }}/mi-app
-            # Crear el archivo .env desde el secreto de GitHub
+
+            # 3. Crear el archivo .env desde el secreto de GitHub
             echo "${{ secrets.ENV_FILE }}" > .env
             
-            aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $REGISTRY
+            # 4. Login en AWS ECR (Usando variables de GitHub interpoladas)
+            aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
+            
+            # 5. Desplegar
             docker compose pull
             docker compose up -d --build
           EOF
