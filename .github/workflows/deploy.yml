@@ -73,6 +73,12 @@ jobs:
             aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
             
             # 5. Desplegar
+            # Detener limpiamente si es posible
+            docker compose down || true
+            
+            # Forzar eliminación de contenedores con nombres fijos para evitar conflictos
+            docker rm -f semillero_backend semillero_redis || true
+            
             docker compose pull
             docker compose up -d --build
           EOF
