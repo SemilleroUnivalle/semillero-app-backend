@@ -55,10 +55,12 @@ jobs:
       - name: Deploy on EC2 via SSH
         run: |
           ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << EOF
-            # 1. Asegurar que el plugin de compose esté (Solo si no lo has instalado manualmente)
+            # 1. Asegurar que el plugin de compose esté instalado (Instalación manual)
             if ! docker compose version > /dev/null 2>&1; then
-              echo "Instalando docker-compose-plugin..."
-              sudo apt-get update && sudo apt-get install -y docker-compose-plugin
+              echo "Instalando docker-compose-plugin manualmente..."
+              mkdir -p ~/.docker/cli-plugins/
+              curl -SL https://github.com/docker/compose/releases/download/v2.29.2/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose
+              chmod +x ~/.docker/cli-plugins/docker-compose
             fi
 
             # 2. Ir al directorio
