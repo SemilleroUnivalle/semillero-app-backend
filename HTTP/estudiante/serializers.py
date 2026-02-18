@@ -25,7 +25,6 @@ class EstudianteSerializerMatricula(serializers.ModelSerializer):
         fields = '__all__'
 
 class EstudianteLista(serializers.ModelSerializer):
-
     class Meta:
         model = Estudiante
         fields = ['id_estudiante', 'nombre', 'apellido', 'numero_documento', 'email', 'colegio']

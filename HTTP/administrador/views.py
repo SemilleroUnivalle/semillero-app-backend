@@ -25,18 +25,16 @@ class AdministradorViewSet(viewsets.ModelViewSet):
     """
     queryset = Administrador.objects.all()
     serializer_class = AdministradorSerializer
+    permission_classes = [IsAuthenticated, IsAdministrador]
     
-    #permission_classes = [IsAuthenticated, IsAdministrador]
-    """
     def get_permissions(self):
-        
+        """
         Define permisos para todas las acciones:
         - Solo los administradores pueden realizar cualquier operación
-        - Estudiantes y profesores no tienen acceso
-        
+        - Estudiantes, profesores,ni usuarios externos tienen acceso
+        """
         permission_classes = [IsAuthenticated, IsAdministrador]
         return [permission() for permission in permission_classes]
-        """
     
     @swagger_auto_schema(
         operation_summary="Listar todos los administradores",
@@ -134,14 +132,11 @@ class AdministradorViewSet(viewsets.ModelViewSet):
     )
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        
-        user = None
-        
+        user = None    
         try:
             user = instance.user
         except Exception:
             pass
-        
         if user:
             try:
                 # Primero eliminar tokens asociados si los hay

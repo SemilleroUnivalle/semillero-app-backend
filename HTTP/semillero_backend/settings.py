@@ -31,13 +31,17 @@ SECRET_KEY = 'django-insecure-3-!4cm82i1-s5hbg4*m_4x!=wg=lj1$0(-3hb&awt2^0nzpp@o
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    'ec2-34-229-140-245.compute-1.amazonaws.com',
-    '34.229.140.245',
+    '3.148.228.106',
     'localhost',
     '127.0.0.1',
     '0.0.0.0',
     '172.19.0.4',
     '172.18.0.3',
+    '190.130.102.234',
+    'https://semillero-app.vercel.app',
+    'semilleroapp.duckdns.org',
+    'ec2-3-148-228-106.us-east-2.compute.amazonaws.com',
+    '181.78.17.229'
 ]
 
 # Definición de aplicaciones
@@ -232,9 +236,19 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Configuración de CORS
 # Define la lista de orígenes permitidos para solicitudes de origen cruzado
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8080",
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+CSRF_TRUSTED_ORIGINS = [
+    "https://semillero-app.vercel.app",
+    "https://semilleroapp.duckdns.org",
 ]
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+#Tamaño de datos o archivos
+DATA_UPLOAD_MAX_MEMORY_SIZE = 20971520
+FILE_UPLOAD_MAX_MEMORY_SIZE = 20971520
+
 
 # Especifica los métodos HTTP permitidos para solicitudes de origen cruzado
 CORS_ALLOW_METHODS = [
@@ -259,9 +273,6 @@ CORS_ALLOW_HEADERS = [
     "x-requested-with",  # Encabezado X-Requested-With
 ]
 
-# Permitir todos los orígenes para solicitudes de origen cruzado (anula CORS_ALLOWED_ORIGINS)
-CORS_ALLOW_ALL_ORIGINS = True
-
 AUTH_USER_MODEL = 'cuenta.CustomUser'
 
 #Configuraciones para servidor SMTP google
@@ -277,29 +288,25 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', '')
 USE_S3 = os.getenv('USE_S3', 'False') == 'True'
 
 if USE_S3:
-    # Configuración para S3 (Producción)
-    AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID', '')
-    AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY', '')
-    AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME', 'archivos-estudiantes')
-    AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', 'us-east-1')
-    AWS_DEFAULT_ACL = 'private'
+    AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID') # Sin el '' por defecto
+    AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+    AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME', 'archivos-semillero')
+    AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', 'us-east-2')
+    AWS_DEFAULT_ACL = None  # Cambiado a None: S3 moderno bloquea ACLs públicas por defecto
     AWS_S3_FILE_OVERWRITE = False
     AWS_S3_SIGNATURE_VERSION = 's3v4'
-    AWS_S3_ADDRESSING_STYLE = 'virtual'
-    
-    FILE_UPLOAD_MAX_MEMORY_SIZE = 2621440  # 2.5 MB en bytes
     
     STORAGES = {
         "default": {
-            "BACKEND": "semillero_backend.storage_backends.MediaStorage",
+            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage", # Estándar si no tienes storage_backends.py
         },
         "staticfiles": {
             "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
         },
     }
     
-    MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/media/'
-    print("✅ Usando almacenamiento S3")
+    MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com/media/'
+    print("✅ Usando almacenamiento S3 con Rol de IAM")
 else:
     # Configuración para almacenamiento local (Desarrollo)
     FILE_UPLOAD_MAX_MEMORY_SIZE = 2621440  # 2.5 MB en bytes
