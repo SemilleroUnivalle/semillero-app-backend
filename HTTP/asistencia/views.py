@@ -17,7 +17,6 @@ from cuenta.permissions import IsAdministrador, IsProfesorOrAdministrador
 class AsistenciaViewSet(viewsets.ModelViewSet):
     """
     API endpoint para gestionar asistencias de estudiantes.
-    
     Permite listar, crear, actualizar y eliminar asistencias.
     """
     queryset = Asistencia.objects.all()
@@ -27,13 +26,11 @@ class AsistenciaViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         """
         Define permisos según la acción solicitada:
-        - create: Estudiantes y administradores pueden crear
-        - list, retrieve, update, partial_update, destroy: Solo administradores
+        - Create, list, retrieve, update, partial_update, destroy: Profesores y administradores
         """
         if self.action in ['create', 'list', 'partial_update', 'destroy', 'retrieve'] :
             permission_classes = [IsProfesorOrAdministrador]
         else:
-            # Solo administradores pueden ver detalles, actualizar y eliminar
             permission_classes = [IsAdministrador]
         return [permission() for permission in permission_classes]
     

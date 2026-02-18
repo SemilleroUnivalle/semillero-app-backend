@@ -138,9 +138,10 @@ class InscripcionViewSet(viewsets.ModelViewSet):
             data = request.data.copy()  # Esto puede fallar con archivos grandes
             instance = self.get_object()
 
-            file_update(instance, data, 'recibos_pago')
+            file_update(instance, data, 'recibo_pago')
             file_update(instance, data, 'constancia')
             file_update(instance, data, 'certificado')
+            file_update(instance, data, 'recibo_servicio')
 
             partial = kwargs.pop('partial', False)
             serializer = self.get_serializer(instance, data=data, partial=True)
@@ -171,9 +172,10 @@ class InscripcionViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
 
             # Procesa archivos, pero puedes guardar el estado antes/después si lo deseas
-            file_update(instance, data, 'recibos_pago')
+            file_update(instance, data, 'recibo_pago')
             file_update(instance, data, 'constancia')
             file_update(instance, data, 'certificado')
+            file_update(instance, data, 'recibo_servicio')
 
             serializer = self.get_serializer(instance, data=data, partial=True)
             serializer.is_valid(raise_exception=True)
@@ -215,18 +217,20 @@ class InscripcionViewSet(viewsets.ModelViewSet):
         # Guarda valores originales
         recibo_pago_original = instance.verificacion_recibo_pago
         certificado_original = instance.verificacion_certificado
+        recibo_servicio_original = instance.verificacion_recibo_servicio
         #certificado = instance.verificacion_certificado
 
         # Guarda cambios nuevos
         instance = serializer.save()
         recibo_pago_nuevo = instance.verificacion_recibo_pago
         certificado_nuevo = instance.verificacion_certificado
+        recibo_servicio_nuevo = instance.verificacion_recibo_servicio
         #certificado_nuevo = instance.verificacion_certificado
 
         # Asigna el estado correcto
-        if recibo_pago_nuevo and certificado_nuevo:
+        if recibo_pago_nuevo and certificado_nuevo and recibo_servicio_nuevo:
             instance.estado = "Revisado"
-        elif recibo_pago_nuevo or certificado_nuevo:
+        elif recibo_pago_nuevo or certificado_nuevo or recibo_servicio_nuevo:
             instance.estado = "Pendiente"
         else:
             instance.estado = "No revisado"
@@ -244,6 +248,8 @@ class InscripcionViewSet(viewsets.ModelViewSet):
             instance.audit_documento_recibo_pago = logentry
         if certificado_original != certificado_nuevo and logentry:
             instance.audit_certificado = logentry
+        if recibo_servicio_original != recibo_servicio_nuevo and logentry:
+            instance.audit_recibo_servicio = logentry
         
         # Guarda solo los campos que hayan cambiado
         campos_actualizados = []
@@ -251,6 +257,8 @@ class InscripcionViewSet(viewsets.ModelViewSet):
             campos_actualizados.append('audit_documento_recibo_pago')
         if certificado_original != certificado_nuevo:
             campos_actualizados.append('audit_certificado')
+        if recibo_servicio_original != recibo_servicio_nuevo:
+            campos_actualizados.append('audit_recibo_servicio')
         
 
         if campos_actualizados:
@@ -269,6 +277,8 @@ class InscripcionViewSet(viewsets.ModelViewSet):
             instance.constancia.delete(save=False)
         if instance.certificado:
             instance.certificado.delete(save=False)
+        if instance.recibo_servicio:
+            instance.recibo_servicio.delete(save=False)
         # Ahora elimina la instancia del modelo
         return super().destroy(request, *args, **kwargs)
 

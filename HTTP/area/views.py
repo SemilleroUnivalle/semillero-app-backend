@@ -16,7 +16,6 @@ from cuenta.permissions import IsEstudiante, IsProfesor, IsAdministrador, IsProf
 class AreaViewSet(viewsets.ModelViewSet):
     """
     API endpoint para gestionar áreas.
-    
     Permite listar, crear, actualizar y eliminar áreas.
     """
     queryset = Area.objects.all()

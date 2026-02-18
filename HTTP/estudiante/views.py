@@ -66,7 +66,6 @@ def extract_single_value(value):
 class EstudianteViewSet(viewsets.ModelViewSet):
     """
     API endpoint para gestionar estudiantes.
-    
     Permite listar, crear, actualizar y eliminar estudiantes.
     """
     queryset = Estudiante.objects.all()
@@ -77,21 +76,18 @@ class EstudianteViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         """
         Define permisos según la acción solicitada:
+        - create: Cualquiera
         - list: Profesores y administradores pueden ver todos los estudiantes
         - retrieve, update, partial_update: Estudiantes pueden ver/actualizar sus propios datos, administradores pueden todos
-        - create, destroy: Solo administradores
+        - destroy: Solo administradores
         """
-        if self.action == 'list':
-            # Profesores y administradores pueden listar
-            permission_classes = [IsProfesorOrAdministradorOrMonitorAcademicoOrAdministrativo]
-        elif self.action in ['retrieve', 'update', 'partial_update']:
+        if self.action in ['list','retrieve', 'update', 'partial_update']:
             # Estudiantes pueden ver/editar su perfil, administradores pueden todos
             # La restricción de que el estudiante solo vea su perfil se controla en retrieve
-            permission_classes = [IsEstudianteOrAdministradorOrMonitorAdministrativo]
+            permission_classes = [IsProfesorOrAdministradorOrMonitorAcademicoOrAdministrativo]
         elif self.action in ['create']:
             permission_classes = [AllowAny]
         elif self.action in ['destroy']:
-            # Solo administradores pueden crear/eliminar
             permission_classes = [IsMonitorAdministrativoOrAdministrador]
         else:
             # Para cualquier otra acción, usuario autenticado
@@ -195,7 +191,7 @@ class EstudianteViewSet(viewsets.ModelViewSet):
                     ciudad_residencia=data.get('ciudad_residencia'),
                     eps=data.get('eps'),
                     grado=data.get('grado'),
-                    colegio=data.get('grado'),
+                    colegio=data.get('colegio'),
                     tipo_documento=data.get('tipo_documento'),
                     genero=data.get('genero'),
                     fecha_nacimiento=data.get('fecha_nacimiento'),
@@ -314,12 +310,13 @@ class EstudianteViewSet(viewsets.ModelViewSet):
                             instance.email = value
                             instance.save()
                         elif field == 'numero_documento':
-                            user.username = value
-                            user.save()
-                            instance.numero_documento = value
-                            instance.save()
-                            numero_documento_actualizado = True
-                            nuevo_numero_documento = value
+                            if instance.numero_documento != value:
+                                user.username = value
+                                user.save()
+                                instance.numero_documento = value
+                                instance.save()
+                                numero_documento_actualizado = True
+                                nuevo_numero_documento = value
 
                 # Renombrar archivos PDF si se actualizó el número de documento
                 if numero_documento_actualizado:
@@ -333,7 +330,8 @@ class EstudianteViewSet(viewsets.ModelViewSet):
                             storage = file_field.storage
                             if storage.exists(old_file_name):
                                 storage.delete(old_file_name)
-                            new_filename = f"{nuevo_numero_documento}.pdf"
+                            _, ext = os.path.splitext(old_file_name)
+                            new_filename = f"{nuevo_numero_documento}{ext}"
                             file_dir = os.path.dirname(old_file_name)
                             new_file_path = os.path.join(file_dir, new_filename)
                             getattr(instance, field).save(new_file_path, ContentFile(file_content), save=True)
