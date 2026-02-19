@@ -92,6 +92,7 @@ INSTALLED_APPS = [
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
          'rest_framework.authentication.TokenAuthentication',
+         'cuenta.authentication.BearerTokenAuthentication',
     ),
     'EXCEPTION_HANDLER': 'cuenta.utils.custom_exception_handler',
     'DEFAULT_FILTER_BACKENDS': [
