@@ -37,11 +37,14 @@ class AcudienteViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         """
         Define permisos según la acción solicitada:
-        - create: Estudiantes y administradores pueden crear y actualizar
+        - create: Cualquiera (para permitir registro inicial)
+        - update, partial_update: Estudiantes y administradores
         - list, retrieve, destroy: Solo administradores
         """
-        if self.action in ['create', 'update', 'partial_update']:
-            # estudiantes y administradores pueden crear y actualizar la informacion del acudiente
+        if self.action == 'create':
+            permission_classes = [AllowAny]
+        elif self.action in ['update', 'partial_update']:
+            # estudiantes y administradores pueden actualizar la informacion del acudiente
             permission_classes = [IsEstudianteOrAdministrador]
         else:
             # Solo administradores pueden listar todos los acudientes, ver detalles y eliminar
