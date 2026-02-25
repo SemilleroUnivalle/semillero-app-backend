@@ -51,7 +51,7 @@ jobs:
 
       - name: Copiar código y archivos a EC2
         run: |
-          rsync -avz -e "ssh -o StrictHostKeyChecking=no -i private_key.pem" ./ ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER }}/mi-app
+          rsync -avz -e "ssh -o StrictHostKeyChecking=no -i private_key.pem" ./ ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST_DEV }}:/home/${{ secrets.EC2_USER }}/mi-app
 
       - name: Deploy on EC2 via SSH
         run: |
