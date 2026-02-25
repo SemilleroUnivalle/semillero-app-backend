@@ -97,11 +97,11 @@ jobs:
 
             # 5. Configuración
             echo "${{ secrets.ENV_FILE }}" > .env
-            aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
+            aws ecr get-login-password --region ${{ env.AWS_REGION }} | sudo docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
             
             # 6. Actualizar y Levantar
-            docker compose down || true
-            docker rm -f semillero_backend semillero_redis || true
-            docker compose pull
-            docker compose up -d --build
+            sudo docker compose down || true
+            sudo docker rm -f semillero_backend semillero_redis || true
+            sudo docker compose pull
+            sudo docker compose up -d --build
           EOF
