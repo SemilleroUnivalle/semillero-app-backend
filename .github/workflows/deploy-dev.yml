@@ -4,10 +4,11 @@ on:
   push:
     branches:
       - dev
+      - staging
 
 env:
   AWS_REGION: "us-east-1"
-  ECR_REGISTRY: "947632012761.dkr.ecr.us-east-1.amazonaws.com/semillero-dev"
+  ECR_REGISTRY: "947632012761.dkr.ecr.us-east-1.amazonaws.com"
   ECR_REPOSITORY: "semillero-dev"
   IMAGE_TAG: "latest"
 
