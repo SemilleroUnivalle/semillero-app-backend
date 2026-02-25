@@ -55,7 +55,7 @@ jobs:
 
       - name: Deploy on EC2 via SSH
         run: |
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << EOF
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST_DEV }} << EOF
             # 1. Asegurar que el plugin de compose esté instalado (Instalación manual)
             if ! docker compose version > /dev/null 2>&1; then
               echo "Instalando docker-compose-plugin manualmente..."
