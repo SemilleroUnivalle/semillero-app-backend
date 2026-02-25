@@ -100,6 +100,7 @@ jobs:
             aws ecr get-login-password --region ${{ env.AWS_REGION }} | sudo docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
             
             # 6. Actualizar y Levantar
+            sudo docker network create semillero-net || true
             sudo docker compose down || true
             sudo docker rm -f semillero_backend semillero_redis || true
             sudo docker compose pull
