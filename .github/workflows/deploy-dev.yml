@@ -3,12 +3,12 @@ name: Construir y Desplegar Docker a EC2
 on:
   push:
     branches:
-      - main
+      - dev
 
 env:
-  AWS_REGION: "us-east-2"
-  ECR_REGISTRY: "947632012761.dkr.ecr.us-east-2.amazonaws.com"
-  ECR_REPOSITORY: "api-semillero-backend"
+  AWS_REGION: "us-east-1"
+  ECR_REGISTRY: "947632012761.dkr.ecr.us-east-1.amazonaws.com/semillero-dev"
+  ECR_REPOSITORY: "semillero-dev"
   IMAGE_TAG: "latest"
 
 jobs:
@@ -45,7 +45,7 @@ jobs:
 
       - name: Copy SSH key
         run: |
-          echo "${{ secrets.EC2_SSH_KEY }}" > private_key.pem
+          echo "${{ secrets.EC2_SSH_KEY_DEV }}" > private_key.pem
           chmod 600 private_key.pem
 
       - name: Copiar código y archivos a EC2

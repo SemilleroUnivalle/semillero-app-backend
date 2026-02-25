@@ -113,7 +113,9 @@ class InscripcionViewSet(viewsets.ModelViewSet):
             data["oferta_academica"] = oferta_academica.id_oferta_academica
         else:
             return (Response({"detail": "La oferta categoria o academica no esta activa"}, status=status.HTTP_400_BAD_REQUEST))
-        
+        # Forzar que la constancia siempre sea True por requerimiento temporal
+        data["verificacion_constancia"] = True
+
         #Crear el objeto usando el serializador
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
@@ -210,27 +212,45 @@ class InscripcionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )    
     
-    #Utilizo perform update para actualizar el estado de la inscripción (No revisado, Revisado, Pendiente)
+    # Utilizo perform update para actualizar el estado de la inscripción (No revisado, Revisado, Pendiente)
     def perform_update(self, serializer):
         instance = serializer.instance  # aún no ha guardado los cambios
 
-        # Guarda valores originales
+        # Guarda valores originales de verificación para auditoría
         recibo_pago_original = instance.verificacion_recibo_pago
+        constancia_original = instance.verificacion_constancia
         certificado_original = instance.verificacion_certificado
         recibo_servicio_original = instance.verificacion_recibo_servicio
-        #certificado = instance.verificacion_certificado
+
+        # Forzar que la constancia siempre sea True por requerimiento temporal
+        serializer.validated_data['verificacion_constancia'] = True
 
         # Guarda cambios nuevos
         instance = serializer.save()
+        
+        # Obtenemos los valores actuales
         recibo_pago_nuevo = instance.verificacion_recibo_pago
+        constancia_nuevo = instance.verificacion_constancia
         certificado_nuevo = instance.verificacion_certificado
         recibo_servicio_nuevo = instance.verificacion_recibo_servicio
-        #certificado_nuevo = instance.verificacion_certificado
+
+        # Evaluamos el estado basándonos solo en documentos que existen
+        verificaciones_efectivas = []
+        if instance.recibo_pago:
+            verificaciones_efectivas.append(recibo_pago_nuevo)
+        if instance.constancia:
+            verificaciones_efectivas.append(constancia_nuevo)
+        if instance.certificado:
+            verificaciones_efectivas.append(certificado_nuevo)
+        if instance.recibo_servicio:
+            verificaciones_efectivas.append(recibo_servicio_nuevo)
 
         # Asigna el estado correcto
-        if recibo_pago_nuevo and certificado_nuevo and recibo_servicio_nuevo:
+        if not verificaciones_efectivas:
+            instance.estado = "No revisado"
+        elif all(verificaciones_efectivas):
             instance.estado = "Revisado"
-        elif recibo_pago_nuevo or certificado_nuevo or recibo_servicio_nuevo:
+        elif any(verificaciones_efectivas):
             instance.estado = "Pendiente"
         else:
             instance.estado = "No revisado"
@@ -244,22 +264,19 @@ class InscripcionViewSet(viewsets.ModelViewSet):
         ).order_by('-timestamp').first()
 
         # Solo actualiza el campo de auditoría si el valor fue cambiado
+        campos_actualizados = []
         if recibo_pago_original != recibo_pago_nuevo and logentry:
             instance.audit_documento_recibo_pago = logentry
+            campos_actualizados.append('audit_documento_recibo_pago')
+        if constancia_original != constancia_nuevo and logentry:
+            instance.audit_constancia = logentry
+            campos_actualizados.append('audit_constancia')
         if certificado_original != certificado_nuevo and logentry:
             instance.audit_certificado = logentry
+            campos_actualizados.append('audit_certificado')
         if recibo_servicio_original != recibo_servicio_nuevo and logentry:
             instance.audit_recibo_servicio = logentry
-        
-        # Guarda solo los campos que hayan cambiado
-        campos_actualizados = []
-        if recibo_pago_original != recibo_pago_nuevo:
-            campos_actualizados.append('audit_documento_recibo_pago')
-        if certificado_original != certificado_nuevo:
-            campos_actualizados.append('audit_certificado')
-        if recibo_servicio_original != recibo_servicio_nuevo:
             campos_actualizados.append('audit_recibo_servicio')
-        
 
         if campos_actualizados:
             instance.save(update_fields=campos_actualizados)
