@@ -8,7 +8,7 @@ on:
 env:
   AWS_REGION: "us-east-2"
   ECR_REGISTRY: "947632012761.dkr.ecr.us-east-2.amazonaws.com"
-  ECR_REPOSITORY: "api-semillero"
+  ECR_REPOSITORY: "api-semillero-backend"
   IMAGE_TAG: "latest"
 
 jobs:
