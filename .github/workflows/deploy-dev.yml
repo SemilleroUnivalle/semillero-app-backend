@@ -55,31 +55,53 @@ jobs:
 
       - name: Deploy on EC2 via SSH
         run: |
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST_DEV }} << EOF
-            # 1. Asegurar que el plugin de compose esté instalado (Instalación manual)
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST_DEV }} << 'EOF'
+            set -e
+            
+            # 1. Instalar Docker si no existe
+            if ! command -v docker &> /dev/null; then
+              echo "Instalando Docker..."
+              sudo apt-get update
+              sudo apt-get install -y ca-certificates curl gnupg
+              sudo install -m 0755 -d /etc/apt/keyrings
+              curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+              sudo chmod a+r /etc/apt/keyrings/docker.gpg
+              echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo $VERSION_CODENAME) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+              sudo apt-get update
+              sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+              sudo usermod -aG docker $USER
+              echo "Docker instalado. Por favor, reinicie el job si falla por permisos de grupo."
+            fi
+
+            # 2. Instalar AWS CLI si no existe
+            if ! command -v aws &> /dev/null; then
+              echo "Instalando AWS CLI..."
+              sudo apt-get install -y unzip
+              curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+              unzip -o awscliv2.zip
+              sudo ./aws/install
+              rm -rf awscliv2.zip aws
+            fi
+
+            # 3. Asegurar plugin de Docker Compose
             if ! docker compose version > /dev/null 2>&1; then
-              echo "Instalando docker-compose-plugin manualmente..."
+              echo "Configurando plugin de Docker Compose..."
               mkdir -p ~/.docker/cli-plugins/
               curl -SL https://github.com/docker/compose/releases/download/v2.29.2/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose
               chmod +x ~/.docker/cli-plugins/docker-compose
             fi
 
-            # 2. Ir al directorio
+            # 4. Preparar despliegue
+            mkdir -p /home/${{ secrets.EC2_USER }}/mi-app
             cd /home/${{ secrets.EC2_USER }}/mi-app
 
-            # 3. Crear el archivo .env desde el secreto de GitHub
+            # 5. Configuración
             echo "${{ secrets.ENV_FILE }}" > .env
-            
-            # 4. Login en AWS ECR (Usando variables de GitHub interpoladas)
             aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
             
-            # 5. Desplegar
-            # Detener limpiamente si es posible
+            # 6. Actualizar y Levantar
             docker compose down || true
-            
-            # Forzar eliminación de contenedores con nombres fijos para evitar conflictos
             docker rm -f semillero_backend semillero_redis || true
-            
             docker compose pull
             docker compose up -d --build
           EOF
