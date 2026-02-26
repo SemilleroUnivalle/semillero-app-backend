@@ -30,19 +30,7 @@ SECRET_KEY = 'django-insecure-3-!4cm82i1-s5hbg4*m_4x!=wg=lj1$0(-3hb&awt2^0nzpp@o
 # ADVERTENCIA DE SEGURIDAD: no ejecutes con debug activado en producción
 DEBUG = True
 
-ALLOWED_HOSTS = [
-    '3.148.228.106',
-    'localhost',
-    '127.0.0.1',
-    '0.0.0.0',
-    '172.19.0.4',
-    '172.18.0.3',
-    '190.130.102.234',
-    'https://semillero-app.vercel.app',
-    'semilleroapp.duckdns.org',
-    'ec2-3-148-228-106.us-east-2.compute.amazonaws.com',
-    '181.78.17.229'
-]
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 # Definición de aplicaciones
 
@@ -162,31 +150,18 @@ CHANNEL_LAYERS = {
 }
 # Base de datos
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-"""
-DATABASES = {
-    # Configuración para usar SQLite
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    },
-    'postgres': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'semillero',
-        'USER': 'semillero',
-        'PASSWORD': 'adminsemillero',
-        'HOST': 'database-semillero.cktk40yw6g7t.us-east-1.rds.amazonaws.com',
-        'PORT': '5432',
-    },
-}
-"""
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'db_semillero',
-        'USER': 'postgres',
-        'PASSWORD': 'postgres',
-        'HOST': 'db_semillero',
-        'PORT': '5432',
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'HOST': os.getenv('DB_HOST'),
+        'PORT': os.getenv('DB_PORT'),
+        'OPTIONS': {
+            'sslmode': 'prefer',
+        },
     },
 }
 
