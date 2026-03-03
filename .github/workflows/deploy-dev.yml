@@ -96,7 +96,7 @@ jobs:
             cd /home/${{ secrets.EC2_USER }}/mi-app
 
             # 5. Configuración
-            echo "${{ secrets.ENV_FILE }}" > .env
+            echo "${{ secrets.ENV_FILE_DEV }}" > .env
             aws ecr get-login-password --region ${{ env.AWS_REGION }} | sudo docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
             
             # 6. Actualizar y Levantar
