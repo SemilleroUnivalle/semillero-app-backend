@@ -81,10 +81,13 @@ class EstudianteViewSet(viewsets.ModelViewSet):
         - retrieve, update, partial_update: Estudiantes pueden ver/actualizar sus propios datos, administradores pueden todos
         - destroy: Solo administradores
         """
-        if self.action in ['list','retrieve', 'update', 'partial_update']:
-            # Estudiantes pueden ver/editar su perfil, administradores pueden todos
-            # La restricción de que el estudiante solo vea su perfil se controla en retrieve
+        if self.action == 'list':
+            # Profesores y administradores pueden ver todos los estudiantes
             permission_classes = [IsProfesorOrAdministradorOrMonitorAcademicoOrAdministrativo]
+        elif self.action in ['retrieve', 'update', 'partial_update']:
+            # Estudiantes pueden ver/editar su perfil, administradores y otros roles facultados pueden todos
+            # La restricción de que el estudiante solo vea su perfil se controla en cada método
+            permission_classes = [IsAuthenticated]
         elif self.action in ['create']:
             permission_classes = [AllowAny]
         elif self.action in ['destroy']:
@@ -231,6 +234,16 @@ class EstudianteViewSet(viewsets.ModelViewSet):
         try:
             data = request.data.copy()
             instance = self.get_object()
+            user = request.user
+
+            # Validar que si es un estudiante, solo pueda actualizar su propio perfil
+            if getattr(user, 'user_type', None) == 'estudiante':
+                estudiante_rel = getattr(user, 'estudiante', None)
+                if not estudiante_rel or estudiante_rel.id_estudiante != instance.id_estudiante:
+                    return Response(
+                        {"detail": "No tienes permiso para actualizar este perfil"},
+                        status=status.HTTP_403_FORBIDDEN
+                    )
 
             file_update(instance, data, 'documento_identidad')
             file_update(instance, data, 'foto')
@@ -255,10 +268,6 @@ class EstudianteViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-    def extract_single_value(value):
-        if isinstance(value, list):
-            return value[0] if value else ''
-        return value
     @swagger_auto_schema(
         operation_summary="Actualizar parcialmente un estudiante",
         operation_description="Actualiza uno o más campos de un estudiante existente"
@@ -267,6 +276,17 @@ class EstudianteViewSet(viewsets.ModelViewSet):
         try:
             data = request.data.copy()
             instance = self.get_object()
+            user_auth = request.user
+
+            # Validar que si es un estudiante, solo pueda actualizar su propio perfil
+            if getattr(user_auth, 'user_type', None) == 'estudiante':
+                estudiante_rel = getattr(user_auth, 'estudiante', None)
+                if not estudiante_rel or estudiante_rel.id_estudiante != instance.id_estudiante:
+                    return Response(
+                        {"detail": "No tienes permiso para actualizar este perfil"},
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+
             user = instance.user
 
             pdf_fields = [
