@@ -1,6 +1,6 @@
 server {
     listen 80;
-    server_name semillero-dev.duckdns.org;
+    server_name ${DOMINIO};
 
     # Validación de Certbot
     location /.well-known/acme-challenge/ {
@@ -15,11 +15,14 @@ server {
 
 server {
     listen 443 ssl;
-    server_name semillero-dev.duckdns.org;
+    server_name ${DOMINIO};
+
+    # Redirige peticiones HTTP enviadas al puerto HTTPS
+    error_page 497 https://$host$request_uri;
 
     # Rutas de los certificados generados
-    ssl_certificate /etc/letsencrypt/live/semillero-dev.duckdns.org/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/semillero-dev.duckdns.org/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/${DOMINIO}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DOMINIO}/privkey.pem;
 
     # Recomendaciones básicas de seguridad
     ssl_protocols TLSv1.2 TLSv1.3;
