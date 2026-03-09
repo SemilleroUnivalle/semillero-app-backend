@@ -48,3 +48,7 @@ ENV/
 #credentials
 *.env
 .env
+
+# Certbot
+certbot/
+nginx/default.conf
