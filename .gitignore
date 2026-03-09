@@ -51,4 +51,3 @@ ENV/
 
 # Certbot
 certbot/
-nginx/default.conf
