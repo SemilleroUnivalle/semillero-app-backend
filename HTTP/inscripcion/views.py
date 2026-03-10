@@ -113,7 +113,9 @@ class InscripcionViewSet(viewsets.ModelViewSet):
             data["oferta_academica"] = oferta_academica.id_oferta_academica
         else:
             return (Response({"detail": "La oferta categoria o academica no esta activa"}, status=status.HTTP_400_BAD_REQUEST))
-        
+        # Forzar que la constancia siempre sea True por requerimiento temporal
+        data["verificacion_constancia"] = True
+
         #Crear el objeto usando el serializador
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
@@ -219,6 +221,9 @@ class InscripcionViewSet(viewsets.ModelViewSet):
         constancia_original = instance.verificacion_constancia
         certificado_original = instance.verificacion_certificado
         recibo_servicio_original = instance.verificacion_recibo_servicio
+
+        # Forzar que la constancia siempre sea True por requerimiento temporal
+        serializer.validated_data['verificacion_constancia'] = True
 
         # Guarda cambios nuevos
         instance = serializer.save()

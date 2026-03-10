@@ -24,8 +24,13 @@ from .serializers import (
 )
 
 # Autenticación y Permisos
-from rest_framework.permissions import IsAuthenticated
-from cuenta.permissions import IsAdministrador, IsProfesorOrAdministrador
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from cuenta.permissions import (
+    IsAdministrador, 
+    IsProfesorOrAdministrador, 
+    IsProfesorOrAdministradorOrMonitorAcademicoOrAdministrativo,
+    IsMonitorAdministrativoOrAdministrador
+)
 
 
 class PruebaDiagnosticaViewSet(viewsets.ModelViewSet):
@@ -35,7 +40,24 @@ class PruebaDiagnosticaViewSet(viewsets.ModelViewSet):
     Permite listar, crear, actualizar y eliminar pruebas diagnósticas.
     """
     queryset = PruebaDiagnostica.objects.all()
-    permission_classes = [IsAuthenticated, IsAdministrador]
+    # permission_classes = [IsAuthenticated, IsAdministrador]
+
+    def get_permissions(self):
+        """
+        Define permisos según la acción solicitada:
+        - create: Cualquier persona (para realizar la prueba)
+        - list, retrieve, update, partial_update: Administrador, profesor o monitor administrativo
+        - destroy: Solo administrador o monitor administrativo
+        """
+        if self.action == 'create':
+            permission_classes = [AllowAny]
+        elif self.action in ['list', 'retrieve', 'update', 'partial_update', 'por_modulo']:
+            permission_classes = [IsProfesorOrAdministradorOrMonitorAcademicoOrAdministrativo]
+        elif self.action == 'destroy':
+            permission_classes = [IsMonitorAdministrativoOrAdministrador]
+        else:
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
 
     def get_serializer_class(self):
         """
@@ -175,7 +197,24 @@ class PreguntaDiagnosticaViewSet(viewsets.ModelViewSet):
     Permite listar, crear, actualizar y eliminar preguntas diagnósticas.
     """
     queryset = PreguntaDiagnostica.objects.all()
-    permission_classes = [IsAuthenticated, IsAdministrador]
+    # permission_classes = [IsAuthenticated, IsAdministrador]
+
+    def get_permissions(self):
+        """
+        Define permisos según la acción solicitada:
+        - create, crear_con_respuestas: Cualquier persona
+        - list, retrieve, update, partial_update, por_prueba, banco, asignar_a_prueba, clonar_del_banco: Administrador, profesor o monitor administrativo
+        - destroy: Solo administrador o monitor administrativo
+        """
+        if self.action in ['create', 'crear_con_respuestas']:
+            permission_classes = [AllowAny]
+        elif self.action in ['list', 'retrieve', 'update', 'partial_update', 'por_prueba', 'banco', 'asignar_a_prueba', 'clonar_del_banco']:
+            permission_classes = [IsProfesorOrAdministradorOrMonitorAcademicoOrAdministrativo]
+        elif self.action == 'destroy':
+            permission_classes = [IsMonitorAdministrativoOrAdministrador]
+        else:
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
 
     def get_serializer_class(self):
         """
@@ -545,7 +584,24 @@ class RespuestaDiagnosticaViewSet(viewsets.ModelViewSet):
     Permite listar, crear, actualizar y eliminar respuestas diagnósticas.
     """
     queryset = RespuestaDiagnostica.objects.all()
-    permission_classes = [IsAuthenticated, IsAdministrador]
+    # permission_classes = [IsAuthenticated, IsAdministrador]
+
+    def get_permissions(self):
+        """
+        Define permisos según la acción solicitada:
+        - create: Cualquier persona
+        - list, retrieve, update, partial_update: Administrador, profesor o monitor administrativo
+        - destroy: Solo administrador o monitor administrativo
+        """
+        if self.action == 'create':
+            permission_classes = [AllowAny]
+        elif self.action in ['list', 'retrieve', 'update', 'partial_update']:
+            permission_classes = [IsProfesorOrAdministradorOrMonitorAcademicoOrAdministrativo]
+        elif self.action == 'destroy':
+            permission_classes = [IsMonitorAdministrativoOrAdministrador]
+        else:
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
 
     def get_serializer_class(self):
         """

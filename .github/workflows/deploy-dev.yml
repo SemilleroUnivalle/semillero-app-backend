@@ -1,0 +1,108 @@
+name: Construir y Desplegar Docker a EC2
+
+on:
+  push:
+    branches:
+      - dev
+      - staging
+
+env:
+  AWS_REGION: "us-east-1"
+  ECR_REGISTRY: "947632012761.dkr.ecr.us-east-1.amazonaws.com"
+  ECR_REPOSITORY: "semillero-dev"
+  IMAGE_TAG: "latest"
+
+jobs:
+  build-and-push:
+    name: Construir y Empujar la Imagen de Docker a ECR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push Docker image (backend)
+        run: |
+          docker build -f HTTP/Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG HTTP
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Copy SSH key
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY_DEV }}" > private_key.pem
+          chmod 600 private_key.pem
+
+      - name: Copiar código y archivos a EC2
+        run: |
+          rsync -avz -e "ssh -o StrictHostKeyChecking=no -i private_key.pem" ./ ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST_DEV }}:/home/${{ secrets.EC2_USER }}/mi-app
+
+      - name: Deploy on EC2 via SSH
+        run: |
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST_DEV }} << 'EOF'
+            set -e
+            
+            # 1. Instalar Docker si no existe
+            if ! command -v docker &> /dev/null; then
+              echo "Instalando Docker..."
+              sudo apt-get update
+              sudo apt-get install -y ca-certificates curl gnupg
+              sudo install -m 0755 -d /etc/apt/keyrings
+              curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+              sudo chmod a+r /etc/apt/keyrings/docker.gpg
+              echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo $VERSION_CODENAME) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+              sudo apt-get update
+              sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+              sudo usermod -aG docker $USER
+              echo "Docker instalado. Por favor, reinicie el job si falla por permisos de grupo."
+            fi
+
+            # 2. Instalar AWS CLI si no existe
+            if ! command -v aws &> /dev/null; then
+              echo "Instalando AWS CLI..."
+              sudo apt-get install -y unzip
+              curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+              unzip -o awscliv2.zip
+              sudo ./aws/install
+              rm -rf awscliv2.zip aws
+            fi
+
+            # 3. Asegurar plugin de Docker Compose
+            if ! docker compose version > /dev/null 2>&1; then
+              echo "Configurando plugin de Docker Compose..."
+              mkdir -p ~/.docker/cli-plugins/
+              curl -SL https://github.com/docker/compose/releases/download/v2.29.2/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose
+              chmod +x ~/.docker/cli-plugins/docker-compose
+            fi
+
+            # 4. Preparar despliegue
+            mkdir -p /home/${{ secrets.EC2_USER }}/mi-app
+            cd /home/${{ secrets.EC2_USER }}/mi-app
+
+            # 5. Configuración
+            echo "${{ secrets.ENV_FILE_DEV }}" > .env
+            aws ecr get-login-password --region ${{ env.AWS_REGION }} | sudo docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
+            
+            # 6. Actualizar y Levantar
+            sudo docker network create semillero-net || true
+            sudo docker compose down || true
+            sudo docker rm -f semillero_backend semillero_redis || true
+            sudo docker compose pull
+            sudo docker compose up -d --build
+          EOF
