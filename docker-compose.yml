@@ -52,20 +52,6 @@ services:
     networks:
       - semillero-net
 
-  db_semillero:
-    image: postgres:17-alpine
-    container_name: semillero_db
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=semillero_db
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - semillero-net
-
 networks:
   semillero-net:
     external: true

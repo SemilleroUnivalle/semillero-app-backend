@@ -1,0 +1,32 @@
+services:
+  nginx:
+    ports:
+      - "80:80"
+    environment:
+      - DOMINIO=localhost
+    volumes:
+      - ./nginx/local.conf.template:/etc/nginx/templates/default.conf.template:ro
+    depends_on:
+      - backend
+
+  # Certbot no es necesario localmente
+  certbot:
+    profiles:
+      - donotstart
+
+  db_semillero:
+    image: postgres:17-alpine
+    container_name: semillero_db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=semillero_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - semillero-net
+
+volumes:
+  postgres_data:
