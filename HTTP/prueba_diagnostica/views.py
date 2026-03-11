@@ -24,8 +24,13 @@ from .serializers import (
 )
 
 # Autenticación y Permisos
-from rest_framework.permissions import IsAuthenticated
-from cuenta.permissions import IsAdministrador, IsProfesorOrAdministrador
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from cuenta.permissions import (
+    IsAdministrador, 
+    IsProfesorOrAdministrador, 
+    IsProfesorOrAdministradorOrMonitorAcademicoOrAdministrativo,
+    IsMonitorAdministrativoOrAdministrador
+)
 
 
 class PruebaDiagnosticaViewSet(viewsets.ModelViewSet):
@@ -35,7 +40,24 @@ class PruebaDiagnosticaViewSet(viewsets.ModelViewSet):
     Permite listar, crear, actualizar y eliminar pruebas diagnósticas.
     """
     queryset = PruebaDiagnostica.objects.all()
-    permission_classes = [IsAuthenticated, IsAdministrador]
+    # permission_classes = [IsAuthenticated, IsAdministrador]
+
+    def get_permissions(self):
+        """
+        Define permisos según la acción solicitada:
+        - create: Cualquier persona (para realizar la prueba)
+        - list, retrieve, update, partial_update: Administrador, profesor o monitor administrativo
+        - destroy: Solo administrador o monitor administrativo
+        """
+        if self.action == 'create':
+            permission_classes = [AllowAny]
+        elif self.action in ['list', 'retrieve', 'update', 'partial_update', 'por_modulo']:
+            permission_classes = [IsProfesorOrAdministradorOrMonitorAcademicoOrAdministrativo]
+        elif self.action == 'destroy':
+            permission_classes = [IsMonitorAdministrativoOrAdministrador]
+        else:
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
 
     def get_serializer_class(self):
         """
@@ -175,7 +197,24 @@ class PreguntaDiagnosticaViewSet(viewsets.ModelViewSet):
     Permite listar, crear, actualizar y eliminar preguntas diagnósticas.
     """
     queryset = PreguntaDiagnostica.objects.all()
-    permission_classes = [IsAuthenticated, IsAdministrador]
+    # permission_classes = [IsAuthenticated, IsAdministrador]
+
+    def get_permissions(self):
+        """
+        Define permisos según la acción solicitada:
+        - create, crear_con_respuestas: Cualquier persona
+        - list, retrieve, update, partial_update, por_prueba, banco, asignar_a_prueba, clonar_del_banco: Administrador, profesor o monitor administrativo
+        - destroy: Solo administrador o monitor administrativo
+        """
+        if self.action in ['create', 'crear_con_respuestas']:
+            permission_classes = [AllowAny]
+        elif self.action in ['list', 'retrieve', 'update', 'partial_update', 'por_prueba', 'banco', 'asignar_a_prueba', 'clonar_del_banco']:
+            permission_classes = [IsProfesorOrAdministradorOrMonitorAcademicoOrAdministrativo]
+        elif self.action == 'destroy':
+            permission_classes = [IsMonitorAdministrativoOrAdministrador]
+        else:
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
 
     def get_serializer_class(self):
         """
@@ -349,6 +388,194 @@ class PreguntaDiagnosticaViewSet(viewsets.ModelViewSet):
         serializer = PreguntaDiagnosticaReadSerializer(preguntas, many=True)
         return Response(serializer.data)
 
+    @swagger_auto_schema(
+        operation_summary="Listar banco de preguntas",
+        operation_description="Retorna todas las preguntas que no están asociadas a ninguna prueba diagnóstica (banco de preguntas reutilizables)",
+        manual_parameters=[
+            openapi.Parameter(
+                'tipo_pregunta',
+                openapi.IN_QUERY,
+                description="Filtrar por tipo de pregunta (multiple, verdadero_falso)",
+                type=openapi.TYPE_STRING,
+                required=False
+            )
+        ]
+    )
+    @action(detail=False, methods=['get'], url_path='banco')
+    def banco(self, request):
+        """
+        Endpoint para listar preguntas del banco (sin prueba asociada).
+        Estas preguntas pueden ser reutilizadas en múltiples pruebas.
+        """
+        # Filtrar preguntas sin prueba asociada
+        preguntas = PreguntaDiagnostica.objects.filter(id_prueba__isnull=True, estado=True)
+        
+        # Filtro opcional por tipo de pregunta
+        tipo_pregunta = request.query_params.get('tipo_pregunta')
+        if tipo_pregunta:
+            preguntas = preguntas.filter(tipo_pregunta=tipo_pregunta)
+        
+        if not preguntas.exists():
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        
+        serializer = PreguntaDiagnosticaReadSerializer(preguntas, many=True)
+        return Response(serializer.data)
+
+    @swagger_auto_schema(
+        operation_summary="Asignar pregunta del banco a una prueba",
+        operation_description="Asigna una pregunta existente del banco a una prueba diagnóstica específica",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['id_pregunta', 'id_prueba'],
+            properties={
+                'id_pregunta': openapi.Schema(
+                    type=openapi.TYPE_INTEGER,
+                    description='ID de la pregunta del banco'
+                ),
+                'id_prueba': openapi.Schema(
+                    type=openapi.TYPE_INTEGER,
+                    description='ID de la prueba diagnóstica'
+                ),
+            }
+        ),
+        responses={
+            status.HTTP_200_OK: PreguntaDiagnosticaReadSerializer,
+            status.HTTP_400_BAD_REQUEST: "Datos inválidos",
+            status.HTTP_404_NOT_FOUND: "Pregunta o prueba no encontrada"
+        }
+    )
+    @action(detail=False, methods=['post'], url_path='asignar-a-prueba')
+    def asignar_a_prueba(self, request):
+        """
+        Asigna una pregunta del banco a una prueba diagnóstica.
+        La pregunta original se mantiene en el banco.
+        """
+        id_pregunta = request.data.get('id_pregunta')
+        id_prueba = request.data.get('id_prueba')
+        
+        if not id_pregunta or not id_prueba:
+            return Response(
+                {"detalle": "Debe proporcionar 'id_pregunta' e 'id_prueba'"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            pregunta = PreguntaDiagnostica.objects.get(id_pregunta=id_pregunta)
+        except PreguntaDiagnostica.DoesNotExist:
+            return Response(
+                {"detalle": "Pregunta no encontrada"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        try:
+            prueba = PruebaDiagnostica.objects.get(id_prueba=id_prueba)
+        except PruebaDiagnostica.DoesNotExist:
+            return Response(
+                {"detalle": "Prueba diagnóstica no encontrada"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Verificar que la pregunta esté en el banco (sin prueba asignada)
+        if pregunta.id_prueba is not None:
+            return Response(
+                {"detalle": "Esta pregunta ya está asignada a una prueba. Use 'clonar-del-banco' para crear una copia."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Asignar la pregunta a la prueba
+        pregunta.id_prueba = prueba
+        pregunta.save()
+        
+        serializer = PreguntaDiagnosticaReadSerializer(pregunta)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @swagger_auto_schema(
+        operation_summary="Clonar pregunta del banco a una prueba",
+        operation_description="Crea una copia de una pregunta del banco (con sus respuestas) y la asigna a una prueba diagnóstica",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['id_pregunta', 'id_prueba'],
+            properties={
+                'id_pregunta': openapi.Schema(
+                    type=openapi.TYPE_INTEGER,
+                    description='ID de la pregunta del banco a clonar'
+                ),
+                'id_prueba': openapi.Schema(
+                    type=openapi.TYPE_INTEGER,
+                    description='ID de la prueba diagnóstica destino'
+                ),
+            }
+        ),
+        responses={
+            status.HTTP_201_CREATED: PreguntaDiagnosticaReadSerializer,
+            status.HTTP_400_BAD_REQUEST: "Datos inválidos",
+            status.HTTP_404_NOT_FOUND: "Pregunta o prueba no encontrada"
+        }
+    )
+    @action(detail=False, methods=['post'], url_path='clonar-del-banco')
+    def clonar_del_banco(self, request):
+        """
+        Clona una pregunta del banco (incluyendo sus respuestas) y la asigna a una prueba.
+        La pregunta original permanece en el banco sin cambios.
+        """
+        id_pregunta = request.data.get('id_pregunta')
+        id_prueba = request.data.get('id_prueba')
+        
+        if not id_pregunta or not id_prueba:
+            return Response(
+                {"detalle": "Debe proporcionar 'id_pregunta' e 'id_prueba'"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            pregunta_original = PreguntaDiagnostica.objects.get(id_pregunta=id_pregunta)
+        except PreguntaDiagnostica.DoesNotExist:
+            return Response(
+                {"detalle": "Pregunta no encontrada"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        try:
+            prueba = PruebaDiagnostica.objects.get(id_prueba=id_prueba)
+        except PruebaDiagnostica.DoesNotExist:
+            return Response(
+                {"detalle": "Prueba diagnóstica no encontrada"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        try:
+            with transaction.atomic():
+                # Obtener las respuestas de la pregunta original
+                respuestas_originales = pregunta_original.respuestas.all()
+                
+                # Clonar la pregunta
+                pregunta_clonada = PreguntaDiagnostica.objects.create(
+                    id_prueba=prueba,
+                    texto_pregunta=pregunta_original.texto_pregunta,
+                    tipo_pregunta=pregunta_original.tipo_pregunta,
+                    puntaje=pregunta_original.puntaje,
+                    imagen=pregunta_original.imagen,
+                    explicacion=pregunta_original.explicacion,
+                    estado=pregunta_original.estado
+                )
+                
+                # Clonar las respuestas
+                for respuesta_original in respuestas_originales:
+                    RespuestaDiagnostica.objects.create(
+                        id_pregunta=pregunta_clonada,
+                        texto_respuesta=respuesta_original.texto_respuesta,
+                        es_correcta=respuesta_original.es_correcta
+                    )
+                
+                serializer = PreguntaDiagnosticaReadSerializer(pregunta_clonada)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+                
+        except Exception as e:
+            return Response(
+                {"detalle": f"Error al clonar pregunta: {str(e)}"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
 
 class RespuestaDiagnosticaViewSet(viewsets.ModelViewSet):
     """
@@ -357,7 +584,24 @@ class RespuestaDiagnosticaViewSet(viewsets.ModelViewSet):
     Permite listar, crear, actualizar y eliminar respuestas diagnósticas.
     """
     queryset = RespuestaDiagnostica.objects.all()
-    permission_classes = [IsAuthenticated, IsAdministrador]
+    # permission_classes = [IsAuthenticated, IsAdministrador]
+
+    def get_permissions(self):
+        """
+        Define permisos según la acción solicitada:
+        - create: Cualquier persona
+        - list, retrieve, update, partial_update: Administrador, profesor o monitor administrativo
+        - destroy: Solo administrador o monitor administrativo
+        """
+        if self.action == 'create':
+            permission_classes = [AllowAny]
+        elif self.action in ['list', 'retrieve', 'update', 'partial_update']:
+            permission_classes = [IsProfesorOrAdministradorOrMonitorAcademicoOrAdministrativo]
+        elif self.action == 'destroy':
+            permission_classes = [IsMonitorAdministrativoOrAdministrador]
+        else:
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
 
     def get_serializer_class(self):
         """

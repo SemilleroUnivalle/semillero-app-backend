@@ -27,9 +27,9 @@ except ImportError:
 
 # Configuración: ajustar según necesidad
 N = 100  # Cantidad de estudiantes a crear
-pk_inicio = 101
-user_inicio = 146
-numero_documento_inicio = 221
+pk_inicio = 1
+user_inicio = 42
+numero_documento_inicio = 200
 
 # Archivos base (deben existir en base_dir)
 # Es necesario ajustar esta ruta si 'base_dir' no es correcta en tu entorno.

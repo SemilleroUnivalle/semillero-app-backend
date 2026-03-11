@@ -22,6 +22,11 @@ def certificado_upload_to(instance, filename):
     numero_documento = instance.id_estudiante.numero_documento
     return f'certificados/{numero_documento}.{ext}'
 
+def recibo_servicio(instance, filename):
+    ext = filename.split('.')[-1]
+    numero_documento = instance.id_estudiante.numero_documento
+    return f'recibo_servicio/{numero_documento}.{ext}'
+
 class Inscripcion(models.Model):
     id_inscripcion = models.AutoField(primary_key=True)
     id_estudiante = models.ForeignKey(Estudiante, on_delete=models.CASCADE)
@@ -49,10 +54,16 @@ class Inscripcion(models.Model):
         help_text="Sube un documento pdf del certificado de funcionario"
     )
 
+    recibo_servicio = models.FileField(
+        upload_to=recibo_servicio, null=True, blank=True,
+        help_text="Sube un documento pdf del recibo de servicio"
+    )
+
     #verificacion de documentos
     verificacion_recibo_pago = models.BooleanField(default=False)
     verificacion_constancia = models.BooleanField(default=False)
     verificacion_certificado = models.BooleanField(default=False)
+    verificacion_recibo_servicio = models.BooleanField(default=False)
     estado = models.CharField(max_length=12,default='No revisado')
     #id de la auditoria que corresponde a cada cambio solo en el caso de:
         # - Foto
@@ -80,6 +91,13 @@ class Inscripcion(models.Model):
         blank=True
     )
 
+    audit_recibo_servicio = models.OneToOneField(
+        LogEntry,
+        on_delete=models.CASCADE,
+        related_name="inscripcion_recibo_servicio",
+        null=True,
+        blank=True
+    )
 
     def __str__(self):
         return (

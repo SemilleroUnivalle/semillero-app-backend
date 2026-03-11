@@ -34,10 +34,10 @@ if modulo_lookup:
         print("AVISO: No se pudo importar Modulo o no existe el app 'modulo'. Se creará profesor sin modulo asignado.")
 
 # Configuración: ajustar según necesidad
-N = 1  # Cantidad de profesores a crear
+N = 20  # Cantidad de profesores a crear
 pk_inicio = 1
-user_inicio = 1
-numero_documento_inicio = 3000
+user_inicio = 21
+numero_documento_inicio = 300
 
 # Archivos base (deben existir en base_dir) - nombres de ejemplo
 base_dir = "/app/fixtures/documentos_profesor"

@@ -66,7 +66,6 @@ def extract_single_value(value):
 class EstudianteViewSet(viewsets.ModelViewSet):
     """
     API endpoint para gestionar estudiantes.
-    
     Permite listar, crear, actualizar y eliminar estudiantes.
     """
     queryset = Estudiante.objects.all()
@@ -77,21 +76,21 @@ class EstudianteViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         """
         Define permisos según la acción solicitada:
+        - create: Cualquiera
         - list: Profesores y administradores pueden ver todos los estudiantes
         - retrieve, update, partial_update: Estudiantes pueden ver/actualizar sus propios datos, administradores pueden todos
-        - create, destroy: Solo administradores
+        - destroy: Solo administradores
         """
         if self.action == 'list':
-            # Profesores y administradores pueden listar
+            # Profesores y administradores pueden ver todos los estudiantes
             permission_classes = [IsProfesorOrAdministradorOrMonitorAcademicoOrAdministrativo]
         elif self.action in ['retrieve', 'update', 'partial_update']:
-            # Estudiantes pueden ver/editar su perfil, administradores pueden todos
-            # La restricción de que el estudiante solo vea su perfil se controla en retrieve
-            permission_classes = [IsEstudianteOrAdministradorOrMonitorAdministrativo]
+            # Estudiantes pueden ver/editar su perfil, administradores y otros roles facultados pueden todos
+            # La restricción de que el estudiante solo vea su perfil se controla en cada método
+            permission_classes = [IsAuthenticated]
         elif self.action in ['create']:
             permission_classes = [AllowAny]
         elif self.action in ['destroy']:
-            # Solo administradores pueden crear/eliminar
             permission_classes = [IsMonitorAdministrativoOrAdministrador]
         else:
             # Para cualquier otra acción, usuario autenticado
@@ -195,7 +194,7 @@ class EstudianteViewSet(viewsets.ModelViewSet):
                     ciudad_residencia=data.get('ciudad_residencia'),
                     eps=data.get('eps'),
                     grado=data.get('grado'),
-                    colegio=data.get('grado'),
+                    colegio=data.get('colegio'),
                     tipo_documento=data.get('tipo_documento'),
                     genero=data.get('genero'),
                     fecha_nacimiento=data.get('fecha_nacimiento'),
@@ -235,6 +234,16 @@ class EstudianteViewSet(viewsets.ModelViewSet):
         try:
             data = request.data.copy()
             instance = self.get_object()
+            user = request.user
+
+            # Validar que si es un estudiante, solo pueda actualizar su propio perfil
+            if getattr(user, 'user_type', None) == 'estudiante':
+                estudiante_rel = getattr(user, 'estudiante', None)
+                if not estudiante_rel or estudiante_rel.id_estudiante != instance.id_estudiante:
+                    return Response(
+                        {"detail": "No tienes permiso para actualizar este perfil"},
+                        status=status.HTTP_403_FORBIDDEN
+                    )
 
             file_update(instance, data, 'documento_identidad')
             file_update(instance, data, 'foto')
@@ -259,10 +268,6 @@ class EstudianteViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-    def extract_single_value(value):
-        if isinstance(value, list):
-            return value[0] if value else ''
-        return value
     @swagger_auto_schema(
         operation_summary="Actualizar parcialmente un estudiante",
         operation_description="Actualiza uno o más campos de un estudiante existente"
@@ -271,6 +276,17 @@ class EstudianteViewSet(viewsets.ModelViewSet):
         try:
             data = request.data.copy()
             instance = self.get_object()
+            user_auth = request.user
+
+            # Validar que si es un estudiante, solo pueda actualizar su propio perfil
+            if getattr(user_auth, 'user_type', None) == 'estudiante':
+                estudiante_rel = getattr(user_auth, 'estudiante', None)
+                if not estudiante_rel or estudiante_rel.id_estudiante != instance.id_estudiante:
+                    return Response(
+                        {"detail": "No tienes permiso para actualizar este perfil"},
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+
             user = instance.user
 
             pdf_fields = [
@@ -314,12 +330,13 @@ class EstudianteViewSet(viewsets.ModelViewSet):
                             instance.email = value
                             instance.save()
                         elif field == 'numero_documento':
-                            user.username = value
-                            user.save()
-                            instance.numero_documento = value
-                            instance.save()
-                            numero_documento_actualizado = True
-                            nuevo_numero_documento = value
+                            if instance.numero_documento != value:
+                                user.username = value
+                                user.save()
+                                instance.numero_documento = value
+                                instance.save()
+                                numero_documento_actualizado = True
+                                nuevo_numero_documento = value
 
                 # Renombrar archivos PDF si se actualizó el número de documento
                 if numero_documento_actualizado:
@@ -333,7 +350,8 @@ class EstudianteViewSet(viewsets.ModelViewSet):
                             storage = file_field.storage
                             if storage.exists(old_file_name):
                                 storage.delete(old_file_name)
-                            new_filename = f"{nuevo_numero_documento}.pdf"
+                            _, ext = os.path.splitext(old_file_name)
+                            new_filename = f"{nuevo_numero_documento}{ext}"
                             file_dir = os.path.dirname(old_file_name)
                             new_file_path = os.path.join(file_dir, new_filename)
                             getattr(instance, field).save(new_file_path, ContentFile(file_content), save=True)

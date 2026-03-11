@@ -6,9 +6,9 @@ on:
       - main
 
 env:
-  AWS_REGION: "us-east-1"
-  ECR_REGISTRY: "897722690560.dkr.ecr.us-east-1.amazonaws.com"
-  ECR_REPOSITORY: "api-semillero"
+  AWS_REGION: "us-east-2"
+  ECR_REGISTRY: "947632012761.dkr.ecr.us-east-2.amazonaws.com"
+  ECR_REPOSITORY: "api-semillero-backend"
   IMAGE_TAG: "latest"
 
 jobs:
@@ -31,8 +31,8 @@ jobs:
 
       - name: Build and push Docker image (backend)
         run: |
-          docker build -f HTTP/Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY-backend:$IMAGE_TAG HTTP
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY-backend:$IMAGE_TAG
+          docker build -f HTTP/Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG HTTP
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
   deploy:
     name: Deploy to EC2
@@ -53,16 +53,32 @@ jobs:
           rsync -avz -e "ssh -o StrictHostKeyChecking=no -i private_key.pem" ./ ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER }}/mi-app
 
       - name: Deploy on EC2 via SSH
-        env:
-          REGISTRY: ${{ env.ECR_REGISTRY }}
-          REPO: ${{ env.ECR_REPOSITORY }}
-          TAG: ${{ env.IMAGE_TAG }}
-          AWS_REGION: ${{ env.AWS_REGION }}
         run: |
           ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << EOF
+            # 1. Asegurar que el plugin de compose esté instalado (Instalación manual)
+            if ! docker compose version > /dev/null 2>&1; then
+              echo "Instalando docker-compose-plugin manualmente..."
+              mkdir -p ~/.docker/cli-plugins/
+              curl -SL https://github.com/docker/compose/releases/download/v2.29.2/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose
+              chmod +x ~/.docker/cli-plugins/docker-compose
+            fi
+
+            # 2. Ir al directorio
             cd /home/${{ secrets.EC2_USER }}/mi-app
-            aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $REGISTRY
-            docker-compose pull || true
-            docker-compose down || true
-            docker-compose up -d --build
+
+            # 3. Crear el archivo .env desde el secreto de GitHub
+            echo "${{ secrets.ENV_FILE }}" > .env
+            
+            # 4. Login en AWS ECR (Usando variables de GitHub interpoladas)
+            aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
+            
+            # 5. Desplegar
+            # Detener limpiamente si es posible
+            docker compose down || true
+            
+            # Forzar eliminación de contenedores con nombres fijos para evitar conflictos
+            docker rm -f semillero_backend semillero_redis || true
+            
+            docker compose pull
+            docker compose up -d --build
           EOF

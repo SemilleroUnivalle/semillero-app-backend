@@ -47,3 +47,7 @@ ENV/
 
 #credentials
 *.env
+.env
+
+# Certbot
+certbot/

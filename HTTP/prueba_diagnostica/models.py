@@ -55,7 +55,10 @@ class PreguntaDiagnostica(models.Model):
         PruebaDiagnostica,
         on_delete=models.CASCADE,
         related_name='preguntas',
-        verbose_name='Prueba Diagnóstica'
+        verbose_name='Prueba Diagnóstica',
+        null=True,
+        blank=True,
+        help_text='Dejar vacío para crear una pregunta en el banco de preguntas'
     )
     texto_pregunta = models.TextField(verbose_name='Pregunta')
     tipo_pregunta = models.CharField(
@@ -87,13 +90,15 @@ class PreguntaDiagnostica(models.Model):
     fecha_modificacion = models.DateTimeField(auto_now=True, verbose_name='Última Modificación')
 
     def __str__(self):
-        return f" {self.texto_pregunta[:50]}..."
+        prueba_info = f"[{self.id_prueba.nombre_prueba}] " if self.id_prueba else "[Banco] "
+        return f"{prueba_info}{self.texto_pregunta[:50]}..."
 
     class Meta:
         verbose_name = 'Pregunta Diagnóstica'
         verbose_name_plural = 'Preguntas Diagnósticas'
         ordering = ['id_prueba', 'fecha_creacion']
-        unique_together = ['id_prueba', 'fecha_creacion']
+        # Removido unique_together porque id_prueba ahora puede ser NULL
+        # y NULL values no se consideran únicos en unique_together
 
 
 class RespuestaDiagnostica(models.Model):

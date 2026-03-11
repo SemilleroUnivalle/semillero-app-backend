@@ -11,6 +11,6 @@ hooks:
       runas: ubuntu
   AfterInstall:
     - location: scripts/install.sh
-      timeout: 300
+      timeout: 600
       runas: ubuntu
       ignoreFailure: true

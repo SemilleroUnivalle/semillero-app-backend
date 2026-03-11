@@ -1,20 +1,46 @@
 services:
   backend:
-    build: 
+    build:
       context: ./HTTP
-    command: sh -c "python manage.py migrate && gunicorn semillero_backend.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8080"
+    command: sh -c "python manage.py migrate && python manage.py collectstatic --noinput && gunicorn semillero_backend.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8080"
     volumes:
       - ./HTTP:/app
+      - static_volume:/app/staticfiles
     container_name: semillero_backend
-    ports:
-      - "8080:8080"
     depends_on:
       - redis
-      - db_semillero
+    env_file:
+      - .env
     environment:
       - DEBUG=0
-      - DATABASE_URL=postgres://postgres:postgres@db_semillero:5432/semillero_db
-      - SECRET_KEY=dev_secret_key_change_in_production
+    networks:
+      - semillero-net
+
+  nginx:
+    image: nginx:alpine
+    container_name: semillero_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - DOMINIO=${DOMINIO}
+    volumes:
+      - ./nginx/default.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - static_volume:/app/staticfiles
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    depends_on:
+      - backend
+    networks:
+      - semillero-net
+
+  certbot:
+    image: certbot/certbot
+    container_name: semillero_certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
     networks:
       - semillero-net
 
@@ -45,4 +71,4 @@ networks:
     external: true
 
 volumes:
-  postgres_data:
+  static_volume:

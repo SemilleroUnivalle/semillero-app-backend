@@ -48,13 +48,23 @@ class InscripcionSerializer(serializers.ModelSerializer):
     oferta_categoria = OfertaCategoriaInscripcionReadSerializer(source='id_oferta_categoria', read_only=True)
 
     audit_documento_recibo_pago = LogEntrySerializerEstudiante(read_only=True)
+    audit_constancia = LogEntrySerializerEstudiante(read_only=True)
     audit_certificado = LogEntrySerializerEstudiante(read_only=True)
+    audit_recibo_servicio = LogEntrySerializerEstudiante(read_only=True)
 
 
     class Meta:
         model = Inscripcion
-        fields = ['id_inscripcion', 'id_estudiante','estudiante', 'id_modulo','modulo', 'id_oferta_categoria','oferta_categoria', 'grupo', 'fecha_inscripcion', 'tipo_vinculacion', 
-        'terminos', 'observaciones', 'audit_certificado', 'audit_documento_recibo_pago']
+        fields = [
+            'id_inscripcion', 'id_estudiante', 'estudiante', 'id_modulo', 'modulo', 
+            'id_oferta_categoria', 'oferta_categoria', 'grupo', 'fecha_inscripcion', 
+            'tipo_vinculacion', 'terminos', 'observaciones', 'estado',
+            'recibo_pago', 'certificado', 'constancia', 'recibo_servicio',
+            'verificacion_recibo_pago', 'verificacion_constancia', 'verificacion_certificado', 
+            'verificacion_recibo_servicio',
+            'audit_documento_recibo_pago', 'audit_constancia', 'audit_certificado', 
+            'audit_recibo_servicio'
+        ]
         read_only_fields = ('id_inscripcion',)
         
 
@@ -69,14 +79,16 @@ class InscripcionInfProfeSerializer(serializers.ModelSerializer):
     oferta_categoria = OfertaCategoriaInscripcionReadSerializer(source='id_oferta_categoria', read_only=True)
 
     audit_documento_recibo_pago = LogEntrySerializerEstudiante(read_only=True)
+    audit_constancia = LogEntrySerializerEstudiante(read_only=True)
     audit_certificado = LogEntrySerializerEstudiante(read_only=True)
+    audit_recibo_servicio = LogEntrySerializerEstudiante(read_only=True)
 
     profesor = serializers.SerializerMethodField()
 
     class Meta:
         model = Inscripcion
         fields = ['profesor','id_inscripcion', 'id_estudiante','estudiante', 'id_modulo','modulo', 'id_oferta_categoria','oferta_categoria', 'grupo', 'fecha_inscripcion', 'tipo_vinculacion', 
-        'terminos', 'observaciones', 'audit_certificado', 'audit_documento_recibo_pago']
+        'terminos', 'observaciones', 'audit_certificado', 'audit_documento_recibo_pago', 'recibo_pago', 'certificado', 'constancia', 'recibo_servicio', 'audit_recibo_servicio', 'audit_constancia']
         read_only_fields = ('id_inscripcion',)
         
 
