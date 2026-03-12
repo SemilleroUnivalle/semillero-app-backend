@@ -455,16 +455,58 @@ class InscripcionViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], url_path="dashboard",
         permission_classes=[IsAdministrador])
     def dashboard(self, request):
+        # Obtener el ID del periodo (oferta_academica) desde los parámetros
+        periodo_id = request.query_params.get('periodo', None)
+
+        # Base queryset para inscripciones con filtro opcional
+        inscripciones_qs = Inscripcion.objects.all()
+        estudiantes_qs = Estudiante.objects.all()
+
+        # Si el usuario NO envía periodo, y queremos ver los totales históricos (TODO), 
+        # dejamos periodo_id en None. 
+        # Si prefieres que el Dashboard NUNCA sea global y siempre fuerce uno, 
+        # descomenta la lógica de búsqueda de periodo_actual abajo.
+        
+        # Lógica para elegir si queremos un periodo por defecto o no:
+        # if not periodo_id:
+        #     ... (lógica de prioridad) ...
+
+        if periodo_id:
+            try:
+                from oferta_academica.models import OfertaAcademica
+                periodo_actual = OfertaAcademica.objects.get(pk=periodo_id)
+                
+                # Filtrar inscripciones directamente por el periodo
+                inscripciones_qs = inscripciones_qs.filter(oferta_academica_id=periodo_id)
+                
+                # Para filtrar estudiantes "registrados en el periodo", usamos el rango de fechas
+                from oferta_academica.models import OfertaAcademica
+                siguiente_periodo = OfertaAcademica.objects.filter(
+                    fecha_inicio__gt=periodo_actual.fecha_inicio
+                ).order_by('fecha_inicio').first()
+
+                if siguiente_periodo:
+                    estudiantes_qs = estudiantes_qs.filter(
+                        user__date_joined__gte=periodo_actual.fecha_inicio,
+                        user__date_joined__lt=siguiente_periodo.fecha_inicio
+                    )
+                else:
+                    estudiantes_qs = estudiantes_qs.filter(
+                        user__date_joined__gte=periodo_actual.fecha_inicio
+                    )
+            except Exception as e:
+                print(f"Error al filtrar por periodo: {e}")
+
         # totales
-        total_enrollments = Inscripcion.objects.count()
-        total_register = Estudiante.objects.count()
+        total_enrollments = inscripciones_qs.count()
+        total_register = estudiantes_qs.count()
         active_modules = Modulo.objects.filter(estado=True).count()
         total_profesores = Profesor.objects.count()
         total_monitores = MonitorAcademico.objects.count()
 
-        # inscripciones por módulo
+        # inscripciones por módulo (usando el queryset filtrado)
         enrollments_by_module_qs = (
-            Inscripcion.objects
+            inscripciones_qs
             .filter(id_modulo__isnull=False)
             .values('id_modulo__nombre_modulo', 'id_modulo__id_area__nombre_area')
             .annotate(enrollments=Count('pk'))
@@ -479,8 +521,9 @@ class InscripcionViewSet(viewsets.ModelViewSet):
             for item in enrollments_by_module_qs
         ]
 
+        # inscripciones por módulo y género (usando el queryset filtrado)
         enrollments_gender_qs = (
-            Inscripcion.objects
+            inscripciones_qs
             .filter(id_modulo__isnull=False)
             .values(
                 'id_modulo__nombre_modulo',
@@ -496,7 +539,6 @@ class InscripcionViewSet(viewsets.ModelViewSet):
 
         for item in enrollments_gender_qs:
             module_name = item['id_modulo__nombre_modulo']
-            # Usamos .capitalize() para estandarizar 'Femenino', 'Masculino', etc.
             gender = item['gender'].capitalize() 
             count = item['count']
 
@@ -518,9 +560,9 @@ class InscripcionViewSet(viewsets.ModelViewSet):
                 "genderBreakdown": gender_breakdown
             })
 
-        # inscripciones por estamento con porcentaje
+        # inscripciones por estamento (usando el queryset filtrado)
         estamento_qs = (
-            Inscripcion.objects
+            inscripciones_qs
             .values(estamento=Coalesce('id_estudiante__estamento', Value('Desconocido')))
             .annotate(count=Count('pk'))
             .order_by('-count')
@@ -536,9 +578,9 @@ class InscripcionViewSet(viewsets.ModelViewSet):
                 "percentage": int(percentage),
             })
 
-        # inscripciones por grado
+        # inscripciones por grado (usando el queryset filtrado)
         grade_qs = (
-            Inscripcion.objects
+            inscripciones_qs
             .values(grade=Coalesce('id_estudiante__grado', Value('Desconocido')))
             .annotate(count=Count('pk'))
             .order_by('-count')
@@ -548,9 +590,9 @@ class InscripcionViewSet(viewsets.ModelViewSet):
             for item in grade_qs
         ]
 
-        # inscripciones recientes (últimas 10)
+        # inscripciones recientes (usando el queryset filtrado)
         recent_qs = (
-            Inscripcion.objects
+            inscripciones_qs
             .select_related('id_estudiante', 'id_modulo')
             .order_by('-fecha_inscripcion')[:10]
         )
@@ -569,9 +611,9 @@ class InscripcionViewSet(viewsets.ModelViewSet):
                 "status": status,
             })
 
-        # distribución por género
+        # distribución por género (usando el queryset filtrado)
         gender_qs = (
-            Inscripcion.objects
+            inscripciones_qs
             .values(gender=Coalesce('id_estudiante__genero', Value('Desconocido')))
             .annotate(count=Count('pk'))
             .order_by('-count')
@@ -581,8 +623,20 @@ class InscripcionViewSet(viewsets.ModelViewSet):
             for item in gender_qs
         ]
 
-        inscritosMatriculados = (total_enrollments / total_register) * 100
-        inscritosNoMatriculados = abs((total_enrollments / total_register) - 1) * 100
+        # indicadores
+        inscritosMatriculados = (total_enrollments / total_register * 100) if total_register > 0 else 0
+        inscritosNoMatriculados = 100 - inscritosMatriculados if total_register > 0 else 0
+
+        # Obtener detalle del periodo para el frontend
+        periodo_detalle = None
+        if periodo_id:
+            try:
+                from oferta_academica.models import OfertaAcademica
+                from oferta_academica.serializers import OfertaAcademicaSerializer
+                periodo_obj = OfertaAcademica.objects.get(pk=periodo_id)
+                periodo_detalle = OfertaAcademicaSerializer(periodo_obj).data
+            except:
+                pass
 
         payload = {
             "totalEnrollments": total_enrollments,
@@ -596,8 +650,10 @@ class InscripcionViewSet(viewsets.ModelViewSet):
             "enrollmentsByGrade": enrollments_by_grade,
             "recentEnrollments": recent_enrollments,
             "genderDistribution": gender_distribution,
-            "inscritosMatriculados": inscritosMatriculados,
-            "inscritosNoMatriculados":inscritosNoMatriculados,
+            "inscritosMatriculados": round(inscritosMatriculados, 2),
+            "inscritosNoMatriculados": round(inscritosNoMatriculados, 2),
+            "periodo_filtrado": periodo_id,
+            "periodo_detalle": periodo_detalle
         }
 
         return Response(payload)

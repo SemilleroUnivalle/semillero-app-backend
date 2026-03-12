@@ -75,6 +75,7 @@ INSTALLED_APPS = [
     "channels",
     "auditlog",
     'prueba_diagnostica',
+    'encuesta_satisfaccion',
 ]
 
 REST_FRAMEWORK = {
