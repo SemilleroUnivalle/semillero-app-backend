@@ -394,53 +394,74 @@ class InscripcionViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], url_path="matricula-grupo",
             permission_classes=[IsAdministrador])
     def matricula_grupo(self, request):
+        from grupo.models import Grupo
+        all_groups = Grupo.objects.select_related('profesor', 'monitor_academico').all()
+        
+        groups = OrderedDict()
+        for grupo in all_groups:
+            gid = grupo.id
+            nombre_grupo = str(grupo.nombre)
+            periodo_nombre = grupo.oferta_academica.nombre if grupo.oferta_academica else "NO ASIGNADO"
+            
+            if grupo.profesor:
+                profesor_data = {
+                    'id': grupo.profesor.id,
+                    'nombre': str(grupo.profesor.nombre) + " " + str(grupo.profesor.apellido),
+                }
+            else:
+                profesor_data = None 
+
+            if grupo.monitor_academico:
+                monitor_academico_data = {
+                    'id' : grupo.monitor_academico.id,
+                    'nombre' : str(grupo.monitor_academico.nombre) + " " + str(grupo.monitor_academico.apellido),
+                }
+            else:
+                monitor_academico_data = None
+
+            groups[gid] = {
+                'grupo_id': gid,
+                'nombre': nombre_grupo,
+                'periodo': periodo_nombre,
+                'profesor': profesor_data,
+                'monitor': monitor_academico_data,
+                'matriculas': []
+            }
+        
+        # Estudiantes sin grupo (gid = None)
+        groups[None] = {
+            'grupo_id': None,
+            'nombre': "NO ASIGNADO",
+            'periodo': "NO ASIGNADO",
+            'profesor': None,
+            'monitor': None,
+            'matriculas': []
+        }
+
         qs = Inscripcion.objects.select_related(
             'grupo', 
-            'grupo__profesor',
-            'grupo__monitor_academico',
             'id_estudiante', 
             'id_modulo', 
-            'id_oferta_categoria'
+            'id_oferta_categoria',
+            'id_oferta_categoria__id_oferta_academica'
         ).all().order_by('grupo_id', 'id_inscripcion')
 
-        groups = OrderedDict()
         for ins in qs:
             gid = ins.grupo_id  # puede ser None
             
             if gid not in groups:
-                
-                if ins.grupo:
-                    nombre_grupo = str(ins.grupo.nombre)
+                 # Backup para casos donde el grupo fue eliminado de la BD pero sigue en la inscripción (aunque no debería pasar por constraints)
+                 pass
             
-                    if ins.grupo.profesor:
-                        profesor_data = {
-                            'id': ins.grupo.profesor.id,
-                            'nombre': str(ins.grupo.profesor.nombre) + " " + str(ins.grupo.profesor.apellido),
-                        }
-                        if ins.grupo.monitor_academico:
-                            monitor_academico_data = {
-                            'id' : ins.grupo.monitor_academico.id,
-                            'nombre' : str(ins.grupo.monitor_academico.nombre) + " " + str(ins.grupo.monitor_academico.apellido),
-                            }
-                        else:
-                            monitor_academico = None
-                    else:
-                        profesor_data = None 
-                else:
-                    # El grupo no existe (gid es None)
-                    nombre_grupo = "NO ASIGNADO"
-                    profesor_data = None # El profesor es nulo si no hay grupo
-
-                groups[gid] = {
-                    'grupo_id': gid,
-                    'nombre': nombre_grupo,
-                    'profesor': profesor_data,
-                    'monitor': monitor_academico_data,
-                    'matriculas': []
-                }
-                
-            # serializamos cada inscripcion individualmente para incluir los campos calculados por el serializer
-            groups[gid]['matriculas'].append(InscripcionSerializer(ins).data)
+            # serializamos cada inscripcion individualmente
+            if gid in groups or gid is None:
+                groups[gid]['matriculas'].append(InscripcionSerializer(ins).data)
+        
+        # Para estudiantes sin grupo, tratar de ponerle un periodo basado en su oferta categoría
+        for m in groups[None]['matriculas']:
+            if 'oferta_categoria' in m and m['oferta_categoria'] and 'id_oferta_academica' in m['oferta_categoria']:
+                groups[None]['periodo'] = m['oferta_categoria']['id_oferta_academica'].get('nombre', 'NO ASIGNADO')
+                break
 
         # convertir a lista y añadir conteo
         result = []

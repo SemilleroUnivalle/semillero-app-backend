@@ -43,6 +43,7 @@ class Estudiante(models.Model):
     departamento_residencia = models.CharField(max_length=50) #Departamento de residencia del estudiante
     comuna_residencia = models.CharField(max_length=10) #Comuna de residencia del estudiante
     direccion_residencia = models.CharField(max_length=255) #Dirección de residencia del estudiante
+    estrato = models.CharField(max_length=20, blank=True, null=True) #Estrato del estudiante
     estamento = models.CharField(max_length=50) #Estamento al que pertenece el estudiante
     discapacidad = models.BooleanField(default=False) #Indica si el estudiante tiene alguna discapacidad
     tipo_discapacidad = models.CharField(max_length=50, default='Ninguna') #Tipo de discapacidad del estudiante

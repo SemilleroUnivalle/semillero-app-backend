@@ -6,6 +6,7 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 #Modelo
 from .models import Grupo
+from oferta_academica.models import OfertaAcademica
 #Serializadores
 from .serializers import GrupoSerializer
 from grupo.serializers import GrupoListaSerializer 
@@ -54,14 +55,26 @@ class GrupoViewSet(viewsets.ModelViewSet):
         }
     )
     def create(self, request, *args, **kwargs):
-        data = request.data
+        # Copiamos request.data para poder modificarlo
+        if hasattr(request.data, 'copy'):
+            data = request.data.copy()
+        else:
+            # En caso de que sea un dict normal
+            import copy
+            data = copy.deepcopy(request.data)
 
-        #Crear el objeto usando el serializador
+        # Si no viene oferta_academica, le asignamos la más reciente que esté en inscripciones o desarrollo
+        if 'oferta_academica' not in data:
+            oferta_activa = OfertaAcademica.objects.filter(estado__in=['inscripcion', 'desarrollo']).order_by('-id_oferta_academica').first()
+            if oferta_activa:
+                data['oferta_academica'] = oferta_activa.id_oferta_academica
+
+        # Crear el objeto usando el serializador
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
 
-        #Responder con los datos del nuevna grupo",
+        # Responder con los datos del nuevo grupo
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @swagger_auto_schema(
