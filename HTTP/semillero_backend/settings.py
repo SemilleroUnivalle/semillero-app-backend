@@ -76,6 +76,7 @@ INSTALLED_APPS = [
     "auditlog",
     'prueba_diagnostica',
     'encuesta_satisfaccion',
+    'django_extensions',
 ]
 
 REST_FRAMEWORK = {
