@@ -77,5 +77,9 @@ HTTP/diagrama1.png
 # Archivos de parches locales
 *.patch
 
+# Llaves privadas SSH (.pem)
+*.pem
+
+
 
 
