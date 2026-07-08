@@ -51,3 +51,31 @@ ENV/
 
 # Certbot
 certbot/
+
+# Archivos de cobertura de código
+HTTP/.coverage
+.coverage
+htmlcov/
+
+# Respaldos y copias de seguridad
+*.bak
+
+# Entornos virtuales
+.venv/
+
+# Estáticos compilados de producción Django
+HTTP/staticfiles/
+staticfiles/
+
+# Diagramas de base de datos pesados (binarios)
+HTTP/mi_diagrama_bd*.png
+HTTP/diagrama1.png
+
+# Hojas de datos/excel de pruebas
+*.xlsx
+
+# Archivos de parches locales
+*.patch
+
+
+
