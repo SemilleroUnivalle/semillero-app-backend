@@ -45,13 +45,14 @@ class OfertaAcademicaViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     @swagger_auto_schema(
         operation_summary="Listar oferta académica activa",
-        operation_description="Retorna una lista de toda la oferta académica con estado 'activo'"
+        operation_description="Retorna una lista de toda la oferta académica en estado 'Inscripción' o 'Desarrollo'"
     )
     def activos(self, request):
         """
-        Endpoint para listar únicamente la oferta académica con estado 'activo'
+        Endpoint para listar oferta académica disponible para procesos actuales 
+        (En inscripciones o ya en desarrollo)
         """
-        ofertas_activas = OfertaAcademica.objects.filter(estado=True)
+        ofertas_activas = OfertaAcademica.objects.filter(estado__in=['inscripcion', 'desarrollo'])
         serializer = self.get_serializer(ofertas_activas, many=True)
         return Response(serializer.data)
     

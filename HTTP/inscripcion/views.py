@@ -19,7 +19,7 @@ from .serializers import InscripcionSerializer, InscripcionInfProfeSerializer
 #Autenticacion
 from rest_framework.permissions import IsAuthenticated, AllowAny
 #Permisos
-from cuenta.permissions import IsAdministrador, IsEstudianteOrAdministrador, IsEstudianteOrAdministradorOrMonitorAdministrativo
+from cuenta.permissions import IsAdministrador, IsEstudianteOrAdministrador, IsEstudianteOrAdministradorOrMonitorAdministrativo, IsProfesorOrAdministrador
 #Actions
 from rest_framework.decorators import action
 #Dashboard
@@ -64,6 +64,10 @@ class InscripcionViewSet(viewsets.ModelViewSet):
             permission_classes = [AllowAny]
         elif self.action == 'retrieve':
             permission_classes = [IsEstudianteOrAdministradorOrMonitorAdministrativo]
+        elif self.action == 'filtro_estudiante':
+            permission_classes = [IsEstudianteOrAdministrador]
+        elif self.action == 'buscar_por_documento':
+            permission_classes = [IsProfesorOrAdministrador]
         else:
             permission_classes = [IsAdministrador]
         return [permission() for permission in permission_classes]
@@ -103,16 +107,31 @@ class InscripcionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        import sys
-        #Tener el estado de oferta categoria y oferta academica
-        oferta_categoria = modulo.id_oferta_categoria.get()
+        # Resolver la oferta_categoria sin que lance MultipleObjectsReturned si pertenece a varias ofertas
+        oferta_academica_id = data.get("oferta_academica")
+        oferta_categoria_qs = modulo.id_oferta_categoria.all()
+        
+        if oferta_academica_id:
+            oferta_categoria_qs = oferta_categoria_qs.filter(id_oferta_academica=oferta_academica_id)
+            
+        if not oferta_categoria_qs.exists():
+            oferta_categoria_qs = modulo.id_oferta_categoria.filter(estado=True, id_oferta_academica__estado='inscripcion')
+        if not oferta_categoria_qs.exists():
+            oferta_categoria_qs = modulo.id_oferta_categoria.filter(estado=True)
+        if not oferta_categoria_qs.exists():
+            oferta_categoria_qs = modulo.id_oferta_categoria.all()
+            
+        oferta_categoria = oferta_categoria_qs.first()
+        if not oferta_categoria:
+            return Response({"detail": "El módulo no tiene una oferta de categoría asociada."}, status=status.HTTP_400_BAD_REQUEST)
+            
         oferta_academica = oferta_categoria.id_oferta_academica
 
-        if oferta_categoria.estado or oferta_academica.estado:
+        if oferta_categoria.estado or oferta_academica.estado == 'inscripcion' or oferta_academica.estado == 'desarrollo':
             data["id_oferta_categoria"] = oferta_categoria.id_oferta_categoria
             data["oferta_academica"] = oferta_academica.id_oferta_academica
         else:
-            return (Response({"detail": "La oferta categoria o academica no esta activa"}, status=status.HTTP_400_BAD_REQUEST))
+            return Response({"detail": "La oferta categoria o academica no esta activa"}, status=status.HTTP_400_BAD_REQUEST)
         # Forzar que la constancia siempre sea True por requerimiento temporal
         data["verificacion_constancia"] = True
 
@@ -234,26 +253,47 @@ class InscripcionViewSet(viewsets.ModelViewSet):
         certificado_nuevo = instance.verificacion_certificado
         recibo_servicio_nuevo = instance.verificacion_recibo_servicio
 
-        # Evaluamos el estado basándonos solo en documentos que existen
-        verificaciones_efectivas = []
-        if instance.recibo_pago:
-            verificaciones_efectivas.append(recibo_pago_nuevo)
-        if instance.constancia:
-            verificaciones_efectivas.append(constancia_nuevo)
-        if instance.certificado:
-            verificaciones_efectivas.append(certificado_nuevo)
-        if instance.recibo_servicio:
-            verificaciones_efectivas.append(recibo_servicio_nuevo)
+        # Check if there are any uploaded files
+        has_uploaded_files = bool(
+            instance.recibo_pago or
+            instance.constancia or
+            instance.certificado or
+            instance.recibo_servicio
+        )
 
-        # Asigna el estado correcto
-        if not verificaciones_efectivas:
-            instance.estado = "No revisado"
-        elif all(verificaciones_efectivas):
-            instance.estado = "Revisado"
-        elif any(verificaciones_efectivas):
-            instance.estado = "Pendiente"
+        estudiante_verificado = instance.id_estudiante.verificacion_informacion if instance.id_estudiante else False
+
+        if has_uploaded_files:
+            # Evaluamos el estado basándonos en documentos que existen
+            documentos_verificados = []
+            if instance.recibo_pago:
+                documentos_verificados.append(recibo_pago_nuevo)
+            if instance.constancia:
+                documentos_verificados.append(constancia_nuevo)
+            if instance.certificado:
+                documentos_verificados.append(certificado_nuevo)
+            if instance.recibo_servicio:
+                documentos_verificados.append(recibo_servicio_nuevo)
+
+            # Asigna el estado correcto
+            if all(documentos_verificados) and estudiante_verificado:
+                instance.estado = "Revisado"
+            elif any(documentos_verificados) or estudiante_verificado:
+                instance.estado = "Pendiente"
+            else:
+                instance.estado = "No revisado"
         else:
-            instance.estado = "No revisado"
+            # Si no hay archivos subidos, el estado depende de si el administrador
+            # ha verificado explícitamente algún campo (excluyendo constancia que es forzada a True)
+            verificaciones_manuales = [recibo_pago_nuevo, certificado_nuevo, recibo_servicio_nuevo]
+            
+            if any(verificaciones_manuales):
+                if estudiante_verificado:
+                    instance.estado = "Revisado"
+                else:
+                    instance.estado = "Pendiente"
+            else:
+                instance.estado = "No revisado"
 
         instance.save(update_fields=['estado'])
 
@@ -361,7 +401,7 @@ class InscripcionViewSet(viewsets.ModelViewSet):
         operation_description="Filtra la inscripcion por el estudiante especificado en los parámetros de la solicitud"
     )
     @action (detail=False, methods=['get'], url_path='filtro-estudiante',
-            permission_classes=[IsAdministrador])
+            permission_classes=[IsEstudianteOrAdministrador])
     def filtro_estudiante(self, request, *args, **kwargs):
         estudiante = request.query_params.get('id_estudiante', None)
         queryset = self.get_queryset()
@@ -370,6 +410,86 @@ class InscripcionViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(id_estudiante=estudiante)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
+    @swagger_auto_schema(
+        operation_summary="Buscar inscripciones por número de documento del estudiante",
+        operation_description="Retorna las inscripciones del estudiante cuyo número de documento coincide con el parámetro enviado",
+        manual_parameters=[
+            openapi.Parameter(
+                'numero_documento',
+                openapi.IN_QUERY,
+                description="Número de documento del estudiante",
+                type=openapi.TYPE_STRING,
+                required=True
+            ),
+            openapi.Parameter(
+                'oferta_academica_id',
+                openapi.IN_QUERY,
+                description="ID de la oferta académica (opcional)",
+                type=openapi.TYPE_INTEGER,
+                required=False
+            )
+        ]
+    )
+    @action(detail=False, methods=['get'], url_path='buscar-por-documento',
+            permission_classes=[IsProfesorOrAdministrador])
+    def buscar_por_documento(self, request, *args, **kwargs):
+        numero_documento = request.query_params.get('numero_documento', None)
+
+        if not numero_documento:
+            return Response(
+                {"detail": "El parámetro 'numero_documento' es requerido."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Normalizar: quitar espacios al inicio/fin
+        numero_documento = numero_documento.strip()
+
+        # Verificar si el estudiante existe primero
+        from estudiante.models import Estudiante
+        estudiante_qs = Estudiante.objects.filter(numero_documento=numero_documento)
+        if not estudiante_qs.exists():
+            return Response(
+                {"detail": f"No existe ningún estudiante con el número de documento '{numero_documento}'."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Buscar inscripciones del estudiante
+        queryset = self.get_queryset().filter(
+            id_estudiante__numero_documento=numero_documento
+        ).select_related('id_estudiante', 'id_modulo', 'grupo', 'oferta_academica')
+
+        # Filtro opcional por período académico
+        oferta_academica_id = request.query_params.get('oferta_academica_id', None)
+        if oferta_academica_id:
+            queryset = queryset.filter(oferta_academica__id_oferta_academica=oferta_academica_id)
+
+        if not queryset.exists():
+            estudiante = estudiante_qs.first()
+            return Response(
+                {
+                    "detail": f"El estudiante '{estudiante.nombre} {estudiante.apellido}' existe pero no tiene inscripciones registradas.",
+                    "codigo": "SIN_INSCRIPCION",
+                    "nombre": estudiante.nombre,
+                    "apellido": estudiante.apellido,
+                    "numero_documento": estudiante.numero_documento,
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        result = []
+        for inscripcion in queryset:
+            estudiante = inscripcion.id_estudiante
+            result.append({
+                "id_inscripcion": inscripcion.id_inscripcion,
+                "nombre": estudiante.nombre,
+                "apellido": estudiante.apellido,
+                "numero_documento": estudiante.numero_documento,
+                "modulo": inscripcion.id_modulo.nombre_modulo if inscripcion.id_modulo else None,
+                "grupo": str(inscripcion.grupo) if inscripcion.grupo else None,
+            })
+
+        return Response(result, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get'], url_path="filtro-modulo",
             permission_classes=[IsAdministrador])
@@ -394,53 +514,74 @@ class InscripcionViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], url_path="matricula-grupo",
             permission_classes=[IsAdministrador])
     def matricula_grupo(self, request):
+        from grupo.models import Grupo
+        all_groups = Grupo.objects.select_related('profesor', 'monitor_academico').all()
+        
+        groups = OrderedDict()
+        for grupo in all_groups:
+            gid = grupo.id
+            nombre_grupo = str(grupo.nombre)
+            periodo_nombre = grupo.oferta_academica.nombre if grupo.oferta_academica else "NO ASIGNADO"
+            
+            if grupo.profesor:
+                profesor_data = {
+                    'id': grupo.profesor.id,
+                    'nombre': str(grupo.profesor.nombre) + " " + str(grupo.profesor.apellido),
+                }
+            else:
+                profesor_data = None 
+
+            if grupo.monitor_academico:
+                monitor_academico_data = {
+                    'id' : grupo.monitor_academico.id,
+                    'nombre' : str(grupo.monitor_academico.nombre) + " " + str(grupo.monitor_academico.apellido),
+                }
+            else:
+                monitor_academico_data = None
+
+            groups[gid] = {
+                'grupo_id': gid,
+                'nombre': nombre_grupo,
+                'periodo': periodo_nombre,
+                'profesor': profesor_data,
+                'monitor': monitor_academico_data,
+                'matriculas': []
+            }
+        
+        # Estudiantes sin grupo (gid = None)
+        groups[None] = {
+            'grupo_id': None,
+            'nombre': "NO ASIGNADO",
+            'periodo': "NO ASIGNADO",
+            'profesor': None,
+            'monitor': None,
+            'matriculas': []
+        }
+
         qs = Inscripcion.objects.select_related(
             'grupo', 
-            'grupo__profesor',
-            'grupo__monitor_academico',
             'id_estudiante', 
             'id_modulo', 
-            'id_oferta_categoria'
+            'id_oferta_categoria',
+            'id_oferta_categoria__id_oferta_academica'
         ).all().order_by('grupo_id', 'id_inscripcion')
 
-        groups = OrderedDict()
         for ins in qs:
             gid = ins.grupo_id  # puede ser None
             
             if gid not in groups:
-                
-                if ins.grupo:
-                    nombre_grupo = str(ins.grupo.nombre)
+                 # Backup para casos donde el grupo fue eliminado de la BD pero sigue en la inscripción (aunque no debería pasar por constraints)
+                 pass
             
-                    if ins.grupo.profesor:
-                        profesor_data = {
-                            'id': ins.grupo.profesor.id,
-                            'nombre': str(ins.grupo.profesor.nombre) + " " + str(ins.grupo.profesor.apellido),
-                        }
-                        if ins.grupo.monitor_academico:
-                            monitor_academico_data = {
-                            'id' : ins.grupo.monitor_academico.id,
-                            'nombre' : str(ins.grupo.monitor_academico.nombre) + " " + str(ins.grupo.monitor_academico.apellido),
-                            }
-                        else:
-                            monitor_academico = None
-                    else:
-                        profesor_data = None 
-                else:
-                    # El grupo no existe (gid es None)
-                    nombre_grupo = "NO ASIGNADO"
-                    profesor_data = None # El profesor es nulo si no hay grupo
-
-                groups[gid] = {
-                    'grupo_id': gid,
-                    'nombre': nombre_grupo,
-                    'profesor': profesor_data,
-                    'monitor': monitor_academico_data,
-                    'matriculas': []
-                }
-                
-            # serializamos cada inscripcion individualmente para incluir los campos calculados por el serializer
-            groups[gid]['matriculas'].append(InscripcionSerializer(ins).data)
+            # serializamos cada inscripcion individualmente
+            if gid in groups or gid is None:
+                groups[gid]['matriculas'].append(InscripcionSerializer(ins).data)
+        
+        # Para estudiantes sin grupo, tratar de ponerle un periodo basado en su oferta categoría
+        for m in groups[None]['matriculas']:
+            if 'oferta_categoria' in m and m['oferta_categoria'] and 'id_oferta_academica' in m['oferta_categoria']:
+                groups[None]['periodo'] = m['oferta_categoria']['id_oferta_academica'].get('nombre', 'NO ASIGNADO')
+                break
 
         # convertir a lista y añadir conteo
         result = []
@@ -455,16 +596,64 @@ class InscripcionViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], url_path="dashboard",
         permission_classes=[IsAdministrador])
     def dashboard(self, request):
+        # Obtener parámetros de filtro
+        periodo_id = request.query_params.get('periodo', None)
+        modulo_id = request.query_params.get('modulo', None)
+        area_id = request.query_params.get('area', None)
+        tipo_vinculacion = request.query_params.get('tipo_vinculacion', None)
+        estamento = request.query_params.get('estamento', None)
+
+        # Base queryset para inscripciones con filtro opcional
+        inscripciones_qs = Inscripcion.objects.all()
+        estudiantes_qs = Estudiante.objects.all()
+
+        # Filtrar inscripciones
+        if periodo_id and periodo_id != 'all':
+            inscripciones_qs = inscripciones_qs.filter(oferta_academica_id=periodo_id)
+        if modulo_id and modulo_id != 'all' and modulo_id != '':
+            inscripciones_qs = inscripciones_qs.filter(id_modulo_id=modulo_id)
+        if area_id and area_id != 'all' and area_id != '':
+            inscripciones_qs = inscripciones_qs.filter(id_modulo__id_area_id=area_id)
+        if tipo_vinculacion and tipo_vinculacion != 'all' and tipo_vinculacion != '':
+            inscripciones_qs = inscripciones_qs.filter(tipo_vinculacion__iexact=tipo_vinculacion)
+        if estamento and estamento != 'all' and estamento != '':
+            inscripciones_qs = inscripciones_qs.filter(id_estudiante__estamento__iexact=estamento)
+
+        # Filtrar estudiantes registrados por periodo
+        if periodo_id and periodo_id != 'all':
+            try:
+                from oferta_academica.models import OfertaAcademica
+                periodo_actual = OfertaAcademica.objects.get(pk=periodo_id)
+                siguiente_periodo = OfertaAcademica.objects.filter(
+                    fecha_inicio__gt=periodo_actual.fecha_inicio
+                ).order_by('fecha_inicio').first()
+
+                if siguiente_periodo:
+                    estudiantes_qs = estudiantes_qs.filter(
+                        user__date_joined__gte=periodo_actual.fecha_inicio,
+                        user__date_joined__lt=siguiente_periodo.fecha_inicio
+                    )
+                else:
+                    estudiantes_qs = estudiantes_qs.filter(
+                        user__date_joined__gte=periodo_actual.fecha_inicio
+                    )
+            except Exception as e:
+                print(f"Error al filtrar por periodo: {e}")
+
+        # Filtrar estudiantes registrados por estamento si aplica
+        if estamento and estamento != 'all' and estamento != '':
+            estudiantes_qs = estudiantes_qs.filter(estamento__iexact=estamento)
+
         # totales
-        total_enrollments = Inscripcion.objects.count()
-        total_register = Estudiante.objects.count()
+        total_enrollments = inscripciones_qs.count()
+        total_register = estudiantes_qs.count()
         active_modules = Modulo.objects.filter(estado=True).count()
         total_profesores = Profesor.objects.count()
         total_monitores = MonitorAcademico.objects.count()
 
-        # inscripciones por módulo
+        # inscripciones por módulo (usando el queryset filtrado)
         enrollments_by_module_qs = (
-            Inscripcion.objects
+            inscripciones_qs
             .filter(id_modulo__isnull=False)
             .values('id_modulo__nombre_modulo', 'id_modulo__id_area__nombre_area')
             .annotate(enrollments=Count('pk'))
@@ -479,8 +668,9 @@ class InscripcionViewSet(viewsets.ModelViewSet):
             for item in enrollments_by_module_qs
         ]
 
+        # inscripciones por módulo y género (usando el queryset filtrado)
         enrollments_gender_qs = (
-            Inscripcion.objects
+            inscripciones_qs
             .filter(id_modulo__isnull=False)
             .values(
                 'id_modulo__nombre_modulo',
@@ -496,7 +686,6 @@ class InscripcionViewSet(viewsets.ModelViewSet):
 
         for item in enrollments_gender_qs:
             module_name = item['id_modulo__nombre_modulo']
-            # Usamos .capitalize() para estandarizar 'Femenino', 'Masculino', etc.
             gender = item['gender'].capitalize() 
             count = item['count']
 
@@ -518,9 +707,9 @@ class InscripcionViewSet(viewsets.ModelViewSet):
                 "genderBreakdown": gender_breakdown
             })
 
-        # inscripciones por estamento con porcentaje
+        # inscripciones por estamento (usando el queryset filtrado)
         estamento_qs = (
-            Inscripcion.objects
+            inscripciones_qs
             .values(estamento=Coalesce('id_estudiante__estamento', Value('Desconocido')))
             .annotate(count=Count('pk'))
             .order_by('-count')
@@ -536,9 +725,9 @@ class InscripcionViewSet(viewsets.ModelViewSet):
                 "percentage": int(percentage),
             })
 
-        # inscripciones por grado
+        # inscripciones por grado (usando el queryset filtrado)
         grade_qs = (
-            Inscripcion.objects
+            inscripciones_qs
             .values(grade=Coalesce('id_estudiante__grado', Value('Desconocido')))
             .annotate(count=Count('pk'))
             .order_by('-count')
@@ -548,9 +737,9 @@ class InscripcionViewSet(viewsets.ModelViewSet):
             for item in grade_qs
         ]
 
-        # inscripciones recientes (últimas 10)
+        # inscripciones recientes (usando el queryset filtrado)
         recent_qs = (
-            Inscripcion.objects
+            inscripciones_qs
             .select_related('id_estudiante', 'id_modulo')
             .order_by('-fecha_inscripcion')[:10]
         )
@@ -569,9 +758,9 @@ class InscripcionViewSet(viewsets.ModelViewSet):
                 "status": status,
             })
 
-        # distribución por género
+        # distribución por género (usando el queryset filtrado)
         gender_qs = (
-            Inscripcion.objects
+            inscripciones_qs
             .values(gender=Coalesce('id_estudiante__genero', Value('Desconocido')))
             .annotate(count=Count('pk'))
             .order_by('-count')
@@ -581,8 +770,67 @@ class InscripcionViewSet(viewsets.ModelViewSet):
             for item in gender_qs
         ]
 
-        inscritosMatriculados = (total_enrollments / total_register) * 100
-        inscritosNoMatriculados = abs((total_enrollments / total_register) - 1) * 100
+        # distribución por estrato (usando el queryset filtrado)
+        estrato_qs = (
+            inscripciones_qs
+            .values(estrato=Coalesce('id_estudiante__estrato', Value('Desconocido')))
+            .annotate(count=Count('pk'))
+            .order_by('-count')
+        )
+        estrato_distribution = [
+            {"estrato": item['estrato'] or 'Desconocido', "count": item['count']}
+            for item in estrato_qs
+        ]
+
+        # distribución por vinculación (usando el queryset filtrado)
+        vinculacion_qs = (
+            inscripciones_qs
+            .values(vinculacion=Coalesce('tipo_vinculacion', Value('Desconocido')))
+            .annotate(count=Count('pk'))
+            .order_by('-count')
+        )
+        vinculacion_distribution = [
+            {"type": item['vinculacion'], "count": item['count']}
+            for item in vinculacion_qs
+        ]
+
+        # distribución por municipio (usando el queryset filtrado)
+        municipio_qs = (
+            inscripciones_qs
+            .values(municipio=Coalesce('id_estudiante__ciudad_residencia', Value('Desconocido')))
+            .annotate(count=Count('pk'))
+            .order_by('-count')
+        )
+        municipio_distribution = [
+            {"municipality": item['municipio'] or 'Desconocido', "count": item['count']}
+            for item in municipio_qs
+        ]
+
+        # indicadores
+        inscritosMatriculados = (total_enrollments / total_register * 100) if total_register > 0 else 0
+        inscritosNoMatriculados = 100 - inscritosMatriculados if total_register > 0 else 0
+
+        # Obtener detalle del periodo para el frontend
+        periodo_detalle = None
+        if periodo_id:
+            try:
+                from oferta_academica.models import OfertaAcademica
+                from oferta_academica.serializers import OfertaAcademicaSerializer
+                periodo_obj = OfertaAcademica.objects.get(pk=periodo_id)
+                periodo_detalle = OfertaAcademicaSerializer(periodo_obj).data
+            except:
+                pass
+
+        # Obtener opciones para los filtros de forma dinámica
+        from area.models import Area
+        modulos_options = list(Modulo.objects.filter(estado=True).values('id_modulo', 'nombre_modulo', 'id_area_id'))
+        areas_options = list(Area.objects.filter(estado_area=True).values('id_area', 'nombre_area'))
+        
+        vinculaciones_unicas = list(Inscripcion.objects.values_list('tipo_vinculacion', flat=True).distinct())
+        vinculaciones_options = sorted(list(set([v for v in vinculaciones_unicas if v])))
+        
+        estamentos_unicos = list(Estudiante.objects.values_list('estamento', flat=True).distinct())
+        estamentos_options = sorted(list(set([e for e in estamentos_unicos if e])))
 
         payload = {
             "totalEnrollments": total_enrollments,
@@ -596,8 +844,19 @@ class InscripcionViewSet(viewsets.ModelViewSet):
             "enrollmentsByGrade": enrollments_by_grade,
             "recentEnrollments": recent_enrollments,
             "genderDistribution": gender_distribution,
-            "inscritosMatriculados": inscritosMatriculados,
-            "inscritosNoMatriculados":inscritosNoMatriculados,
+            "estratoDistribution": estrato_distribution,
+            "vinculacionDistribution": vinculacion_distribution,
+            "municipioDistribution": municipio_distribution,
+            "inscritosMatriculados": round(inscritosMatriculados, 2),
+            "inscritosNoMatriculados": round(inscritosNoMatriculados, 2),
+            "periodo_filtrado": periodo_id,
+            "periodo_detalle": periodo_detalle,
+            "filterOptions": {
+                "modules": modulos_options,
+                "areas": areas_options,
+                "vinculaciones": vinculaciones_options,
+                "estamentos": estamentos_options,
+            }
         }
 
         return Response(payload)

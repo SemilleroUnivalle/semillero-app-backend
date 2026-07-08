@@ -40,7 +40,7 @@ class AsignacionMonitorAcademicoSerializer(serializers.Serializer):
 
     def validate(self, data):
         try:
-            monitor_academico = MonitorAcademico.objects.get(id_monitor_academico=data['id_monitor_academico'])
+            monitor_academico = MonitorAcademico.objects.get(id=data['id_monitor_academico'])
         except MonitorAcademico.DoesNotExist:
             raise serializers.ValidationError("MonitorAcademico no encontrado")
 

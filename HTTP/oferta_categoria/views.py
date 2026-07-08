@@ -174,8 +174,8 @@ class OfertaCategoriaViewSet(viewsets.ModelViewSet):
         Obtener todas las OfertaCategoria agrupadas por OfertaAcademica
         **solo donde la OfertaAcademica tiene estado=true**.
         """
-        # Filtrar por estado activo
-        queryset = self.get_queryset().filter(id_oferta_academica__estado=True)
+        # Filtrar por estado activo (inscripción o desarrollo)
+        queryset = self.get_queryset().filter(id_oferta_academica__estado__in=['inscripcion'])
         oferta_categoria_por_oferta_academica = defaultdict(list)
 
         for oferta_categoria in queryset:

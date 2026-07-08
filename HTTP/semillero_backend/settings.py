@@ -75,6 +75,8 @@ INSTALLED_APPS = [
     "channels",
     "auditlog",
     'prueba_diagnostica',
+    'encuesta_satisfaccion',
+    'django_extensions',
 ]
 
 REST_FRAMEWORK = {
@@ -149,6 +151,10 @@ CHANNEL_LAYERS = {
     },
 }
 # Base de datos
+DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///db.sqlite3')
+DATABASES = {
+    'default': dj_database_url.parse(DATABASE_URL)
+}
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
@@ -216,7 +222,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = [
     "https://semillero-app.vercel.app",
-    "https://semilleroapp.duckdns.org",
+    "https://semilleroapp1.duckdns.org",
 ]
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
