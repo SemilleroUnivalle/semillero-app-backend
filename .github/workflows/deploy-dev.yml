@@ -46,8 +46,9 @@ jobs:
 
       - name: Copy SSH key
         run: |
-          echo "${{ secrets.EC2_SSH_KEY_DEV }}" > private_key.pem
+          echo "${{ secrets.EC2_SSH_KEY_DEV }}" | tr -d '\r' > private_key.pem
           chmod 600 private_key.pem
+
 
       - name: Copiar código y archivos a EC2
         run: |
