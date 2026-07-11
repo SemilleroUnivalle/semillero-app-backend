@@ -88,7 +88,7 @@ class EstudianteViewSet(viewsets.ModelViewSet):
             # Estudiantes pueden ver/editar su perfil, administradores y otros roles facultados pueden todos
             # La restricción de que el estudiante solo vea su perfil se controla en cada método
             permission_classes = [IsAuthenticated]
-        elif self.action in ['create']:
+        elif self.action in ['create', 'buscar_por_documento']:
             permission_classes = [AllowAny]
         elif self.action in ['destroy']:
             permission_classes = [IsMonitorAdministrativoOrAdministrador]
@@ -120,6 +120,18 @@ class EstudianteViewSet(viewsets.ModelViewSet):
         est = request.user.estudiante
         serializer = self.get_serializer(est)
         return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_path='buscar-por-documento', permission_classes=[AllowAny])
+    def buscar_por_documento(self, request):
+        numero_documento = request.query_params.get('numero_documento')
+        if not numero_documento:
+            return Response({"detail": "El número de documento es requerido."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            estudiante = Estudiante.objects.get(numero_documento=numero_documento)
+            serializer = self.get_serializer(estudiante)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Estudiante.DoesNotExist:
+            return Response({"detail": "Estudiante no encontrado"}, status=status.HTTP_404_NOT_FOUND)
     
     @swagger_auto_schema(
         operation_summary="Listar todos los estudiantes",
