@@ -59,7 +59,7 @@ class InscripcionSerializer(serializers.ModelSerializer):
             'id_inscripcion', 'id_estudiante', 'estudiante', 'id_modulo', 'modulo', 
             'id_oferta_categoria', 'oferta_categoria', 'grupo', 'fecha_inscripcion', 
             'tipo_vinculacion', 'terminos', 'observaciones', 'estado',
-            'recibo_pago', 'certificado', 'constancia', 'recibo_servicio',
+            'recibo_pago', 'certificado', 'constancia', 'recibo_servicio', 'certificado_academico',
             'verificacion_recibo_pago', 'verificacion_constancia', 'verificacion_certificado', 
             'verificacion_recibo_servicio',
             'audit_documento_recibo_pago', 'audit_constancia', 'audit_certificado', 
@@ -88,7 +88,7 @@ class InscripcionInfProfeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Inscripcion
         fields = ['profesor','id_inscripcion', 'id_estudiante','estudiante', 'id_modulo','modulo', 'id_oferta_categoria','oferta_categoria', 'grupo', 'fecha_inscripcion', 'tipo_vinculacion', 
-        'terminos', 'observaciones', 'audit_certificado', 'audit_documento_recibo_pago', 'recibo_pago', 'certificado', 'constancia', 'recibo_servicio', 'audit_recibo_servicio', 'audit_constancia']
+        'terminos', 'observaciones', 'audit_certificado', 'audit_documento_recibo_pago', 'recibo_pago', 'certificado', 'constancia', 'recibo_servicio', 'certificado_academico', 'audit_recibo_servicio', 'audit_constancia']
         read_only_fields = ('id_inscripcion',)
         
 

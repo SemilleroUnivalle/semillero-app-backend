@@ -162,6 +162,7 @@ class InscripcionViewSet(viewsets.ModelViewSet):
             file_update(instance, data, 'recibo_pago')
             file_update(instance, data, 'constancia')
             file_update(instance, data, 'certificado')
+            file_update(instance, data, 'certificado_academico')
             file_update(instance, data, 'recibo_servicio')
 
             partial = kwargs.pop('partial', False)
@@ -196,6 +197,7 @@ class InscripcionViewSet(viewsets.ModelViewSet):
             file_update(instance, data, 'recibo_pago')
             file_update(instance, data, 'constancia')
             file_update(instance, data, 'certificado')
+            file_update(instance, data, 'certificado_academico')
             file_update(instance, data, 'recibo_servicio')
 
             serializer = self.get_serializer(instance, data=data, partial=True)
@@ -334,6 +336,8 @@ class InscripcionViewSet(viewsets.ModelViewSet):
             instance.constancia.delete(save=False)
         if instance.certificado:
             instance.certificado.delete(save=False)
+        if instance.certificado_academico:
+            instance.certificado_academico.delete(save=False)
         if instance.recibo_servicio:
             instance.recibo_servicio.delete(save=False)
         # Ahora elimina la instancia del modelo
