@@ -177,3 +177,27 @@ def test_destroy_student(estudiante_profile, admin_user, profesor_user):
     response = client.delete(url)
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
+
+# Test: Buscar por documento
+@pytest.mark.django_db
+def test_buscar_por_documento(estudiante_profile):
+    client = APIClient()
+    
+    # We do not authenticate (public request)
+    url = '/estudiante/est/buscar-por-documento/'
+    
+    # 1. Search for existing student
+    response = client.get(url, {'numero_documento': estudiante_profile.numero_documento})
+    assert response.status_code == status.HTTP_200_OK
+    assert response.data['nombre'] == estudiante_profile.nombre
+    assert response.data['numero_documento'] == estudiante_profile.numero_documento
+    
+    # 2. Search for non-existing student
+    response = client.get(url, {'numero_documento': 'non-existing-doc-9999'})
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    
+    # 3. Missing query parameter
+    response = client.get(url)
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+

@@ -22,6 +22,11 @@ def certificado_upload_to(instance, filename):
     numero_documento = instance.id_estudiante.numero_documento
     return f'certificados/{numero_documento}.{ext}'
 
+def certificado_academico_upload_to(instance, filename):
+    ext = filename.split('.')[-1]
+    numero_documento = instance.id_estudiante.numero_documento
+    return f'certificados_academicos/{numero_documento}.{ext}'
+
 def recibo_servicio(instance, filename):
     ext = filename.split('.')[-1]
     numero_documento = instance.id_estudiante.numero_documento
@@ -52,6 +57,11 @@ class Inscripcion(models.Model):
     certificado = models.FileField(
         upload_to=certificado_upload_to, null=True, blank=True,
         help_text="Sube un documento pdf del certificado de funcionario"
+    )
+
+    certificado_academico = models.FileField(
+        upload_to=certificado_academico_upload_to, null=True, blank=True,
+        help_text="Sube un documento pdf del certificado académico"
     )
 
     recibo_servicio = models.FileField(
