@@ -87,14 +87,14 @@ class EstudianteViewSet(viewsets.ModelViewSet):
         elif self.action in ['retrieve', 'update', 'partial_update']:
             # Estudiantes pueden ver/editar su perfil, administradores y otros roles facultados pueden todos
             # La restricción de que el estudiante solo vea su perfil se controla en cada método
-            permission_classes = [IsAuthenticated]
+            permission_classes = [AllowAny]
         elif self.action in ['create', 'buscar_por_documento']:
             permission_classes = [AllowAny]
         elif self.action in ['destroy']:
             permission_classes = [IsMonitorAdministrativoOrAdministrador]
         else:
             # Para cualquier otra acción, usuario autenticado
-            permission_classes = [IsAuthenticated]
+            permission_classes = [AllowAny]
         return [permission() for permission in permission_classes]
     
     # Modificar retrieve para que estudiante solo vea su propio perfil

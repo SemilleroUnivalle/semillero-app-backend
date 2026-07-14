@@ -107,31 +107,111 @@ class InscripcionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # Resolver la oferta_categoria sin que lance MultipleObjectsReturned si pertenece a varias ofertas
-        oferta_academica_id = data.get("oferta_academica")
-        oferta_categoria_qs = modulo.id_oferta_categoria.all()
+        # # Resolver la oferta_categoria sin que lance MultipleObjectsReturned si pertenece a varias ofertas
+        # oferta_academica_id = data.get("oferta_academica")
+        # oferta_categoria_qs = modulo.id_oferta_categoria.all()
         
-        if oferta_academica_id:
-            oferta_categoria_qs = oferta_categoria_qs.filter(id_oferta_academica=oferta_academica_id)
+        # if oferta_academica_id:
+        #     oferta_categoria_qs = oferta_categoria_qs.filter(id_oferta_academica=oferta_academica_id)
             
-        if not oferta_categoria_qs.exists():
-            oferta_categoria_qs = modulo.id_oferta_categoria.filter(estado=True, id_oferta_academica__estado='inscripcion')
-        if not oferta_categoria_qs.exists():
-            oferta_categoria_qs = modulo.id_oferta_categoria.filter(estado=True)
-        if not oferta_categoria_qs.exists():
+        # if not oferta_categoria_qs.exists():
+        #     oferta_categoria_qs = modulo.id_oferta_categoria.filter(estado=True, id_oferta_academica__estado='inscripcion')
+        # if not oferta_categoria_qs.exists():
+        #     oferta_categoria_qs = modulo.id_oferta_categoria.filter(estado=True)
+        # if not oferta_categoria_qs.exists():
+        #     oferta_categoria_qs = modulo.id_oferta_categoria.all()
+            
+        # oferta_categoria = oferta_categoria_qs.first()
+        # if not oferta_categoria:
+        #     return Response({"detail": "El módulo no tiene una oferta de categoría asociada."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        # oferta_academica = oferta_categoria.id_oferta_academica
+
+        # if oferta_categoria.estado or oferta_academica.estado == 'inscripcion' or oferta_academica.estado == 'desarrollo':
+        #     data["id_oferta_categoria"] = oferta_categoria.id_oferta_categoria
+        #     data["oferta_academica"] = oferta_academica.id_oferta_academica
+        # else:
+        #     return Response({"detail": "La oferta categoria o academica no esta activa"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # nuevo
+
+        # Resolver la oferta_categoria respetando la selección explícita del frontend
+        oferta_categoria_id = data.get("id_oferta_categoria")
+        oferta_academica_id = data.get("oferta_academica")
+
+        if oferta_categoria_id:
+            try:
+                oferta_categoria_id = int(oferta_categoria_id)
+            except (TypeError, ValueError):
+                return Response(
+                    {"detail": "id_oferta_categoria debe ser un número válido."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            oferta_categoria = modulo.id_oferta_categoria.filter(
+                pk=oferta_categoria_id
+            ).first()
+
+            if not oferta_categoria:
+                return Response(
+                    {"detail": "La oferta categoría enviada no existe o no está asociada al módulo."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        elif oferta_academica_id:
+            try:
+                oferta_academica_id = int(oferta_academica_id)
+            except (TypeError, ValueError):
+                return Response(
+                    {"detail": "oferta_academica debe ser un número válido."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            oferta_categoria_qs = modulo.id_oferta_categoria.filter(
+                id_oferta_academica=oferta_academica_id
+            )
+
+            if not oferta_categoria_qs.exists():
+                oferta_categoria_qs = modulo.id_oferta_categoria.filter(
+                    estado=True, id_oferta_academica__estado='inscripcion'
+                )
+            if not oferta_categoria_qs.exists():
+                oferta_categoria_qs = modulo.id_oferta_categoria.filter(estado=True)
+            if not oferta_categoria_qs.exists():
+                oferta_categoria_qs = modulo.id_oferta_categoria.all()
+
+            oferta_categoria = oferta_categoria_qs.first()
+
+        else:
             oferta_categoria_qs = modulo.id_oferta_categoria.all()
-            
-        oferta_categoria = oferta_categoria_qs.first()
+
+            if not oferta_categoria_qs.exists():
+                oferta_categoria_qs = modulo.id_oferta_categoria.filter(estado=True, id_oferta_academica__estado='inscripcion')
+            if not oferta_categoria_qs.exists():
+                oferta_categoria_qs = modulo.id_oferta_categoria.filter(estado=True)
+            if not oferta_categoria_qs.exists():
+                oferta_categoria_qs = modulo.id_oferta_categoria.all()
+
+            oferta_categoria = oferta_categoria_qs.first()
+
         if not oferta_categoria:
-            return Response({"detail": "El módulo no tiene una oferta de categoría asociada."}, status=status.HTTP_400_BAD_REQUEST)
-            
+            return Response(
+                {"detail": "El módulo no tiene una oferta de categoría asociada."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         oferta_academica = oferta_categoria.id_oferta_academica
 
         if oferta_categoria.estado or oferta_academica.estado == 'inscripcion' or oferta_academica.estado == 'desarrollo':
             data["id_oferta_categoria"] = oferta_categoria.id_oferta_categoria
             data["oferta_academica"] = oferta_academica.id_oferta_academica
         else:
-            return Response({"detail": "La oferta categoria o academica no esta activa"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "La oferta categoria o academica no esta activa"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+
         # Forzar que la constancia siempre sea True por requerimiento temporal
         data["verificacion_constancia"] = True
 
